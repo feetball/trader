@@ -1,0 +1,183 @@
+import fs from 'fs/promises';
+import path from 'path';
+
+/**
+ * Paper Trading Engine - Simulates trades without real money
+ */
+export class PaperTradingEngine {
+  constructor() {
+    this.portfolio = {
+      cash: 10000, // Starting with $10,000 virtual cash
+      positions: [], // Open positions
+      closedTrades: [], // Trade history
+    };
+    this.dataFile = 'paper-trading-data.json';
+    this.loadPortfolio();
+  }
+
+  /**
+   * Load portfolio from disk
+   */
+  async loadPortfolio() {
+    try {
+      const data = await fs.readFile(this.dataFile, 'utf-8');
+      this.portfolio = JSON.parse(data);
+      console.log(`📊 Loaded portfolio: $${this.portfolio.cash.toFixed(2)} cash, ${this.portfolio.positions.length} open positions`);
+    } catch (error) {
+      // File doesn't exist yet, use defaults
+      console.log('📊 Starting new paper trading portfolio with $10,000');
+      await this.savePortfolio();
+    }
+  }
+
+  /**
+   * Save portfolio to disk
+   */
+  async savePortfolio() {
+    try {
+      await fs.writeFile(this.dataFile, JSON.stringify(this.portfolio, null, 2));
+    } catch (error) {
+      console.error('Error saving portfolio:', error.message);
+    }
+  }
+
+  /**
+   * Execute a paper buy order
+   */
+  async buy(productId, symbol, price, usdAmount) {
+    if (this.portfolio.cash < usdAmount) {
+      console.log(`❌ Insufficient cash: $${this.portfolio.cash.toFixed(2)} available, $${usdAmount} needed`);
+      return null;
+    }
+
+    const quantity = usdAmount / price;
+    const timestamp = Date.now();
+
+    const position = {
+      id: `${productId}_${timestamp}`,
+      productId,
+      symbol,
+      entryPrice: price,
+      quantity,
+      investedAmount: usdAmount,
+      entryTime: timestamp,
+      targetPrice: price * 1.05, // 5% profit target
+      stopLoss: price * 0.90, // 10% stop loss
+    };
+
+    this.portfolio.positions.push(position);
+    this.portfolio.cash -= usdAmount;
+
+    await this.savePortfolio();
+
+    console.log(`✅ PAPER BUY: ${symbol} | Qty: ${quantity.toFixed(4)} @ $${price.toFixed(4)} | Invested: $${usdAmount.toFixed(2)}`);
+    console.log(`   Target: $${position.targetPrice.toFixed(4)} (+5%) | Stop: $${position.stopLoss.toFixed(4)} (-10%)`);
+
+    return position;
+  }
+
+  /**
+   * Execute a paper sell order
+   */
+  async sell(position, currentPrice, reason = 'Target reached') {
+    const currentValue = position.quantity * currentPrice;
+    const profit = currentValue - position.investedAmount;
+    const profitPercent = (profit / position.investedAmount) * 100;
+    const holdTime = Date.now() - position.entryTime;
+
+    // Remove from positions
+    this.portfolio.positions = this.portfolio.positions.filter(p => p.id !== position.id);
+    
+    // Add cash
+    this.portfolio.cash += currentValue;
+
+    // Record trade
+    const trade = {
+      ...position,
+      exitPrice: currentPrice,
+      exitTime: Date.now(),
+      profit,
+      profitPercent,
+      holdTimeMs: holdTime,
+      reason,
+    };
+
+    this.portfolio.closedTrades.push(trade);
+
+    await this.savePortfolio();
+
+    console.log(`💰 PAPER SELL: ${position.symbol} | Qty: ${position.quantity.toFixed(4)} @ $${currentPrice.toFixed(4)}`);
+    console.log(`   Profit: $${profit.toFixed(2)} (${profitPercent.toFixed(2)}%) | Hold: ${(holdTime/60000).toFixed(1)}m | Reason: ${reason}`);
+
+    return trade;
+  }
+
+  /**
+   * Get all open positions
+   */
+  getPositions() {
+    return this.portfolio.positions;
+  }
+
+  /**
+   * Get number of open positions
+   */
+  getPositionCount() {
+    return this.portfolio.positions.length;
+  }
+
+  /**
+   * Get available cash
+   */
+  getAvailableCash() {
+    return this.portfolio.cash;
+  }
+
+  /**
+   * Get portfolio summary
+   */
+  getPortfolioSummary(currentPrices = {}) {
+    let totalValue = this.portfolio.cash;
+    
+    this.portfolio.positions.forEach(pos => {
+      const currentPrice = currentPrices[pos.productId] || pos.entryPrice;
+      totalValue += pos.quantity * currentPrice;
+    });
+
+    const totalProfit = this.portfolio.closedTrades.reduce((sum, t) => sum + t.profit, 0);
+    const winningTrades = this.portfolio.closedTrades.filter(t => t.profit > 0).length;
+    const totalTrades = this.portfolio.closedTrades.length;
+
+    return {
+      cash: this.portfolio.cash,
+      positionsValue: totalValue - this.portfolio.cash,
+      totalValue,
+      openPositions: this.portfolio.positions.length,
+      totalTrades,
+      winningTrades,
+      winRate: totalTrades > 0 ? (winningTrades / totalTrades * 100) : 0,
+      totalProfit,
+      roi: ((totalValue - 10000) / 10000 * 100),
+    };
+  }
+
+  /**
+   * Print portfolio summary
+   */
+  printSummary(currentPrices = {}) {
+    const summary = this.getPortfolioSummary(currentPrices);
+    
+    console.log('\n' + '='.repeat(60));
+    console.log('📊 PAPER TRADING PORTFOLIO SUMMARY');
+    console.log('='.repeat(60));
+    console.log(`Cash: $${summary.cash.toFixed(2)}`);
+    console.log(`Positions Value: $${summary.positionsValue.toFixed(2)}`);
+    console.log(`Total Value: $${summary.totalValue.toFixed(2)}`);
+    console.log(`ROI: ${summary.roi.toFixed(2)}%`);
+    console.log(`Open Positions: ${summary.openPositions}`);
+    console.log(`Total Trades: ${summary.totalTrades}`);
+    console.log(`Win Rate: ${summary.winRate.toFixed(1)}%`);
+    console.log(`Total Profit: $${summary.totalProfit.toFixed(2)}`);
+    console.log('='.repeat(60) + '\n');
+  }
+}

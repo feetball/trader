@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  trader:
+    build: .
+    container_name: crypto-trader
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      # Persist trading data
+      - ./data:/app/data
+      - ./paper-trading-data.json:/app/paper-trading-data.json
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/bot/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

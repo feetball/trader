@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Build output (keep dist for Docker build context)
+# frontend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
+# Test files
+coverage/
+.nyc_output/
+
+# Misc
+*.swp
+*.swo
+*~
