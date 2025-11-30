@@ -1,5 +1,6 @@
 import { config } from './config.js';
 import { CoinbaseWebSocket } from './websocket-feed.js';
+import { calculateRSI, detectVolumeSurge, checkPriceAction, scoreTrade } from './indicators.js';
 
 /**
  * Market Scanner - Identifies sub-$1 coins with momentum
@@ -219,14 +220,24 @@ export class MarketScanner {
           const momentum = await this.calculateMomentum(coin.productId, price);
           
           if (momentum && momentum.score >= config.MOMENTUM_THRESHOLD) {
+            // Skip if RSI is overbought
+            if (momentum.rsi !== null && momentum.rsi > 75) {
+              console.log(`[STATUS] ⚠️ Skipping ${coin.symbol}: RSI ${momentum.rsi.toFixed(0)} (overbought)`);
+              return null;
+            }
+            
             return {
               productId: coin.productId,
               symbol: coin.symbol,
               price: price,
               momentum: momentum.score,
+              rawMomentum: momentum.rawMomentum,
               volume24h: coin.baseVolume,
               priceChange24h: coin.priceChange24h || 0,
               volatility: momentum.volatility || 0,
+              rsi: momentum.rsi,
+              volumeSurge: momentum.volumeSurge,
+              priceAction: momentum.priceAction,
               timestamp: Date.now(),
             };
           }
@@ -239,7 +250,8 @@ export class MarketScanner {
       const results = await Promise.all(promises);
       results.forEach(r => {
         if (r) {
-          console.log(`[STATUS] 🎯 Found opportunity: ${r.symbol} +${r.momentum.toFixed(2)}% momentum`);
+          const surgeIcon = r.volumeSurge?.isSurge ? '📈' : '';
+          console.log(`[STATUS] 🎯 Found: ${r.symbol} +${r.momentum.toFixed(2)}% ${surgeIcon} RSI:${r.rsi?.toFixed(0) || '?'}`);
           opportunities.push(r);
         }
       });
@@ -427,11 +439,12 @@ export class MarketScanner {
 
   /**
    * Calculate momentum based on recent price action
+   * Enhanced with volume surge detection and RSI
    */
   async calculateMomentum(productId, currentPrice) {
     try {
       // Use MOMENTUM_WINDOW from config (in minutes), with 5-min candles
-      const candleCount = Math.max(3, Math.ceil(config.MOMENTUM_WINDOW / 5));
+      const candleCount = Math.max(6, Math.ceil(config.MOMENTUM_WINDOW / 5) + 3);
       const candles = await this.client.getCandles(productId, 300, candleCount); // 5 min candles
       
       if (!candles || candles.length < 3) {
@@ -439,7 +452,9 @@ export class MarketScanner {
       }
 
       // Calculate price change over the momentum window
-      const oldestCandle = candles[candles.length - 1];
+      const windowCandles = Math.ceil(config.MOMENTUM_WINDOW / 5);
+      const oldestIdx = Math.min(windowCandles, candles.length - 1);
+      const oldestCandle = candles[oldestIdx];
       const oldPrice = parseFloat(oldestCandle.close);
       
       const priceChange = ((currentPrice - oldPrice) / oldPrice) * 100;
@@ -459,11 +474,43 @@ export class MarketScanner {
       // Calculate average volume
       const avgVolume = candles.reduce((sum, c) => sum + parseFloat(c.volume), 0) / candles.length;
 
+      // NEW: Calculate RSI
+      const prices = candles.map(c => parseFloat(c.close));
+      const rsi = calculateRSI(prices, Math.min(14, prices.length - 1));
+      
+      // NEW: Detect volume surge
+      const volumeSurge = detectVolumeSurge(candles);
+      
+      // NEW: Check price action
+      const priceAction = checkPriceAction(candles);
+      
+      // NEW: Enhanced scoring
+      let enhancedScore = priceChange;
+      
+      // Volume surge bonus (up to +1%)
+      if (volumeSurge.isSurge) {
+        enhancedScore += Math.min(volumeSurge.ratio - 1, 1);
+      }
+      
+      // RSI penalty for overbought
+      if (rsi !== null && rsi > 75) {
+        enhancedScore -= 0.5;
+      }
+      
+      // Price action bonus/penalty
+      if (!priceAction.favorable) {
+        enhancedScore -= 0.3;
+      }
+
       return {
-        score: priceChange,
+        score: enhancedScore,
+        rawMomentum: priceChange,
         volatility,
         avgVolume,
-        timeframe: '15min',
+        rsi,
+        volumeSurge,
+        priceAction,
+        timeframe: `${config.MOMENTUM_WINDOW}min`,
       };
     } catch (error) {
       return null;

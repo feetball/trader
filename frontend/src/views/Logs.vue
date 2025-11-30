@@ -17,6 +17,15 @@
             <v-btn 
               size="small" 
               variant="tonal" 
+              @click="scrollToBottom"
+              class="mr-2"
+            >
+              <v-icon start icon="mdi-arrow-down"></v-icon>
+              Latest
+            </v-btn>
+            <v-btn 
+              size="small" 
+              variant="tonal" 
               @click="refreshData"
               :loading="loading"
             >
@@ -48,36 +57,32 @@
               </v-col>
             </v-row>
 
-            <!-- Log List -->
-            <v-virtual-scroll
-              :items="filteredLogs"
-              height="600"
-              item-height="40"
-            >
-              <template v-slot:default="{ item, index }">
-                <div 
-                  class="log-item d-flex align-start pa-2"
-                  :class="{ 'bg-surface-variant': index % 2 === 0 }"
+            <!-- Log List (chronological - oldest at top, newest at bottom) -->
+            <div ref="logContainer" class="log-container">
+              <div 
+                v-for="(item, index) in filteredLogs"
+                :key="index"
+                class="log-item d-flex align-start pa-2"
+                :class="{ 'bg-surface-variant': index % 2 === 0 }"
+              >
+                <span class="text-caption text-medium-emphasis mr-3" style="min-width: 80px; font-family: monospace;">
+                  {{ item.timestamp }}
+                </span>
+                <v-icon 
+                  :icon="getLogIcon(item.message)" 
+                  :color="getLogColor(item.message)"
+                  size="small"
+                  class="mr-2"
+                ></v-icon>
+                <span 
+                  class="text-body-2 flex-grow-1" 
+                  :class="getLogClass(item.message)"
+                  style="font-family: monospace;"
                 >
-                  <span class="text-caption text-medium-emphasis mr-3" style="min-width: 80px; font-family: monospace;">
-                    {{ item.timestamp }}
-                  </span>
-                  <v-icon 
-                    :icon="getLogIcon(item.message)" 
-                    :color="getLogColor(item.message)"
-                    size="small"
-                    class="mr-2"
-                  ></v-icon>
-                  <span 
-                    class="text-body-2 flex-grow-1" 
-                    :class="getLogClass(item.message)"
-                    style="font-family: monospace;"
-                  >
-                    {{ item.message }}
-                  </span>
-                </div>
-              </template>
-            </v-virtual-scroll>
+                  {{ item.message }}
+                </span>
+              </div>
+            </div>
 
             <div v-if="filteredLogs.length === 0" class="text-center py-8 text-medium-emphasis">
               <v-icon icon="mdi-console" size="64" class="mb-4"></v-icon>
@@ -133,13 +138,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useTrading } from '../composables/useTrading'
 
 const { botStatus, loading, refreshData } = useTrading()
 
 const searchQuery = ref('')
 const filterType = ref('all')
+const logContainer = ref(null)
 
 const logs = computed(() => botStatus.value.logs || [])
 
@@ -168,6 +174,18 @@ const filteredLogs = computed(() => {
 
   return result
 })
+
+// Auto-scroll to bottom when new logs arrive
+watch(() => logs.value.length, async () => {
+  await nextTick()
+  scrollToBottom()
+})
+
+const scrollToBottom = () => {
+  if (logContainer.value) {
+    logContainer.value.scrollTop = logContainer.value.scrollHeight
+  }
+}
 
 const buyCount = computed(() => {
   return logs.value.filter(l => l.message.toLowerCase().includes('buy')).length
@@ -222,5 +240,11 @@ const getLogClass = (message) => {
 <style scoped>
 .log-item {
   border-radius: 4px;
+}
+
+.log-container {
+  height: 600px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
 }
 </style>

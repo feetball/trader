@@ -1,4 +1,5 @@
 import { config } from './config.js';
+import { calculateDynamicStopLoss, scoreTrade } from './indicators.js';
 
 /**
  * Trading Strategy - Handles buy/sell decisions and position management
@@ -35,11 +36,30 @@ export class TradingStrategy {
       return false;
     }
 
+    // Score the trade opportunity
+    const indicators = {
+      volumeRatio: opportunity.volumeSurge?.ratio || 1,
+      rsi: opportunity.rsi,
+      priceAction: opportunity.priceAction
+    };
+    const tradeScore = scoreTrade(opportunity, indicators);
+    
+    // Skip low-grade trades
+    if (tradeScore.grade === 'F') {
+      console.log(`⏸️  Skipping ${opportunity.symbol}: Grade F trade`);
+      return false;
+    }
+
     // Execute buy
-    console.log(`\n🚀 BUY SIGNAL: ${opportunity.symbol}`);
-    console.log(`   Price: $${opportunity.price.toFixed(4)}`);
-    console.log(`   Momentum: ${opportunity.momentum.toFixed(2)}%`);
-    console.log(`   24h Volume: $${(opportunity.volume24h/1000).toFixed(0)}k`);
+    console.log(`\n🚀 BUY SIGNAL: ${opportunity.symbol} [Grade ${tradeScore.grade}]`);
+    console.log(`   Price: $${opportunity.price.toFixed(6)}`);
+    console.log(`   Momentum: +${opportunity.momentum.toFixed(2)}%`);
+    console.log(`   RSI: ${opportunity.rsi?.toFixed(0) || 'N/A'}`);
+    console.log(`   Volume: ${opportunity.volumeSurge?.isSurge ? '📈 SURGE ' : ''}${opportunity.volumeSurge?.ratio?.toFixed(1) || '?'}x avg`);
+    console.log(`   24h Vol: $${(opportunity.volume24h/1000).toFixed(0)}k`);
+    if (tradeScore.reasons.length > 0) {
+      console.log(`   Signals: ${tradeScore.reasons.join(', ')}`);
+    }
 
     if (config.PAPER_TRADING) {
       await this.paper.buy(

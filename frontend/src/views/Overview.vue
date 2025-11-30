@@ -288,13 +288,14 @@
           <v-card-title class="d-flex align-center">
             <v-icon icon="mdi-console" class="mr-2"></v-icon>
             Bot Logs
+            <v-chip size="x-small" class="ml-2" color="info" variant="tonal">newest at bottom</v-chip>
             <v-spacer></v-spacer>
             <v-btn size="x-small" variant="text" to="/logs">View All</v-btn>
           </v-card-title>
           <v-card-text>
             <v-list density="compact" class="log-list">
               <v-list-item
-                v-for="(log, index) in botStatus.logs?.slice(0, 10)"
+                v-for="(log, index) in recentLogs"
                 :key="index"
                 class="px-0 py-1"
               >
@@ -321,6 +322,7 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useTrading } from '../composables/useTrading'
 
 const { 
@@ -336,6 +338,13 @@ const {
   getCoinbaseUrl,
   openCoinbase 
 } = useTrading()
+
+// Get the last 10 logs in chronological order (oldest first, newest last)
+const recentLogs = computed(() => {
+  const logs = botStatus.value.logs || []
+  // Take last 10 logs (already in chronological order)
+  return logs.slice(-10)
+})
 
 const getLogClass = (message) => {
   if (message.includes('BUY')) return 'text-success'

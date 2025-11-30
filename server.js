@@ -6,6 +6,7 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { WebSocketServer } from 'ws';
 import http from 'http';
+import { config } from './config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -65,9 +66,9 @@ const MAX_LOGS = 50;
 
 function addLog(message) {
   const timestamp = new Date().toLocaleTimeString();
-  botStatus.logs.unshift({ timestamp, message });
+  botStatus.logs.push({ timestamp, message });  // Chronological order (oldest first)
   if (botStatus.logs.length > MAX_LOGS) {
-    botStatus.logs.pop();
+    botStatus.logs.shift();  // Remove oldest log
   }
   botStatus.lastUpdate = Date.now();
   botStatus.message = message;
@@ -490,8 +491,9 @@ app.post('/api/bot/start', (req, res) => {
     botStatus.message = 'Starting bot...';
     botStatus.cycleCount = 0;
     botStatus.apiCalls = 0;
-    botStatus.logs = [];
+    botStatus.logs = [];  // Clear old logs
     addLog('🚀 Bot starting...');
+    addLog(`Max Price: $${config.MAX_PRICE} | Profit Target: ${config.PROFIT_TARGET}%`);
 
     botProcess = spawn('node', ['bot-daemon.js'], {
       cwd: process.cwd(),
@@ -606,7 +608,62 @@ app.get('*', (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`📊 Trading Dashboard running on http://localhost:${PORT}`);
-  console.log(`📈 API and frontend served from same port`);
-  console.log(`🔌 WebSocket server ready for real-time updates`);
+  // Startup banner with help and architecture info
+  console.log('');
+  console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
+  console.log('║                                                                              ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v1.3.0                                          ║');
+  console.log('║                                                                              ║');
+  console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
+  console.log('║                                                                              ║');
+  console.log('║   DESCRIPTION:                                                               ║');
+  console.log('║   Automated momentum trading bot for sub-$1 cryptocurrencies on Coinbase.    ║');
+  console.log('║   Uses technical indicators (RSI, volume surge, VWAP) to identify trades.   ║');
+  console.log('║   Supports paper trading mode for safe testing without real money.          ║');
+  console.log('║                                                                              ║');
+  console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
+  console.log('║                                                                              ║');
+  console.log('║   ARCHITECTURE:                                                              ║');
+  console.log('║   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐         ║');
+  console.log('║   │  Vue 3 + Vite   │◄──►│  Express API    │◄──►│  Coinbase API   │         ║');
+  console.log('║   │  (Frontend)     │    │  + WebSocket    │    │  (REST + WS)    │         ║');
+  console.log('║   └─────────────────┘    └─────────────────┘    └─────────────────┘         ║');
+  console.log('║                                                                              ║');
+  console.log('║   LANGUAGES & FRAMEWORKS:                                                    ║');
+  console.log('║   • Backend:  Node.js, Express, WebSocket (ws)                              ║');
+  console.log('║   • Frontend: Vue 3, Vuetify 3, Vue Router 4, Vite                          ║');
+  console.log('║   • Trading:  Coinbase Advanced Trade API, Custom indicators.js            ║');
+  console.log('║   • Deploy:   Docker, Docker Compose                                        ║');
+  console.log('║                                                                              ║');
+  console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
+  console.log('║                                                                              ║');
+  console.log('║   HOW TO USE:                                                                ║');
+  console.log('║   1. Open dashboard at http://localhost:' + PORT + '                               ║');
+  console.log('║   2. Click START to begin scanning markets for opportunities               ║');
+  console.log('║   3. Bot will auto-buy coins showing momentum (RSI + volume surge)         ║');
+  console.log('║   4. Positions auto-sell at profit target or stop loss                     ║');
+  console.log('║   5. Use Settings (⚙️) to adjust trading parameters                         ║');
+  console.log('║                                                                              ║');
+  console.log('║   DASHBOARD PAGES:                                                           ║');
+  console.log('║   • Overview    - Portfolio summary, positions, recent trades              ║');
+  console.log('║   • Bot Status  - Control panel, live status, current activity             ║');
+  console.log('║   • Performance - Detailed profit/loss analytics by coin                   ║');
+  console.log('║   • Trades      - Complete trade history with filters                      ║');
+  console.log('║   • Activity    - Timeline of all trading events                           ║');
+  console.log('║   • Logs        - Full bot output and debugging info                       ║');
+  console.log('║                                                                              ║');
+  console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
+  console.log('║                                                                              ║');
+  console.log('║   CURRENT SETTINGS:                                                          ║');
+  console.log(`║   • Paper Trading: ${config.PAPER_TRADING ? 'ON (simulated)' : 'OFF (REAL $)'}                                             ║`);
+  console.log(`║   • Max Price:     $${config.MAX_PRICE.toFixed(2)} | Position Size: $${config.POSITION_SIZE}                       ║`);
+  console.log(`║   • Profit Target: ${config.PROFIT_TARGET}% | Stop Loss: ${config.STOP_LOSS}%                             ║`);
+  console.log(`║   • Momentum:      ${config.MOMENTUM_THRESHOLD}% in ${config.MOMENTUM_WINDOW} min | Max Positions: ${config.MAX_POSITIONS}                ║`);
+  console.log('║                                                                              ║');
+  console.log('╚══════════════════════════════════════════════════════════════════════════════╝');
+  console.log('');
+  console.log(`📊 Dashboard:  http://localhost:${PORT}`);
+  console.log(`📈 API:        http://localhost:${PORT}/api`);
+  console.log(`🔌 WebSocket:  ws://localhost:${PORT}`);
+  console.log('');
 });
