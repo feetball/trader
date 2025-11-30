@@ -1,176 +1,244 @@
 # Crypto Momentum Trading Bot 🤖
 
-An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase and executes momentum-based trades with 5% profit targets. **Includes a beautiful Vue 3 + Vuetify dashboard!**
+An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase and executes momentum-based trades using technical indicators. **Includes a beautiful Vue 3 + Vuetify multi-page dashboard!**
 
-## ✨ New: Web Dashboard!
+**Version:** 1.3.0
 
-![Dashboard](https://img.shields.io/badge/Dashboard-Vue%203%20%2B%20Vuetify-4FC08D?style=for-the-badge&logo=vue.js)
+## ✨ Features
 
-**Professional real-time web interface with:**
-- 📊 Live portfolio statistics and ROI tracking
-- 📈 Open positions monitoring with P&L
-- 📜 Complete trade history with analytics
-- 🏆 Performance breakdown by cryptocurrency
+### Trading Engine
+- 🔍 **Real-time Market Scanning**: WebSocket-powered live price feeds from Coinbase
+- 📈 **Technical Indicators**: RSI, Volume Surge Detection, VWAP, ATR
+- 🎯 **Trade Grading**: A-F quality scores to filter high-probability setups
+- 📊 **Smart Entry**: RSI filter to avoid overbought coins (>75)
+- 💰 **Paper Trading**: Simulated trades with virtual $10,000 portfolio
+- 🛡️ **Risk Management**: Configurable stop-loss and trailing profit
+
+### Web Dashboard
+- �� Live portfolio statistics and ROI tracking
+- 📈 Open positions with real-time P&L
+- 📜 Complete trade history with filters
+- 🏆 Performance breakdown by coin
 - 🔔 Real-time activity feed
-- 🎨 Beautiful Material Design UI (dark mode)
-- 🔄 Auto-refresh every 5 seconds
+- 📝 Chronological bot logs
+- ❓ Help & documentation page
+- �� Material Design UI (dark mode)
+- 🔌 WebSocket for instant updates
 
-**Quick Start Dashboard:**
-```bash
-# Install everything
+## Architecture
+
+\`\`\`
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Vue 3 + Vite   │◄──►│  Express API    │◄──►│  Coinbase API   │
+│  (Frontend)     │    │  + WebSocket    │    │  (REST + WS)    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+\`\`\`
+
+### Languages & Frameworks
+- **Backend**: Node.js, Express, WebSocket (ws)
+- **Frontend**: Vue 3, Vuetify 3, Vue Router 4, Vite
+- **Trading**: Coinbase Advanced Trade API, Custom indicators.js
+- **Deploy**: Docker, Docker Compose
+
+## Quick Start (Docker - Recommended)
+
+\`\`\`bash
+# Clone and start
+git clone <repo-url>
+cd trader
+
+# Start with Docker
+./deploy.sh start
+
+# View logs
+./deploy.sh logs
+
+# Open dashboard
+open http://localhost:3001
+\`\`\`
+
+### Docker Commands
+\`\`\`bash
+./deploy.sh start   # Start the container
+./deploy.sh stop    # Stop the container
+./deploy.sh update  # Rebuild and restart
+./deploy.sh logs    # View container logs
+./deploy.sh shell   # Shell into container
+\`\`\`
+
+## Quick Start (Local Development)
+
+\`\`\`bash
+# Install dependencies
 npm install
 cd frontend && npm install && cd ..
 
-# Start all services at once
-.\start-all.ps1
+# Start API server (includes bot controls)
+npm run server
 
-# Or manually:
-npm start       # Terminal 1: Trading bot
-npm run server  # Terminal 2: API server
-npm run dashboard  # Terminal 3: Dashboard
+# In another terminal, start frontend dev server
+npm run dashboard
 
-# Visit: http://localhost:3000
-```
+# Open http://localhost:3000 (dev) or http://localhost:3001 (production)
+\`\`\`
 
-See [DASHBOARD.md](DASHBOARD.md) for full dashboard documentation.
+## Dashboard Pages
 
-## Features
-
-- 🔍 **Real-time Market Scanning**: Continuously monitors all sub-$1 crypto trading pairs on Coinbase
-- 📈 **Momentum Detection**: Calculates price momentum using 15-minute price changes to identify trending coins
-- 💰 **Paper Trading**: Simulated trades with a virtual $10,000 portfolio (no real money at risk)
-- 🎯 **Automated Strategy**: 
-  - Buys coins showing 3%+ momentum in the last 15 minutes
-  - Automatically sells when 5% profit target is reached
-  - Includes 10% stop-loss protection
-  - Time-based exit after 4 hours if in profit
-- 📊 **Position Management**: Tracks up to 10 concurrent positions
-- 💾 **Persistent Portfolio**: Saves all trades and positions to disk
-
-## Quick Start
-
-1. **Install dependencies**:
-```bash
-npm install
-```
-
-2. **Test the connection**:
-```bash
-npm test
-```
-
-3. **Start the bot**:
-```bash
-npm start
-```
-
-The bot will:
-- Start with $10,000 virtual cash
-- Scan markets every 30 seconds
-- Show real-time trading activity
-- Save all trades to `paper-trading-data.json`
-
-Press `Ctrl+C` to stop the bot and see final portfolio summary.
+| Page | Description |
+|------|-------------|
+| **Overview** | Portfolio summary, positions, recent trades |
+| **Bot Status** | Control panel, live status, scan activity |
+| **Performance** | Profit/loss analytics by coin |
+| **Trade History** | Complete trade log with filters |
+| **Activity** | Timeline of trading events |
+| **Logs** | Full bot output (chronological) |
+| **Help & Info** | Documentation, architecture, usage guide |
 
 ## Configuration
 
-Edit [config.js](config.js) to customize:
+Edit [config.js](config.js) to customize trading parameters:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `PAPER_TRADING` | `true` | Must be true (real trading not implemented) |
-| `MAX_PRICE` | `$1.00` | Maximum coin price to consider |
-| `PROFIT_TARGET` | `5%` | Sell when this profit is reached |
-| `MOMENTUM_THRESHOLD` | `3%` | Minimum price change to trigger buy |
-| `SCAN_INTERVAL` | `30s` | How often to scan markets |
-| `POSITION_SIZE` | `$100` | Amount to invest per trade |
-| `MAX_POSITIONS` | `10` | Maximum concurrent positions |
-| `MIN_VOLUME` | `$50,000` | Minimum 24h volume required |
-| `STOP_LOSS` | `-10%` | Stop loss percentage |
+| \`PAPER_TRADING\` | \`true\` | Simulated trading mode |
+| \`MAX_PRICE\` | \`$1.00\` | Maximum coin price to trade |
+| \`PROFIT_TARGET\` | \`2%\` | Target profit before exit |
+| \`STOP_LOSS\` | \`-3%\` | Maximum loss before exit |
+| \`MOMENTUM_THRESHOLD\` | \`1.5%\` | Min price change to trigger buy |
+| \`MOMENTUM_WINDOW\` | \`10 min\` | Time window for momentum calc |
+| \`SCAN_INTERVAL\` | \`10s\` | Market scan frequency |
+| \`POSITION_SIZE\` | \`$500\` | Investment per trade |
+| \`MAX_POSITIONS\` | \`30\` | Max concurrent positions |
+| \`MIN_VOLUME\` | \`$25,000\` | Minimum 24h volume |
+| \`ENABLE_TRAILING_PROFIT\` | \`true\` | Let winners ride |
+| \`TRAILING_STOP_PERCENT\` | \`1.5%\` | Trailing stop distance |
+
+Settings can also be changed via the dashboard Settings (⚙️) menu.
 
 ## How It Works
 
-1. **Market Scanner** ([market-scanner.js](market-scanner.js))
-   - Fetches all USD trading pairs from Coinbase
-   - Filters for sub-$1 coins with sufficient volume
-   - Calculates 15-minute momentum using candlestick data
-   - Ranks opportunities by momentum score
+### 1. Market Scanner ([market-scanner.js](market-scanner.js))
+- Fetches all USD trading pairs from Coinbase
+- Filters for sub-$1 coins with sufficient volume
+- Calculates momentum using real-time WebSocket prices
+- **RSI Filter**: Skips overbought coins (RSI > 75)
+- **Volume Surge**: Confirms momentum with unusual volume
+- Ranks opportunities by composite score
 
-2. **Trading Strategy** ([trading-strategy.js](trading-strategy.js))
-   - Evaluates top opportunities each cycle
-   - Opens positions on strong momentum signals
-   - Monitors existing positions for exit conditions
-   - Executes profit-taking and stop-losses
+### 2. Technical Indicators ([indicators.js](indicators.js))
+- \`calculateRSI()\` - Relative Strength Index
+- \`detectVolumeSurge()\` - Volume anomaly detection
+- \`calculateVWAP()\` - Volume Weighted Average Price
+- \`calculateATR()\` - Average True Range (volatility)
+- \`scoreTrade()\` - A-F trade quality grading
 
-3. **Paper Trading Engine** ([paper-trading.js](paper-trading.js))
-   - Maintains virtual portfolio with cash and positions
-   - Simulates buy/sell execution
-   - Tracks P&L for each trade
-   - Persists state to JSON file
+### 3. Trading Strategy ([trading-strategy.js](trading-strategy.js))
+- Evaluates opportunities each scan cycle
+- **Trade Grading**: Rejects Grade D/F setups
+- Opens positions on confirmed signals
+- Monitors for profit target or stop loss
+- Trailing profit lets winners ride higher
 
-4. **Main Bot Loop** ([bot.js](bot.js))
-   - Orchestrates scanning, trading, and position management
-   - Runs continuously until stopped
-   - Displays progress and statistics
+### 4. Paper Trading ([paper-trading.js](paper-trading.js))
+- Virtual $10,000 starting portfolio
+- Simulates buy/sell execution
+- Tracks P&L for each trade
+- Persists state to \`paper-trading-data.json\`
 
-## Example Output
-
-```
-============================================================
-🔄 CYCLE #15 | 10:45:23 AM
-============================================================
-🔍 Scanning markets for opportunities...
-Found 347 USD trading pairs
-✅ Found 3 opportunities
-Top opportunities:
-  SPELL: $0.0003 | Momentum: 4.25% | Vol: $125k
-  AXL: $0.1270 | Momentum: 3.85% | Vol: $89k
-  ONDO: $0.5109 | Momentum: 3.12% | Vol: $156k
-
-🚀 BUY SIGNAL: SPELL
-   Price: $0.0003
-   Momentum: 4.25%
-   24h Volume: $125k
-✅ PAPER BUY: SPELL | Qty: 333333.3333 @ $0.0003 | Invested: $100.00
-   Target: $0.0003 (+5%) | Stop: $0.0003 (-10%)
-
-📈 Checking 1 open position(s)...
-   SPELL: $0.0003 | P&L: 2.15% ($2.15)
-
-⏳ Waiting 30s until next scan...
-```
+### 5. API Server ([server.js](server.js))
+- Express REST API for dashboard
+- WebSocket for real-time updates
+- Bot start/stop controls
+- Settings management
 
 ## File Structure
 
-- `bot.js` - Main entry point and trading loop
-- `config.js` - Configuration settings
-- `coinbase-client.js` - Coinbase API wrapper  
-- `market-scanner.js` - Market analysis and opportunity detection
-- `trading-strategy.js` - Buy/sell decision logic
-- `paper-trading.js` - Virtual portfolio management
-- `test-connection.js` - API connection test
-- `paper-trading-data.json` - Portfolio state (auto-generated)
+\`\`\`
+trader/
+├── bot-daemon.js        # Background bot process
+├── bot.js               # Interactive bot runner
+├── config.js            # Trading configuration
+├── coinbase-client.js   # Coinbase API wrapper
+├── market-scanner.js    # Market analysis & scanning
+├── trading-strategy.js  # Buy/sell decision logic
+├── paper-trading.js     # Virtual portfolio management
+├── indicators.js        # Technical analysis functions
+├── server.js            # Express API + WebSocket server
+├── docker-compose.yml   # Docker configuration
+├── Dockerfile           # Container build
+├── deploy.sh            # Deployment script
+├── frontend/
+│   ├── src/
+│   │   ├── App.vue              # Main layout + nav
+│   │   ├── router/index.js      # Vue Router config
+│   │   ├── composables/         # Shared state
+│   │   ├── views/               # Page components
+│   │   │   ├── Overview.vue
+│   │   │   ├── BotStatus.vue
+│   │   │   ├── Performance.vue
+│   │   │   ├── TradeHistory.vue
+│   │   │   ├── Activity.vue
+│   │   │   ├── Logs.vue
+│   │   │   └── Help.vue
+│   │   └── plugins/vuetify.js
+│   └── package.json
+└── paper-trading-data.json  # Portfolio state (auto-generated)
+\`\`\`
+
+## Example Console Output
+
+\`\`\`
+╔══════════════════════════════════════════════════════════════════════════════╗
+║   💹  CRYPTO MOMENTUM TRADER v1.3.0                                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║   CURRENT SETTINGS:                                                          ║
+║   • Paper Trading: ON (simulated)                                            ║
+║   • Max Price:     $1.00 | Position Size: $500                               ║
+║   • Profit Target: 2% | Stop Loss: -3%                                       ║
+║   • Momentum:      1.5% in 10 min | Max Positions: 30                        ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📊 Dashboard:  http://localhost:3001
+📈 API:        http://localhost:3001/api
+🔌 WebSocket:  ws://localhost:3001
+\`\`\`
 
 ## Safety Features
 
-⚠️ **This bot is PAPER TRADING ONLY**
+⚠️ **This bot is PAPER TRADING ONLY by default**
 - No real money is used
 - No real trades are executed
 - All trading is simulated
 - Safe for learning and testing
 
-The Coinbase API credentials in your `.env` are not actually used for trading. The bot only uses public market data endpoints that don't require authentication.
+## API Endpoints
 
-## Next Steps
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| \`/api/portfolio\` | GET | Portfolio summary |
+| \`/api/positions\` | GET | Open positions |
+| \`/api/positions/live\` | GET | Positions with live prices |
+| \`/api/trades\` | GET | Trade history |
+| \`/api/performance-by-coin\` | GET | P&L by coin |
+| \`/api/activity\` | GET | Recent activity |
+| \`/api/bot/status\` | GET | Bot running state |
+| \`/api/bot/start\` | POST | Start the bot |
+| \`/api/bot/stop\` | POST | Stop the bot |
+| \`/api/settings\` | GET/POST | Get/update config |
+| \`/api/portfolio/reset\` | POST | Reset to $10,000 |
 
-To improve the bot, consider:
-- Adjusting momentum thresholds based on market conditions
-- Adding technical indicators (RSI, MACD, etc.)
-- Implementing trailing stop-losses
-- Backtesting on historical data
-- Adding alerts/notifications
-- Creating a web dashboard
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test with Docker: \`./deploy.sh update\`
+5. Submit a pull request
 
 ## Disclaimer
 
 This is an educational project for paper trading only. Cryptocurrency trading involves substantial risk. Never trade with money you cannot afford to lose.
+
+## License
+
+MIT

@@ -1,5 +1,17 @@
 {
-  "cash": 10000,
-  "positions": [],
+  "cash": 9500,
+  "positions": [
+    {
+      "id": "MOG-USD_1764543444679",
+      "productId": "MOG-USD",
+      "symbol": "MOG",
+      "entryPrice": 3.2e-7,
+      "quantity": 1562500000,
+      "investedAmount": 500,
+      "entryTime": 1764543444679,
+      "targetPrice": 3.3600000000000004e-7,
+      "stopLoss": 2.8800000000000004e-7
+    }
+  ],
   "closedTrades": []
 }
