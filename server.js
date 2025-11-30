@@ -460,9 +460,35 @@ app.get('/api/positions/live', async (req, res) => {
   }
 });
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: Date.now() });
+// Health check - enhanced for monitoring
+app.get('/api/health', async (req, res) => {
+  try {
+    const pkg = JSON.parse(await fs.readFile('package.json', 'utf-8'));
+    const uptime = process.uptime();
+    
+    res.json({
+      status: 'ok',
+      version: pkg.version,
+      uptime: Math.floor(uptime),
+      uptimeFormatted: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
+      timestamp: Date.now(),
+      bot: {
+        running: botStatus.running,
+        cycleCount: botStatus.cycleCount,
+        apiCalls: botStatus.apiCalls
+      },
+      websocket: {
+        clients: wsClients.size
+      },
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+        unit: 'MB'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: error.message });
+  }
 });
 
 // Get app version
@@ -612,7 +638,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v1.3.0                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v1.4.0                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
