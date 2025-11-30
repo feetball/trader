@@ -1,5 +1,51 @@
+# Dependencies
 node_modules/
+frontend/node_modules/
+
+# Environment files (SECRETS!)
 .env
-*.log
+.env.*
+.env.local
+.env.*.local
+*.env
+
+# Trading data (personal portfolio info)
+paper-trading-data.json
 trades.json
 positions.json
+data/*.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build output
+frontend/dist/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# Test & coverage
+coverage/
+.nyc_output/
+
+# Misc
+*.bak
+*.tmp
+*.temp

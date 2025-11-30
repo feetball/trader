@@ -1,9 +1,23 @@
-# Dependencies
+# Dependencies (will be installed in container)
 node_modules/
 frontend/node_modules/
 
-# Build output (keep dist for Docker build context)
-# frontend/dist/
+# Git
+.git/
+.gitignore
+
+# Environment files (SECRETS!)
+.env
+.env.*
+.env.local
+.env.*.local
+*.env
+
+# Trading data (mounted as volume, not baked into image)
+paper-trading-data.json
+trades.json
+positions.json
+data/
 
 # Logs
 *.log
@@ -13,20 +27,22 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE/Editor
 .vscode/
 .idea/
-
-# Environment files with secrets
-.env
-.env.local
-.env.*.local
-
-# Test files
-coverage/
-.nyc_output/
-
-# Misc
 *.swp
 *.swo
 *~
+
+# Test & coverage
+coverage/
+.nyc_output/
+
+# Documentation (not needed in container)
+*.md
+!README.md
+
+# Misc
+*.bak
+*.tmp
+*.temp
