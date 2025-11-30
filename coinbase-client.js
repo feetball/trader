@@ -2,6 +2,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Module-level counter for API calls - shared across all imports
+let apiCallCount = 0;
+
+// Candle cache to reduce API calls - key: productId:granularity, value: { candles, time }
+const candleCache = new Map();
+const CANDLE_CACHE_TTL = 60000; // Cache candles for 60 seconds (they update every 5 min anyway)
+
 /**
  * Coinbase API Client wrapper
  * Uses public API endpoints for market data (no auth required)
@@ -13,10 +20,26 @@ export class CoinbaseClient {
   }
 
   /**
+   * Reset the API call counter
+   */
+  static resetApiCallCount() {
+    apiCallCount = 0;
+    candleCache.clear(); // Also clear cache on reset
+  }
+
+  /**
+   * Get the current API call count
+   */
+  static getApiCallCount() {
+    return apiCallCount;
+  }
+
+  /**
    * Get all available products (trading pairs) - Public endpoint
    */
   async getProducts() {
     try {
+      apiCallCount++;
       const response = await fetch(`${this.publicUrl}/products`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const products = await response.json();
@@ -40,6 +63,7 @@ export class CoinbaseClient {
    */
   async getCurrentPrice(productId) {
     try {
+      apiCallCount++;
       const response = await fetch(`${this.publicUrl}/products/${productId}/ticker`);
       if (!response.ok) return null;
       const data = await response.json();
@@ -54,6 +78,7 @@ export class CoinbaseClient {
    */
   async getProductStats(productId) {
     try {
+      apiCallCount++;
       const response = await fetch(`${this.publicUrl}/products/${productId}/stats`);
       if (!response.ok) return null;
       const data = await response.json();
@@ -79,9 +104,21 @@ export class CoinbaseClient {
 
   /**
    * Get candles/historical data for momentum analysis - Public endpoint
+   * With caching to reduce API calls
    */
   async getCandles(productId, granularity = 300, limit = 20) {
     try {
+      // Check cache first
+      const cacheKey = `${productId}:${granularity}`;
+      const now = Date.now();
+      const cached = candleCache.get(cacheKey);
+      
+      if (cached && (now - cached.time) < CANDLE_CACHE_TTL) {
+        // Return cached data (slice to requested limit)
+        return cached.candles.slice(0, limit);
+      }
+
+      apiCallCount++;
       const end = Math.floor(Date.now() / 1000);
       const start = end - (limit * granularity);
       
@@ -93,7 +130,7 @@ export class CoinbaseClient {
       const candles = await response.json();
       
       // Convert format: [time, low, high, open, close, volume]
-      return candles.map(c => ({
+      const converted = candles.map(c => ({
         start: c[0].toString(),
         low: c[1].toString(),
         high: c[2].toString(),
@@ -101,6 +138,11 @@ export class CoinbaseClient {
         close: c[4].toString(),
         volume: c[5].toString(),
       }));
+
+      // Cache the result
+      candleCache.set(cacheKey, { candles: converted, time: now });
+
+      return converted;
     } catch (error) {
       return [];
     }

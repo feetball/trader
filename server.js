@@ -4,12 +4,44 @@ import fs from 'fs/promises';
 import path from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
+import { WebSocketServer } from 'ws';
+import http from 'http';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Create HTTP server for both Express and WebSocket
+const server = http.createServer(app);
+
+// WebSocket server for real-time updates
+const wss = new WebSocketServer({ server });
+const wsClients = new Set();
+
+wss.on('connection', (ws) => {
+  wsClients.add(ws);
+  console.log(`[WS] Client connected (${wsClients.size} total)`);
+  
+  // Send current state immediately
+  ws.send(JSON.stringify({ type: 'botStatus', data: botStatus }));
+  
+  ws.on('close', () => {
+    wsClients.delete(ws);
+    console.log(`[WS] Client disconnected (${wsClients.size} total)`);
+  });
+});
+
+// Broadcast to all connected WebSocket clients
+function broadcast(type, data) {
+  const message = JSON.stringify({ type, data });
+  for (const client of wsClients) {
+    if (client.readyState === 1) { // WebSocket.OPEN
+      client.send(message);
+    }
+  }
+}
 
 app.use(cors());
 app.use(express.json());
@@ -25,6 +57,7 @@ let botStatus = {
   message: 'Bot is stopped',
   lastUpdate: Date.now(),
   cycleCount: 0,
+  apiCalls: 0,
   logs: [],
 };
 
@@ -37,6 +70,23 @@ function addLog(message) {
     botStatus.logs.pop();
   }
   botStatus.lastUpdate = Date.now();
+  botStatus.message = message;
+  
+  // Broadcast status update to all connected clients
+  broadcast('botStatus', botStatus);
+}
+
+// Broadcast portfolio updates periodically when bot is running
+let portfolioBroadcastInterval = null;
+
+async function broadcastPortfolio() {
+  try {
+    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const portfolio = JSON.parse(data);
+    broadcast('portfolio', portfolio);
+  } catch (e) {
+    // Ignore errors
+  }
 }
 
 /**
@@ -195,9 +245,233 @@ app.get('/api/activity', async (req, res) => {
   }
 });
 
+// Reset portfolio to starting state
+app.post('/api/portfolio/reset', async (req, res) => {
+  // Don't allow reset while bot is running
+  if (botProcess) {
+    return res.json({ success: false, message: 'Stop the bot before resetting portfolio' });
+  }
+
+  try {
+    const initialPortfolio = {
+      cash: 10000,
+      positions: [],
+      closedTrades: []
+    };
+    await fs.writeFile('paper-trading-data.json', JSON.stringify(initialPortfolio, null, 2));
+    res.json({ success: true, message: 'Portfolio reset to $10,000' });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// Get current config settings
+app.get('/api/settings', async (req, res) => {
+  try {
+    const configContent = await fs.readFile('config.js', 'utf-8');
+    
+    // Parse config values from the file
+    const settings = {};
+    const patterns = {
+      PAPER_TRADING: /PAPER_TRADING:\s*(true|false)/,
+      MAX_PRICE: /MAX_PRICE:\s*([\d.]+)/,
+      PROFIT_TARGET: /PROFIT_TARGET:\s*([\d.]+)/,
+      MOMENTUM_THRESHOLD: /MOMENTUM_THRESHOLD:\s*([\d.]+)/,
+      MOMENTUM_WINDOW: /MOMENTUM_WINDOW:\s*(\d+)/,
+      SCAN_INTERVAL: /SCAN_INTERVAL:\s*(\d+)/,
+      POSITION_SIZE: /POSITION_SIZE:\s*(\d+)/,
+      MAX_POSITIONS: /MAX_POSITIONS:\s*(\d+)/,
+      MIN_VOLUME: /MIN_VOLUME:\s*(\d+)/,
+      STOP_LOSS: /STOP_LOSS:\s*(-?[\d.]+)/,
+      ENABLE_TRAILING_PROFIT: /ENABLE_TRAILING_PROFIT:\s*(true|false)/,
+      TRAILING_STOP_PERCENT: /TRAILING_STOP_PERCENT:\s*([\d.]+)/,
+      MIN_MOMENTUM_TO_RIDE: /MIN_MOMENTUM_TO_RIDE:\s*([\d.]+)/,
+    };
+
+    for (const [key, pattern] of Object.entries(patterns)) {
+      const match = configContent.match(pattern);
+      if (match) {
+        if (match[1] === 'true') settings[key] = true;
+        else if (match[1] === 'false') settings[key] = false;
+        else settings[key] = parseFloat(match[1]);
+      }
+    }
+
+    res.json(settings);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+// Update config settings
+app.post('/api/settings', async (req, res) => {
+  const wasRunning = botProcess !== null;
+  
+  try {
+    // Stop bot if running
+    if (botProcess) {
+      addLog('⚙️ Stopping bot to apply new settings...');
+      botProcess.kill('SIGTERM');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      botProcess = null;
+    }
+
+    const newSettings = req.body;
+    
+    // Generate new config file content
+    const configContent = `// Trading bot configuration
+export const config = {
+  // Paper trading mode (true = simulated trades, false = real trades)
+  PAPER_TRADING: ${newSettings.PAPER_TRADING ?? true},
+  
+  // Maximum price threshold for coins to trade
+  MAX_PRICE: ${newSettings.MAX_PRICE ?? 1.00},
+  
+  // Profit target percentage (lowered for faster trades)
+  PROFIT_TARGET: ${newSettings.PROFIT_TARGET ?? 2.5},
+  
+  // Minimum price change % in the last period to trigger a buy signal
+  MOMENTUM_THRESHOLD: ${newSettings.MOMENTUM_THRESHOLD ?? 1.5},
+  
+  // Time window for momentum calculation in minutes
+  MOMENTUM_WINDOW: ${newSettings.MOMENTUM_WINDOW ?? 10},
+  
+  // How often to scan markets (seconds)
+  // WebSocket provides real-time prices, so fast scans are possible
+  SCAN_INTERVAL: ${newSettings.SCAN_INTERVAL ?? 10},
+  
+  // Position size per trade (USD)
+  POSITION_SIZE: ${newSettings.POSITION_SIZE ?? 500},
+  
+  // Maximum number of concurrent positions
+  MAX_POSITIONS: ${newSettings.MAX_POSITIONS ?? 30},
+  
+  // Minimum 24h volume to consider (USD)
+  MIN_VOLUME: ${newSettings.MIN_VOLUME ?? 25000},
+  
+  // Stop loss percentage (tighter for faster cuts)
+  STOP_LOSS: ${newSettings.STOP_LOSS ?? -3.0},
+  
+  // Trailing profit settings - let winners ride while climbing
+  ENABLE_TRAILING_PROFIT: ${newSettings.ENABLE_TRAILING_PROFIT ?? true},
+  TRAILING_STOP_PERCENT: ${newSettings.TRAILING_STOP_PERCENT ?? 1.0},
+  MIN_MOMENTUM_TO_RIDE: ${newSettings.MIN_MOMENTUM_TO_RIDE ?? 0.5},
+};
+`;
+
+    await fs.writeFile('config.js', configContent);
+    addLog('✅ Settings saved successfully');
+    
+    // Restart bot if it was running
+    if (wasRunning) {
+      addLog('🔄 Restarting bot with new settings...');
+      
+      // Small delay to ensure config is written
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      botStatus.running = true;
+      botStatus.message = 'Restarting with new settings...';
+      botStatus.cycleCount = 0;
+      botStatus.apiCalls = 0;
+
+      botProcess = spawn('node', ['bot-daemon.js'], {
+        cwd: process.cwd(),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+
+      botProcess.stdout.on('data', (data) => {
+        const lines = data.toString().split('\n').filter(l => l.trim());
+        lines.forEach(line => {
+          if (line.includes('[APICALLS]')) {
+            const match = line.match(/\[APICALLS\]\s*(\d+)/);
+            if (match) {
+              botStatus.apiCalls = parseInt(match[1], 10);
+            }
+          } else if (line.includes('[CYCLE]')) {
+            botStatus.cycleCount++;
+          } else if (line.includes('[STATUS]')) {
+            const msg = line.replace(/.*\[STATUS\]\s*/, '');
+            botStatus.message = msg;
+            addLog(msg);
+          }
+        });
+      });
+
+      botProcess.stderr.on('data', (data) => {
+        const msg = data.toString().trim();
+        if (msg) {
+          addLog(`⚠️ ${msg}`);
+        }
+      });
+
+      botProcess.on('close', (code) => {
+        botStatus.running = false;
+        botStatus.message = `Bot stopped (exit code: ${code})`;
+        addLog(`🛑 Bot stopped with code ${code}`);
+        botProcess = null;
+      });
+      
+      res.json({ success: true, message: 'Settings saved and bot restarted', restarted: true });
+    } else {
+      botStatus.running = false;
+      res.json({ success: true, message: 'Settings saved successfully', restarted: false });
+    }
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// Get live prices for positions
+app.get('/api/positions/live', async (req, res) => {
+  try {
+    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const portfolio = JSON.parse(data);
+    
+    // Fetch current prices for all positions in parallel
+    const positionsWithPrices = await Promise.all(
+      portfolio.positions.map(async (pos) => {
+        try {
+          const response = await fetch(`https://api.exchange.coinbase.com/products/${pos.productId}/ticker`);
+          if (!response.ok) return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
+          const ticker = await response.json();
+          const currentPrice = parseFloat(ticker.price);
+          const currentValue = pos.quantity * currentPrice;
+          const currentPL = currentValue - pos.investedAmount;
+          const currentPLPercent = (currentPL / pos.investedAmount) * 100;
+          
+          return {
+            ...pos,
+            currentPrice,
+            currentValue,
+            currentPL,
+            currentPLPercent,
+            holdTime: Date.now() - pos.entryTime,
+          };
+        } catch (error) {
+          return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
+        }
+      })
+    );
+    
+    res.json(positionsWithPrices);
+  } catch (error) {
+    res.json([]);
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: Date.now() });
+});
+
+// Get app version
+app.get('/api/version', async (req, res) => {
+  try {
+    const pkg = JSON.parse(await fs.readFile('package.json', 'utf-8'));
+    res.json({ version: pkg.version });
+  } catch (error) {
+    res.json({ version: 'unknown' });
+  }
 });
 
 // Get bot status
@@ -215,6 +489,7 @@ app.post('/api/bot/start', (req, res) => {
     botStatus.running = true;
     botStatus.message = 'Starting bot...';
     botStatus.cycleCount = 0;
+    botStatus.apiCalls = 0;
     botStatus.logs = [];
     addLog('🚀 Bot starting...');
 
@@ -226,8 +501,16 @@ app.post('/api/bot/start', (req, res) => {
     botProcess.stdout.on('data', (data) => {
       const lines = data.toString().split('\n').filter(l => l.trim());
       lines.forEach(line => {
+        // Parse [APICALLS] messages for API call count
+        if (line.includes('[APICALLS]')) {
+          const count = parseInt(line.replace('[APICALLS]', '').trim());
+          if (!isNaN(count)) {
+            botStatus.apiCalls = count;
+            addLog(`📡 API Calls: ${count}`);
+          }
+        }
         // Parse [STATUS] messages for detailed status updates
-        if (line.includes('[STATUS]')) {
+        else if (line.includes('[STATUS]')) {
           const statusMsg = line.replace('[STATUS]', '').trim();
           botStatus.message = statusMsg;
         }
@@ -264,6 +547,12 @@ app.post('/api/bot/start', (req, res) => {
       botStatus.running = false;
       botStatus.message = `Bot stopped (exit code: ${code})`;
       addLog(`🛑 Bot stopped with code ${code}`);
+      
+      // Stop portfolio broadcasts
+      if (portfolioBroadcastInterval) {
+        clearInterval(portfolioBroadcastInterval);
+        portfolioBroadcastInterval = null;
+      }
     });
 
     botProcess.on('error', (err) => {
@@ -272,6 +561,11 @@ app.post('/api/bot/start', (req, res) => {
       botStatus.message = `Failed to start: ${err.message}`;
       addLog(`❌ Failed to start: ${err.message}`);
     });
+    
+    // Start broadcasting portfolio updates every 2 seconds
+    if (!portfolioBroadcastInterval) {
+      portfolioBroadcastInterval = setInterval(broadcastPortfolio, 2000);
+    }
 
     res.json({ success: true, message: 'Bot started' });
   } catch (error) {
@@ -311,7 +605,8 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`📊 Trading Dashboard running on http://localhost:${PORT}`);
   console.log(`📈 API and frontend served from same port`);
+  console.log(`🔌 WebSocket server ready for real-time updates`);
 });

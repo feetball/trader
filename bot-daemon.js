@@ -23,6 +23,10 @@ class TradingBotDaemon {
     console.log(`Max Price: $${config.MAX_PRICE} | Profit Target: ${config.PROFIT_TARGET}%`);
     console.log(`Position Size: $${config.POSITION_SIZE} | Max Positions: ${config.MAX_POSITIONS}`);
 
+    // Reset API call counter on start
+    CoinbaseClient.resetApiCallCount();
+    console.log('📊 API call counter reset');
+
     await this.paper.loadPortfolio();
     this.isRunning = true;
 
@@ -65,7 +69,9 @@ class TradingBotDaemon {
 
         // Show portfolio summary
         const summary = this.paper.getPortfolioSummary();
-        console.log(`[STATUS] Portfolio: $${summary.totalValue.toFixed(2)} | Cash: $${summary.cash.toFixed(2)} | Positions: ${summary.openPositions}`);
+        const apiCalls = CoinbaseClient.getApiCallCount();
+        console.log(`[STATUS] Portfolio: $${summary.totalValue.toFixed(2)} | Cash: $${summary.cash.toFixed(2)} | Positions: ${summary.openPositions} | API: ${apiCalls}`);
+        console.log(`[APICALLS] ${apiCalls}`);
 
         console.log(`[STATUS] Waiting ${config.SCAN_INTERVAL}s until next scan...`);
         await this.sleep(config.SCAN_INTERVAL * 1000);

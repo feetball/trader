@@ -11,6 +11,8 @@ services:
       # Persist trading data
       - ./data:/app/data
       - ./paper-trading-data.json:/app/paper-trading-data.json
+      # Persist settings
+      - ./config.js:/app/config.js
     environment:
       - NODE_ENV=production
     healthcheck:

@@ -1,6 +1,6 @@
 {
   "name": "crypto-momentum-trader",
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "Automated momentum trading bot for sub-$1 cryptocurrencies on Coinbase",
   "main": "bot.js",
   "type": "module",
@@ -11,12 +11,18 @@
     "server": "node server.js",
     "dashboard": "cd frontend && npm run dev"
   },
-  "keywords": ["crypto", "trading", "bot", "coinbase"],
+  "keywords": [
+    "crypto",
+    "trading",
+    "bot",
+    "coinbase"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "ws": "^8.18.3"
   }
 }
