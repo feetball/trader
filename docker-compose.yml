@@ -13,6 +13,9 @@ services:
       - ./paper-trading-data.json:/app/paper-trading-data.json
       # Persist settings
       - ./config.js:/app/config.js
+      # Use host timezone
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
     environment:
       - NODE_ENV=production
     healthcheck:

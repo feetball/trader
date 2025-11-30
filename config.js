@@ -4,16 +4,16 @@ export const config = {
   PAPER_TRADING: true,
   
   // Maximum price threshold for coins to trade
-  MAX_PRICE: 1.00,
+  MAX_PRICE: 1,
   
   // Profit target percentage (lowered for faster trades)
-  PROFIT_TARGET: 2.5,
+  PROFIT_TARGET: 1.5,
   
   // Minimum price change % in the last period to trigger a buy signal
-  MOMENTUM_THRESHOLD: 1.5,
+  MOMENTUM_THRESHOLD: 1.25,
   
   // Time window for momentum calculation in minutes
-  MOMENTUM_WINDOW: 10,
+  MOMENTUM_WINDOW: 5,
   
   // How often to scan markets (seconds)
   // WebSocket provides real-time prices, so fast scans are possible
@@ -29,10 +29,10 @@ export const config = {
   MIN_VOLUME: 25000,
   
   // Stop loss percentage (tighter for faster cuts)
-  STOP_LOSS: -3.0,
+  STOP_LOSS: -1.5,
   
   // Trailing profit settings - let winners ride while climbing
-  ENABLE_TRAILING_PROFIT: true,
-  TRAILING_STOP_PERCENT: 1.0,  // Sell when price drops 1% from peak
-  MIN_MOMENTUM_TO_RIDE: 0.5,   // Minimum recent momentum % to keep riding
+  ENABLE_TRAILING_PROFIT: false,
+  TRAILING_STOP_PERCENT: 1,
+  MIN_MOMENTUM_TO_RIDE: 0.5,
 };

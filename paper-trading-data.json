@@ -1,28 +1,5 @@
 {
-  "cash": 9000,
-  "positions": [
-    {
-      "id": "PERP-USD_1764531012783",
-      "productId": "PERP-USD",
-      "symbol": "PERP",
-      "entryPrice": 0.1179,
-      "quantity": 4240.882103477523,
-      "investedAmount": 500,
-      "entryTime": 1764531012783,
-      "targetPrice": 0.12379500000000002,
-      "stopLoss": 0.10611000000000001
-    },
-    {
-      "id": "TNSR-USD_1764531014785",
-      "productId": "TNSR-USD",
-      "symbol": "TNSR",
-      "entryPrice": 0.149,
-      "quantity": 3355.7046979865772,
-      "investedAmount": 500,
-      "entryTime": 1764531014785,
-      "targetPrice": 0.15645,
-      "stopLoss": 0.1341
-    }
-  ],
+  "cash": 10000,
+  "positions": [],
   "closedTrades": []
 }
