@@ -59,8 +59,33 @@ let botStatus = {
   lastUpdate: Date.now(),
   cycleCount: 0,
   apiCalls: 0,
+  apiRate: 0, // Calls per minute
   logs: [],
 };
+
+// Track API call timestamps for rate calculation
+let apiCallTimestamps = [];
+let lastApiCallCount = 0;
+
+function updateApiRate() {
+  const now = Date.now();
+  const oneMinuteAgo = now - 60000;
+  
+  // If we have a new API call count, record it
+  if (botStatus.apiCalls > lastApiCallCount) {
+    const newCalls = botStatus.apiCalls - lastApiCallCount;
+    for (let i = 0; i < newCalls; i++) {
+      apiCallTimestamps.push(now);
+    }
+    lastApiCallCount = botStatus.apiCalls;
+  }
+  
+  // Remove timestamps older than 1 minute
+  apiCallTimestamps = apiCallTimestamps.filter(ts => ts > oneMinuteAgo);
+  
+  // Rate is calls in the last minute
+  botStatus.apiRate = apiCallTimestamps.length;
+}
 
 const MAX_LOGS = 50;
 
@@ -374,6 +399,9 @@ export const config = {
       botStatus.message = 'Restarting with new settings...';
       botStatus.cycleCount = 0;
       botStatus.apiCalls = 0;
+      botStatus.apiRate = 0;
+      apiCallTimestamps = [];
+      lastApiCallCount = 0;
 
       botProcess = spawn('node', ['bot-daemon.js'], {
         cwd: process.cwd(),
@@ -387,6 +415,7 @@ export const config = {
             const match = line.match(/\[APICALLS\]\s*(\d+)/);
             if (match) {
               botStatus.apiCalls = parseInt(match[1], 10);
+              updateApiRate();
             }
           } else if (line.includes('[CYCLE]')) {
             botStatus.cycleCount++;
@@ -517,6 +546,9 @@ app.post('/api/bot/start', (req, res) => {
     botStatus.message = 'Starting bot...';
     botStatus.cycleCount = 0;
     botStatus.apiCalls = 0;
+    botStatus.apiRate = 0;
+    apiCallTimestamps = [];
+    lastApiCallCount = 0;
     botStatus.logs = [];  // Clear old logs
     addLog('🚀 Bot starting...');
     addLog(`Max Price: $${config.MAX_PRICE} | Profit Target: ${config.PROFIT_TARGET}%`);
