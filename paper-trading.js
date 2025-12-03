@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { config } from './config.js';
 
 /**
  * Paper Trading Engine - Simulates trades without real money
@@ -61,8 +62,8 @@ export class PaperTradingEngine {
       quantity,
       investedAmount: usdAmount,
       entryTime: timestamp,
-      targetPrice: price * 1.05, // 5% profit target
-      stopLoss: price * 0.90, // 10% stop loss
+      targetPrice: price * (1 + config.PROFIT_TARGET / 100),
+      stopLoss: price * (1 + config.STOP_LOSS / 100), // config.STOP_LOSS is negative, e.g., -2 = 2% below entry
     };
 
     this.portfolio.positions.push(position);
@@ -70,8 +71,8 @@ export class PaperTradingEngine {
 
     await this.savePortfolio();
 
-    console.log(`✅ PAPER BUY: ${symbol} | Qty: ${quantity.toFixed(4)} @ $${price.toFixed(4)} | Invested: $${usdAmount.toFixed(2)}`);
-    console.log(`   Target: $${position.targetPrice.toFixed(4)} (+5%) | Stop: $${position.stopLoss.toFixed(4)} (-10%)`);
+    console.log(`✅ PAPER BUY: ${symbol} | Qty: ${quantity.toFixed(4)} @ $${price.toFixed(6)} | Invested: $${usdAmount.toFixed(2)}`);
+    console.log(`   Target: $${position.targetPrice.toFixed(6)} (+${config.PROFIT_TARGET}%) | Stop: $${position.stopLoss.toFixed(6)} (${config.STOP_LOSS}%)`);
 
     return position;
   }

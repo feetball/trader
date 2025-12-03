@@ -107,11 +107,13 @@ export class TradingStrategy {
 
         console.log(`[STATUS] ${position.symbol}: $${currentPrice.toFixed(4)} | P&L: ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}% ($${profit.toFixed(2)}) | Hold: ${holdTimeMinutes.toFixed(0)}m`);
 
-        // Check stop loss first
+        // Check stop loss first (this is critical!)
         if (currentPrice <= position.stopLoss) {
-          console.log(`[STATUS] 🛑 ${position.symbol} hit stop loss! Selling...`);
+          console.log(`[STATUS] 🛑 ${position.symbol} HIT STOP LOSS!`);
+          console.log(`[STATUS]    Entry: $${position.entryPrice.toFixed(6)} | Stop: $${position.stopLoss.toFixed(6)} | Current: $${currentPrice.toFixed(6)}`);
+          console.log(`[STATUS]    Loss: ${profitPercent.toFixed(2)}% ($${profit.toFixed(2)}) - SELLING NOW`);
           this.peakPrices.delete(position.productId);
-          await this.paper.sell(position, currentPrice, 'Stop loss triggered');
+          await this.paper.sell(position, currentPrice, `Stop loss hit (${profitPercent.toFixed(1)}%)`);
           continue;
         }
 

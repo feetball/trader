@@ -108,16 +108,23 @@
                 </span>
                 <v-progress-circular v-else size="16" width="2" indeterminate></v-progress-circular>
               </template>
-              <template v-slot:item.currentPL="{ item }">
+              <template v-slot:item.currentPLPercent="{ item }">
                 <v-chip 
-                  v-if="item.currentPL !== undefined"
+                  v-if="item.currentPLPercent !== undefined"
                   size="small" 
-                  :color="item.currentPL >= 0 ? 'success' : 'error'"
+                  :color="item.currentPLPercent >= 0 ? 'success' : 'error'"
                   variant="flat"
                 >
-                  {{ item.currentPL >= 0 ? '+' : '' }}${{ item.currentPL?.toFixed(2) || '0.00' }}
-                  ({{ item.currentPLPercent >= 0 ? '+' : '' }}{{ item.currentPLPercent?.toFixed(2) || '0.00' }}%)
+                  {{ item.currentPLPercent >= 0 ? '+' : '' }}{{ item.currentPLPercent?.toFixed(2) || '0.00' }}%
                 </v-chip>
+              </template>
+              <template v-slot:item.currentPL="{ item }">
+                <span 
+                  v-if="item.currentPL !== undefined"
+                  :class="item.currentPL >= 0 ? 'text-success' : 'text-error'"
+                >
+                  {{ item.currentPL >= 0 ? '+' : '' }}${{ item.currentPL?.toFixed(2) || '0.00' }}
+                </span>
               </template>
               <template v-slot:item.investedAmount="{ item }">
                 ${{ item.investedAmount.toFixed(2) }}
@@ -358,7 +365,8 @@ const positionHeaders = [
   { title: 'Symbol', key: 'symbol', sortable: true },
   { title: 'Entry', key: 'entryPrice', sortable: true },
   { title: 'Current', key: 'currentPrice', sortable: true },
-  { title: 'P&L', key: 'currentPL', sortable: true },
+  { title: 'P&L %', key: 'currentPLPercent', sortable: true },
+  { title: 'P&L $', key: 'currentPL', sortable: true },
   { title: 'Invested', key: 'investedAmount', sortable: true },
   { title: 'Purchased', key: 'entryTime', sortable: true },
   { title: 'Hold Time', key: 'holdTime', sortable: true },
