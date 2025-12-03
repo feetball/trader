@@ -308,7 +308,7 @@
         <span :class="wsConnected ? 'text-success' : 'text-warning'">
           {{ wsConnected ? '🟢 Live' : '🟡 Reconnecting...' }}
         </span>
-        · API: {{ botStatus.apiCalls || 0 }} total ({{ botStatus.apiRate || 0 }}/min)
+        · API: {{ botStatus.apiCalls || 0 }} total | {{ botStatus.apiRate || 0 }}/min now | {{ botStatus.apiRateHourly || 0 }}/min hourly avg
       </div>
       <div class="text-caption text-medium-emphasis">
         v{{ appVersion }}

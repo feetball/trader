@@ -47,11 +47,17 @@ class TradingBotDaemon {
           console.log(`[STATUS] Checking ${posCount} open position(s) for profit targets...`);
         }
         await this.strategy.managePositions();
+        
+        // Update API count after position management
+        console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
 
         // Scan for new opportunities
         if (this.paper.getPositionCount() < config.MAX_POSITIONS) {
           console.log(`[STATUS] Scanning ${config.MAX_POSITIONS - this.paper.getPositionCount()} slots available for new positions`);
           const opportunities = await this.scanner.scanMarkets();
+          
+          // Update API count after scan
+          console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
 
           if (opportunities.length > 0) {
             console.log(`[STATUS] Evaluating top ${Math.min(3, opportunities.length)} opportunities...`);

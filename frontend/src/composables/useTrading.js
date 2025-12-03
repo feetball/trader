@@ -25,6 +25,7 @@ const botStatus = ref({
   cycleCount: 0,
   apiCalls: 0,
   apiRate: 0,
+  apiRateHourly: 0,
   logs: [],
 })
 

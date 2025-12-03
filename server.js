@@ -59,32 +59,45 @@ let botStatus = {
   lastUpdate: Date.now(),
   cycleCount: 0,
   apiCalls: 0,
-  apiRate: 0, // Calls per minute
+  apiRate: 0, // Calls per minute (current)
+  apiRateHourly: 0, // Average calls per minute over last hour
   logs: [],
 };
 
 // Track API call timestamps for rate calculation
-let apiCallTimestamps = [];
+let apiCallTimestamps = []; // Last minute
+let apiCallTimestampsHourly = []; // Last hour
 let lastApiCallCount = 0;
+let botStartTime = null;
 
 function updateApiRate() {
   const now = Date.now();
   const oneMinuteAgo = now - 60000;
+  const oneHourAgo = now - 3600000;
   
   // If we have a new API call count, record it
   if (botStatus.apiCalls > lastApiCallCount) {
     const newCalls = botStatus.apiCalls - lastApiCallCount;
     for (let i = 0; i < newCalls; i++) {
       apiCallTimestamps.push(now);
+      apiCallTimestampsHourly.push(now);
     }
     lastApiCallCount = botStatus.apiCalls;
   }
   
-  // Remove timestamps older than 1 minute
+  // Remove timestamps older than 1 minute / 1 hour
   apiCallTimestamps = apiCallTimestamps.filter(ts => ts > oneMinuteAgo);
+  apiCallTimestampsHourly = apiCallTimestampsHourly.filter(ts => ts > oneHourAgo);
   
-  // Rate is calls in the last minute
+  // Current rate is calls in the last minute
   botStatus.apiRate = apiCallTimestamps.length;
+  
+  // Hourly average: total calls in last hour / minutes elapsed (max 60)
+  const minutesRunning = botStartTime ? Math.min(60, (now - botStartTime) / 60000) : 1;
+  botStatus.apiRateHourly = minutesRunning > 0 ? Math.round(apiCallTimestampsHourly.length / minutesRunning) : 0;
+  
+  // Broadcast updated status
+  broadcast('botStatus', botStatus);
 }
 
 const MAX_LOGS = 50;
@@ -104,6 +117,32 @@ function addLog(message) {
 
 // Broadcast portfolio updates periodically when bot is running
 let portfolioBroadcastInterval = null;
+
+// Update API rate every 2 seconds so it decays properly
+setInterval(() => {
+  if (botStatus.running) {
+    const now = Date.now();
+    const oneMinuteAgo = now - 60000;
+    const oneHourAgo = now - 3600000;
+    
+    // Remove timestamps older than 1 minute / 1 hour
+    apiCallTimestamps = apiCallTimestamps.filter(ts => ts > oneMinuteAgo);
+    apiCallTimestampsHourly = apiCallTimestampsHourly.filter(ts => ts > oneHourAgo);
+    
+    // Current rate
+    const newRate = apiCallTimestamps.length;
+    
+    // Hourly average
+    const minutesRunning = botStartTime ? Math.min(60, (now - botStartTime) / 60000) : 1;
+    const newHourlyRate = minutesRunning > 0 ? Math.round(apiCallTimestampsHourly.length / minutesRunning) : 0;
+    
+    if (newRate !== botStatus.apiRate || newHourlyRate !== botStatus.apiRateHourly) {
+      botStatus.apiRate = newRate;
+      botStatus.apiRateHourly = newHourlyRate;
+      broadcast('botStatus', botStatus);
+    }
+  }
+}, 2000);
 
 async function broadcastPortfolio() {
   try {
@@ -400,8 +439,11 @@ export const config = {
       botStatus.cycleCount = 0;
       botStatus.apiCalls = 0;
       botStatus.apiRate = 0;
+      botStatus.apiRateHourly = 0;
       apiCallTimestamps = [];
+      apiCallTimestampsHourly = [];
       lastApiCallCount = 0;
+      botStartTime = Date.now();
 
       botProcess = spawn('node', ['bot-daemon.js'], {
         cwd: process.cwd(),
@@ -547,8 +589,11 @@ app.post('/api/bot/start', (req, res) => {
     botStatus.cycleCount = 0;
     botStatus.apiCalls = 0;
     botStatus.apiRate = 0;
+    botStatus.apiRateHourly = 0;
     apiCallTimestamps = [];
+    apiCallTimestampsHourly = [];
     lastApiCallCount = 0;
+    botStartTime = Date.now();
     botStatus.logs = [];  // Clear old logs
     addLog('🚀 Bot starting...');
     addLog(`Max Price: $${config.MAX_PRICE} | Profit Target: ${config.PROFIT_TARGET}%`);
@@ -566,7 +611,7 @@ app.post('/api/bot/start', (req, res) => {
           const count = parseInt(line.replace('[APICALLS]', '').trim());
           if (!isNaN(count)) {
             botStatus.apiCalls = count;
-            addLog(`📡 API Calls: ${count}`);
+            updateApiRate();
           }
         }
         // Parse [STATUS] messages for detailed status updates
