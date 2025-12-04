@@ -391,7 +391,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useTrading } from '../composables/useTrading'
 import { GridLayout, GridItem } from 'grid-layout-plus'
 
@@ -426,16 +426,32 @@ const defaultLayout = [
 const layout = ref([])
 const savingLayout = ref(false)
 
+// Debounce timer for auto-save
+let saveTimer = null
+
+// Auto-save layout when it changes
+const autoSaveLayout = () => {
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(() => {
+    localStorage.setItem('dashboardLayout', JSON.stringify(layout.value))
+  }, 500) // Save 500ms after last change
+}
+
+// Watch for layout changes and auto-save
+watch(layout, () => {
+  autoSaveLayout()
+}, { deep: true })
+
 onMounted(() => {
   const savedLayout = localStorage.getItem('dashboardLayout')
   if (savedLayout) {
     try {
       layout.value = JSON.parse(savedLayout)
     } catch (e) {
-      layout.value = defaultLayout
+      layout.value = JSON.parse(JSON.stringify(defaultLayout))
     }
   } else {
-    layout.value = defaultLayout
+    layout.value = JSON.parse(JSON.stringify(defaultLayout))
   }
 })
 
@@ -448,7 +464,7 @@ const saveLayout = () => {
 }
 
 const resetLayout = () => {
-  layout.value = defaultLayout
+  layout.value = JSON.parse(JSON.stringify(defaultLayout))
   saveLayout()
 }
 
