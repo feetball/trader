@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
@@ -633,16 +634,20 @@ app.get('/api/updates/status', (req, res) => {
 
 // Perform update
 app.post('/api/updates/apply', async (req, res) => {
-  // Don't allow update while bot is running
+  const wasRunning = !!botProcess;
+  
+  // Stop bot if running
   if (botProcess) {
-    return res.json({ success: false, message: 'Stop the bot before updating' });
+    console.log('[UPDATE] Stopping bot before update...');
+    botProcess.kill();
+    botProcess = null;
   }
 
   try {
     const { execSync } = await import('child_process');
     
     // Send initial response
-    res.json({ success: true, message: 'Update started. Server will restart shortly.' });
+    res.json({ success: true, message: 'Update started. Server will restart shortly.', wasRunning });
     
     // Give time for response to be sent
     setTimeout(async () => {
@@ -663,6 +668,12 @@ app.post('/api/updates/apply', async (req, res) => {
         
         console.log('[UPDATE] Building frontend...');
         execSync('npm run build', { cwd: path.join(process.cwd(), 'frontend'), stdio: 'inherit' });
+        
+        // Save flag to restart bot after server restarts
+        if (wasRunning) {
+          fsSync.writeFileSync(path.join(process.cwd(), '.restart-bot'), 'true');
+          console.log('[UPDATE] Bot will be restarted after update.');
+        }
         
         console.log('[UPDATE] Update complete! Restarting server...');
         
@@ -821,7 +832,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v1.6.3                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v1.6.4                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
@@ -875,4 +886,12 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📈 API:        http://localhost:${PORT}/api`);
   console.log(`🔌 WebSocket:  ws://localhost:${PORT}`);
   console.log('');
+  
+  // Check if bot should be auto-started after update
+  const restartFlagPath = path.join(process.cwd(), '.restart-bot');
+  if (fsSync.existsSync(restartFlagPath)) {
+    fsSync.unlinkSync(restartFlagPath);
+    console.log('[AUTO-START] Restarting bot after update...');
+    startBot();
+  }
 });
