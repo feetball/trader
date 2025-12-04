@@ -587,8 +587,9 @@ app.get('/api/updates/check', async (req, res) => {
     const pkg = JSON.parse(await fs.readFile('package.json', 'utf-8'));
     const currentVersion = pkg.version;
     
-    // Fetch latest package.json from GitHub
-    const response = await fetch('https://raw.githubusercontent.com/feetball/trader/master/package.json');
+    // Fetch latest package.json from GitHub (with cache bust)
+    const cacheBust = Date.now();
+    const response = await fetch(`https://raw.githubusercontent.com/feetball/trader/master/package.json?cb=${cacheBust}`);
     if (!response.ok) {
       throw new Error(`GitHub fetch failed: ${response.status}`);
     }
@@ -640,15 +641,23 @@ app.get('/api/updates/status', (req, res) => {
 app.post('/api/updates/apply', async (req, res) => {
   const wasRunning = !!botProcess;
   
+  // Helper to send update log to all clients
+  const updateLog = (message) => {
+    console.log(message);
+    broadcast('updateLog', { message, timestamp: Date.now() });
+  };
+  
   // Stop bot if running
   if (botProcess) {
-    console.log('[UPDATE] Stopping bot before update...');
+    updateLog('[UPDATE] Stopping bot before update...');
     botProcess.kill();
     botProcess = null;
   }
 
   try {
-    const { execSync } = await import('child_process');
+    const { exec } = await import('child_process');
+    const { promisify } = await import('util');
+    const execAsync = promisify(exec);
     
     // Send initial response
     res.json({ success: true, message: 'Update started. Server will restart shortly.', wasRunning });
@@ -656,34 +665,57 @@ app.post('/api/updates/apply', async (req, res) => {
     // Give time for response to be sent
     setTimeout(async () => {
       try {
-        console.log('[UPDATE] Starting update process...');
+        updateLog('[UPDATE] Starting update process...');
         
         // Backup current settings before update
         let savedSettings = null;
         const settingsPath = path.join(process.cwd(), 'user-settings.json');
         if (fsSync.existsSync(settingsPath)) {
-          console.log('[UPDATE] Backing up user settings...');
+          updateLog('[UPDATE] Backing up user settings...');
           savedSettings = fsSync.readFileSync(settingsPath, 'utf-8');
         }
         
         // Git pull
-        console.log('[UPDATE] Pulling latest code from GitHub...');
-        execSync('git pull origin master', { cwd: process.cwd(), stdio: 'inherit' });
+        updateLog('[UPDATE] Pulling latest code from GitHub...');
+        try {
+          const { stdout: gitOut } = await execAsync('git pull origin master', { cwd: process.cwd() });
+          if (gitOut) updateLog(gitOut.trim());
+        } catch (e) {
+          updateLog(`[GIT] ${e.stdout || e.message}`);
+        }
         
         // Install dependencies
-        console.log('[UPDATE] Installing backend dependencies...');
-        execSync('npm install', { cwd: process.cwd(), stdio: 'inherit' });
+        updateLog('[UPDATE] Installing backend dependencies...');
+        try {
+          const { stdout: npmOut } = await execAsync('npm install 2>&1', { cwd: process.cwd() });
+          const lines = npmOut.split('\n').filter(l => l.trim() && !l.includes('npm WARN'));
+          lines.forEach(l => updateLog(l));
+        } catch (e) {
+          updateLog(`[NPM] ${e.message}`);
+        }
         
         // Install frontend dependencies and build
-        console.log('[UPDATE] Installing frontend dependencies...');
-        execSync('npm install', { cwd: path.join(process.cwd(), 'frontend'), stdio: 'inherit' });
+        updateLog('[UPDATE] Installing frontend dependencies...');
+        try {
+          const { stdout: npmFrontOut } = await execAsync('npm install 2>&1', { cwd: path.join(process.cwd(), 'frontend') });
+          const lines = npmFrontOut.split('\n').filter(l => l.trim() && !l.includes('npm WARN'));
+          lines.forEach(l => updateLog(l));
+        } catch (e) {
+          updateLog(`[NPM] ${e.message}`);
+        }
         
-        console.log('[UPDATE] Building frontend...');
-        execSync('npm run build', { cwd: path.join(process.cwd(), 'frontend'), stdio: 'inherit' });
+        updateLog('[UPDATE] Building frontend...');
+        try {
+          const { stdout: buildOut } = await execAsync('npm run build 2>&1', { cwd: path.join(process.cwd(), 'frontend') });
+          const lines = buildOut.split('\n').filter(l => l.trim());
+          lines.slice(-5).forEach(l => updateLog(l)); // Last 5 lines of build output
+        } catch (e) {
+          updateLog(`[BUILD] ${e.message}`);
+        }
         
         // Restore user settings after update
         if (savedSettings) {
-          console.log('[UPDATE] Restoring user settings...');
+          updateLog('[UPDATE] Restoring user settings...');
           fsSync.writeFileSync(settingsPath, savedSettings);
           
           // Also restore config.js from saved settings
@@ -728,21 +760,24 @@ export const config = {
 };
 `;
           fsSync.writeFileSync(path.join(process.cwd(), 'config.js'), configContent);
-          console.log('[UPDATE] User settings restored successfully!');
+          updateLog('[UPDATE] User settings restored successfully!');
         }
         
         // Save flag to restart bot after server restarts
         if (wasRunning) {
           fsSync.writeFileSync(path.join(process.cwd(), '.restart-bot'), 'true');
-          console.log('[UPDATE] Bot will be restarted after update.');
+          updateLog('[UPDATE] Bot will be restarted after update.');
         }
         
-        console.log('[UPDATE] Update complete! Restarting server...');
+        updateLog('[UPDATE] ✅ Update complete! Restarting server...');
+        
+        // Small delay to let the final message broadcast
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Exit process - Docker/PM2/systemd will restart it
         process.exit(0);
       } catch (error) {
-        console.error('[UPDATE] Update failed:', error.message);
+        updateLog(`[UPDATE] ❌ Update failed: ${error.message}`);
       }
     }, 500);
     

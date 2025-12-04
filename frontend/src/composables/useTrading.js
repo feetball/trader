@@ -10,6 +10,7 @@ const botLoading = ref(false)
 const wsConnected = ref(false)
 const lastUpdate = ref('')
 const appVersion = ref('...')
+const updateLogs = ref([])
 
 const portfolio = ref({})
 const positions = ref([])
@@ -207,6 +208,8 @@ function connectWebSocket() {
       if (type === 'botStatus') {
         botStatus.value = data
         lastUpdate.value = new Date().toLocaleTimeString()
+      } else if (type === 'updateLog') {
+        updateLogs.value.push(data.message)
       } else if (type === 'portfolio') {
         if (data.positions) {
           positions.value = data.positions
@@ -280,6 +283,11 @@ function cleanup() {
 }
 
 export function useTrading() {
+  // Function to clear update logs
+  const clearUpdateLogs = () => {
+    updateLogs.value = []
+  }
+  
   return {
     // State
     loading,
@@ -287,6 +295,7 @@ export function useTrading() {
     wsConnected,
     lastUpdate,
     appVersion,
+    updateLogs,
     portfolio,
     positions,
     livePositions,
@@ -312,5 +321,6 @@ export function useTrading() {
     refreshLivePositions,
     initialize,
     cleanup,
+    clearUpdateLogs,
   }
 }
