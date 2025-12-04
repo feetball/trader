@@ -210,6 +210,12 @@ function connectWebSocket() {
         lastUpdate.value = new Date().toLocaleTimeString()
       } else if (type === 'updateLog') {
         updateLogs.value.push(data.message)
+      } else if (type === 'updateComplete') {
+        // Server is about to restart after update - reload page after brief delay
+        updateLogs.value.push('[UPDATE] Server restarting, reloading page...')
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
       } else if (type === 'portfolio') {
         if (data.positions) {
           positions.value = data.positions

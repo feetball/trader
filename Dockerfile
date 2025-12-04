@@ -10,6 +10,9 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
+# Install git for in-app updates
+RUN apk add --no-cache git
+
 # Copy backend files
 COPY package*.json ./
 RUN npm ci --only=production
@@ -17,8 +20,13 @@ RUN npm ci --only=production
 COPY *.js ./
 COPY config.js ./
 
-# Copy built frontend
+# Copy full frontend (source + built dist) for in-app updates
+COPY frontend/ ./frontend/
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
+COPY --from=frontend-build /app/frontend/node_modules ./frontend/node_modules
+
+# Initialize git repo for updates (will be overwritten if volume mounted)
+COPY .git/ ./.git/
 
 # Expose port
 EXPOSE 3001

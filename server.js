@@ -778,8 +778,11 @@ export const config = {
         
         updateLog('[UPDATE] ✅ Update complete! Restarting server...');
         
-        // Small delay to let the final message broadcast
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Broadcast reload signal to all clients
+        broadcast('updateComplete', { reload: true, newVersion: cachedUpdateInfo?.latestVersion });
+        
+        // Small delay to let the final message broadcast and clients receive reload signal
+        await new Promise(resolve => setTimeout(resolve, 1500));
         
         // Exit process - Docker/PM2/systemd will restart it
         process.exit(0);

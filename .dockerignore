@@ -1,10 +1,5 @@
 # Dependencies (will be installed in container)
 node_modules/
-frontend/node_modules/
-
-# Git
-.git/
-.gitignore
 
 # Environment files (SECRETS!)
 .env
