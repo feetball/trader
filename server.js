@@ -45,6 +45,12 @@ function broadcast(type, data) {
   }
 }
 
+// Helper to broadcast update progress to the UI
+function updateLog(message) {
+  console.log(`[UPDATE] ${message}`);
+  broadcast('updateLog', { message });
+}
+
 app.use(cors());
 app.use(express.json());
 
@@ -929,7 +935,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.5                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.6                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

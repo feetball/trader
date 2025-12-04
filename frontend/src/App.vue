@@ -174,6 +174,14 @@
             <div class="mt-4 text-h6">Updating...</div>
             <div class="text-caption">Please wait. The page will reload when complete.</div>
           </div>
+
+          <div v-if="updateInProgress || updateLogs.length" class="mt-4">
+            <div class="text-subtitle-2 mb-1">Update log</div>
+            <v-sheet color="grey-darken-4" class="pa-2 rounded" style="max-height: 220px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+              <div v-if="!updateLogs.length" class="text-medium-emphasis text-caption">Waiting for update output...</div>
+              <div v-for="(line, idx) in updateLogs" :key="idx">{{ line }}</div>
+            </v-sheet>
+          </div>
         </v-card-text>
         <v-card-actions v-if="!updateInProgress">
           <v-spacer></v-spacer>
@@ -489,6 +497,7 @@ const {
   wsConnected,
   lastUpdate,
   appVersion,
+  updateLogs,
   botStatus,
   settings,
   startBot,
@@ -498,7 +507,8 @@ const {
   saveSettings,
   refreshData,
   initialize,
-  cleanup
+  cleanup,
+  clearUpdateLogs
 } = useTrading()
 
 const drawer = ref(true)
@@ -549,6 +559,7 @@ const applyUpdate = async () => {
     if (!confirmed) return
   }
   
+  clearUpdateLogs()
   updateInProgress.value = true
   
   try {
