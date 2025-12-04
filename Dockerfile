@@ -25,8 +25,14 @@ COPY frontend/ ./frontend/
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 COPY --from=frontend-build /app/frontend/node_modules ./frontend/node_modules
 
-# Initialize git repo for updates (will be overwritten if volume mounted)
-COPY .git/ ./.git/
+# Create default paper-trading-data.json (will be overwritten by volume if mounted)
+RUN echo '{"cash":10000,"positions":[],"closedTrades":[]}' > /app/paper-trading-data.json
+
+# Initialize git repo for in-app updates (clone fresh if .git not available)
+RUN git init && \
+    git remote add origin https://github.com/feetball/trader.git && \
+    git fetch origin master --depth=1 && \
+    git reset --soft origin/master
 
 # Expose port
 EXPOSE 3001

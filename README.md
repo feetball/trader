@@ -47,6 +47,9 @@ An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase
 git clone <repo-url>
 cd trader
 
+# Create paper trading data file (required for first run)
+cp paper-trading-data.example.json paper-trading-data.json
+
 # Start with Docker
 ./deploy.sh start
 

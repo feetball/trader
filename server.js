@@ -319,9 +319,17 @@ app.get('/api/activity', async (req, res) => {
 
 // Reset portfolio to starting state
 app.post('/api/portfolio/reset', async (req, res) => {
-  // Don't allow reset while bot is running
+  const wasRunning = !!botProcess;
+  
+  // Stop bot if running
   if (botProcess) {
-    return res.json({ success: false, message: 'Stop the bot before resetting portfolio' });
+    console.log('[RESET] Stopping bot before portfolio reset...');
+    botProcess.kill();
+    botProcess = null;
+    botStatus.running = false;
+    botStatus.message = 'Stopped for portfolio reset';
+    // Wait for process to fully stop
+    await new Promise(resolve => setTimeout(resolve, 500));
   }
 
   try {
@@ -331,7 +339,62 @@ app.post('/api/portfolio/reset', async (req, res) => {
       closedTrades: []
     };
     await fs.writeFile('paper-trading-data.json', JSON.stringify(initialPortfolio, null, 2));
-    res.json({ success: true, message: 'Portfolio reset to $10,000' });
+    console.log('[RESET] Portfolio reset to $10,000');
+    
+    // Restart bot if it was running
+    if (wasRunning) {
+      console.log('[RESET] Restarting bot after portfolio reset...');
+      // Trigger bot start after a short delay
+      setTimeout(() => {
+        const startEvent = { body: {} };
+        const startRes = { json: (data) => console.log('[RESET] Bot restart result:', data) };
+        // We'll call the start logic directly by importing spawn
+        const { spawn } = require('child_process');
+        
+        botStatus.running = true;
+        botStatus.message = 'Starting bot...';
+        botStatus.cycleCount = 0;
+        botStatus.apiCalls = 0;
+        botStatus.logs = [];
+        
+        botProcess = spawn('node', ['bot-daemon.js'], {
+          cwd: process.cwd(),
+          stdio: ['pipe', 'pipe', 'pipe'],
+        });
+        
+        botProcess.stdout.on('data', (data) => {
+          const lines = data.toString().split('\n').filter(l => l.trim());
+          lines.forEach(line => {
+            if (line.includes('[APICALLS]')) {
+              const count = parseInt(line.replace('[APICALLS]', '').trim());
+              if (!isNaN(count)) botStatus.apiCalls = count;
+            } else if (line.includes('[STATUS]')) {
+              botStatus.message = line.replace('[STATUS]', '').trim();
+            } else if (line.includes('CYCLE #')) {
+              const match = line.match(/CYCLE #(\d+)/);
+              if (match) botStatus.cycleCount = parseInt(match[1]);
+            }
+            if (line.includes('BUY') || line.includes('SELL') || line.includes('CYCLE') || line.includes('Error')) {
+              addLog(line.replace('[STATUS]', '').trim());
+            }
+          });
+        });
+        
+        botProcess.stderr.on('data', (data) => {
+          addLog(`❌ Error: ${data.toString().trim()}`);
+        });
+        
+        botProcess.on('close', (code) => {
+          botProcess = null;
+          botStatus.running = false;
+          botStatus.message = `Bot stopped (exit code: ${code})`;
+        });
+        
+        console.log('[RESET] Bot restarted after portfolio reset');
+      }, 500);
+    }
+    
+    res.json({ success: true, message: 'Portfolio reset to $10,000', wasRunning, restarted: wasRunning });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
