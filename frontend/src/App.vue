@@ -3,9 +3,10 @@
     <!-- Navigation Drawer -->
     <v-navigation-drawer
       v-model="drawer"
-      :rail="rail"
-      permanent
-      @click="rail = false"
+      :rail="!isMobile && rail"
+      :temporary="isMobile"
+      :permanent="!isMobile"
+      @click="isMobile ? null : (rail = false)"
     >
       <v-list-item
         prepend-icon="mdi-robot"
@@ -66,7 +67,7 @@
 
     <!-- App Bar -->
     <v-app-bar color="primary" density="compact">
-      <v-app-bar-nav-icon @click="rail = !rail"></v-app-bar-nav-icon>
+      <v-app-bar-nav-icon @click="isMobile ? (drawer = !drawer) : (rail = !rail)"></v-app-bar-nav-icon>
       
       <v-app-bar-title>
         {{ currentRoute?.meta?.title || 'Dashboard' }}
@@ -93,8 +94,8 @@
         @click="startBot"
         :loading="botLoading"
       >
-        <v-icon start icon="mdi-play" size="small"></v-icon>
-        Start
+        <v-icon :start="!isMobile" icon="mdi-play" size="small"></v-icon>
+        <span class="d-none d-sm-inline">Start</span>
       </v-btn>
       
       <v-btn 
@@ -106,8 +107,8 @@
         @click="stopBot"
         :loading="botLoading"
       >
-        <v-icon start icon="mdi-stop" size="small"></v-icon>
-        Stop
+        <v-icon :start="!isMobile" icon="mdi-stop" size="small"></v-icon>
+        <span class="d-none d-sm-inline">Stop</span>
       </v-btn>
       
       <v-btn icon="mdi-refresh" size="small" @click="refreshData" :loading="loading"></v-btn>
@@ -513,7 +514,16 @@ const {
 
 const drawer = ref(true)
 const rail = ref(true)
+const isMobile = ref(window.innerWidth < 600)
 const resetLoading = ref(false)
+
+// Handle window resize for mobile detection
+const handleResize = () => {
+  isMobile.value = window.innerWidth < 600
+  if (isMobile.value) {
+    drawer.value = false
+  }
+}
 const settingsLoading = ref(false)
 const showResetDialog = ref(false)
 const showSettingsDialog = ref(false)
@@ -628,6 +638,8 @@ const doSaveSettings = async () => {
 
 onMounted(() => {
   initialize()
+  window.addEventListener('resize', handleResize)
+  handleResize() // Initial check
   
   // Check for updates on startup (with delay to not block UI)
   setTimeout(async () => {
@@ -668,6 +680,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   cleanup()
+  window.removeEventListener('resize', handleResize)
   if (updateCheckInterval) {
     clearInterval(updateCheckInterval)
   }

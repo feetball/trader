@@ -1,6 +1,6 @@
 <template>
-  <v-container fluid>
-    <div class="d-flex justify-end mb-2">
+  <v-container fluid class="pa-2 pa-sm-4">
+    <div class="d-none d-md-flex justify-end mb-2">
       <v-btn 
         color="primary" 
         size="small" 
@@ -21,9 +21,150 @@
       </v-btn>
     </div>
 
+    <!-- Mobile Layout (stacked cards) -->
+    <div v-if="isMobile" class="mobile-layout">
+      <!-- Stats Row -->
+      <v-row dense class="mb-2">
+        <v-col cols="6">
+          <v-card class="h-100">
+            <v-card-text class="pa-2">
+              <div class="text-overline text-truncate">Total Value</div>
+              <div class="text-h6">${{ portfolio.totalValue?.toFixed(2) || '0.00' }}</div>
+              <div class="text-caption" :class="portfolio.roi >= 0 ? 'text-success' : 'text-error'">
+                {{ portfolio.roi?.toFixed(2) || '0.00' }}% ROI
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="6">
+          <v-card class="h-100">
+            <v-card-text class="pa-2">
+              <div class="text-overline text-truncate">Available Cash</div>
+              <div class="text-h6">${{ portfolio.cash?.toFixed(2) || '0.00' }}</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="6">
+          <v-card class="h-100">
+            <v-card-text class="pa-2">
+              <div class="text-overline text-truncate">Total Profit</div>
+              <div class="text-h6" :class="portfolio.totalProfit >= 0 ? 'text-success' : 'text-error'">
+                ${{ portfolio.totalProfit?.toFixed(2) || '0.00' }}
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="6">
+          <v-card class="h-100">
+            <v-card-text class="pa-2">
+              <div class="text-overline text-truncate">Win Rate</div>
+              <div class="text-h6">{{ portfolio.winRate?.toFixed(1) || '0.0' }}%</div>
+              <div class="text-caption">{{ portfolio.winningTrades || 0 }}W / {{ portfolio.losingTrades || 0 }}L</div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Open Positions -->
+      <v-card class="mb-2">
+        <v-card-title class="d-flex align-center py-2">
+          <v-icon icon="mdi-chart-line" class="mr-2" size="small"></v-icon>
+          Open Positions ({{ livePositions.length }})
+          <v-spacer></v-spacer>
+          <v-chip 
+            v-if="totalUnrealizedPL !== 0" 
+            :color="totalUnrealizedPL >= 0 ? 'success' : 'error'"
+            size="x-small"
+          >
+            {{ totalUnrealizedPL >= 0 ? '+' : '' }}${{ totalUnrealizedPL.toFixed(2) }}
+          </v-chip>
+        </v-card-title>
+        <v-card-text class="pa-2">
+          <v-list density="compact" class="pa-0">
+            <v-list-item
+              v-for="pos in livePositions.slice(0, 10)"
+              :key="pos.symbol"
+              class="px-0"
+            >
+              <template v-slot:prepend>
+                <v-chip 
+                  size="x-small" 
+                  color="primary"
+                  @click="openCoinbase(pos.symbol)"
+                >
+                  {{ pos.symbol }}
+                </v-chip>
+              </template>
+              <v-list-item-title class="d-flex justify-space-between">
+                <span>${{ pos.entryPrice?.toFixed(6) }}</span>
+                <v-chip 
+                  size="x-small"
+                  :color="(pos.currentPLPercent || 0) >= 0 ? 'success' : 'error'"
+                >
+                  {{ (pos.currentPLPercent || 0) >= 0 ? '+' : '' }}{{ pos.currentPLPercent?.toFixed(2) || '0.00' }}%
+                </v-chip>
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item v-if="livePositions.length === 0" class="px-0">
+              <v-list-item-title class="text-medium-emphasis text-center">
+                No open positions
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item v-if="livePositions.length > 10" class="px-0">
+              <v-list-item-title class="text-caption text-center text-medium-emphasis">
+                +{{ livePositions.length - 10 }} more positions
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
+
+      <!-- Recent Trades -->
+      <v-card class="mb-2">
+        <v-card-title class="py-2">
+          <v-icon icon="mdi-history" class="mr-2" size="small"></v-icon>
+          Recent Trades
+        </v-card-title>
+        <v-card-text class="pa-2">
+          <v-list density="compact" class="pa-0">
+            <v-list-item
+              v-for="trade in trades.slice(0, 5)"
+              :key="trade.exitTime"
+              class="px-0"
+            >
+              <template v-slot:prepend>
+                <v-chip 
+                  size="x-small" 
+                  color="primary"
+                  @click="openCoinbase(trade.symbol)"
+                >
+                  {{ trade.symbol }}
+                </v-chip>
+              </template>
+              <v-list-item-title>
+                <span :class="trade.profit >= 0 ? 'text-success' : 'text-error'">
+                  {{ trade.profit >= 0 ? '+' : '' }}${{ trade.profit.toFixed(2) }}
+                </span>
+                <v-chip size="x-small" :color="trade.profit >= 0 ? 'success' : 'error'" class="ml-1">
+                  {{ trade.profitPercent >= 0 ? '+' : '' }}{{ trade.profitPercent.toFixed(2) }}%
+                </v-chip>
+              </v-list-item-title>
+            </v-list-item>
+            <v-list-item v-if="trades.length === 0" class="px-0">
+              <v-list-item-title class="text-medium-emphasis">
+                No trades yet
+              </v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+      </v-card>
+    </div>
+
+    <!-- Desktop Layout (grid) -->
     <GridLayout
+      v-else
       v-model:layout="layout"
-      :col-num="12"
+      :col-num="colNum"
       :row-height="30"
       :is-draggable="true"
       :is-resizable="true"
@@ -391,7 +532,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useTrading } from '../composables/useTrading'
 import { GridLayout, GridItem } from 'grid-layout-plus'
 
@@ -408,6 +549,42 @@ const {
   getCoinbaseUrl,
   openCoinbase 
 } = useTrading()
+
+// Responsive handling
+const isMobile = ref(window.innerWidth < 768)
+const colNum = ref(12)
+
+const handleResize = () => {
+  const width = window.innerWidth
+  isMobile.value = width < 768
+  if (width < 600) {
+    colNum.value = 4
+  } else if (width < 960) {
+    colNum.value = 6
+  } else {
+    colNum.value = 12
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+  handleResize()
+  
+  const savedLayout = localStorage.getItem('dashboardLayout')
+  if (savedLayout) {
+    try {
+      layout.value = JSON.parse(savedLayout)
+    } catch (e) {
+      layout.value = JSON.parse(JSON.stringify(defaultLayout))
+    }
+  } else {
+    layout.value = JSON.parse(JSON.stringify(defaultLayout))
+  }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
 
 // Default layout
 const defaultLayout = [
@@ -441,19 +618,6 @@ const autoSaveLayout = () => {
 watch(layout, () => {
   autoSaveLayout()
 }, { deep: true })
-
-onMounted(() => {
-  const savedLayout = localStorage.getItem('dashboardLayout')
-  if (savedLayout) {
-    try {
-      layout.value = JSON.parse(savedLayout)
-    } catch (e) {
-      layout.value = JSON.parse(JSON.stringify(defaultLayout))
-    }
-  } else {
-    layout.value = JSON.parse(JSON.stringify(defaultLayout))
-  }
-})
 
 const saveLayout = () => {
   savingLayout.value = true
