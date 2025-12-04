@@ -1,6 +1,6 @@
 {
   "name": "crypto-trader-dashboard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -8,11 +8,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.0",
+    "axios": "^1.6.0",
+    "grid-layout-plus": "^1.1.1",
     "vue": "^3.4.0",
     "vue-router": "^4.2.0",
-    "vuetify": "^3.5.0",
-    "axios": "^1.6.0",
-    "@mdi/font": "^7.4.0"
+    "vuetify": "^3.5.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

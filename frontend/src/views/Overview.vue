@@ -1,9 +1,47 @@
 <template>
   <v-container fluid>
-    <!-- Portfolio Summary Cards -->
-    <v-row>
-      <v-col cols="12" md="3">
-        <v-card>
+    <div class="d-flex justify-end mb-2">
+      <v-btn 
+        color="primary" 
+        size="small" 
+        prepend-icon="mdi-content-save" 
+        @click="saveLayout"
+        :loading="savingLayout"
+      >
+        Save Layout
+      </v-btn>
+      <v-btn 
+        color="secondary" 
+        size="small" 
+        variant="text"
+        class="ml-2"
+        @click="resetLayout"
+      >
+        Reset Default
+      </v-btn>
+    </div>
+
+    <GridLayout
+      v-model:layout="layout"
+      :col-num="12"
+      :row-height="30"
+      :is-draggable="true"
+      :is-resizable="true"
+      :vertical-compact="true"
+      :use-css-transforms="true"
+    >
+      <GridItem
+        v-for="item in layout"
+        :key="item.i"
+        :x="item.x"
+        :y="item.y"
+        :w="item.w"
+        :h="item.h"
+        :i="item.i"
+        class="grid-item-card"
+      >
+        <!-- Item 0: Total Value -->
+        <v-card v-if="item.i === '0'" class="h-100">
           <v-card-text>
             <div class="text-overline mb-1">Total Value</div>
             <div class="text-h4 mb-1">
@@ -18,10 +56,9 @@
             </div>
           </v-card-text>
         </v-card>
-      </v-col>
 
-      <v-col cols="12" md="3">
-        <v-card>
+        <!-- Item 1: Available Cash -->
+        <v-card v-if="item.i === '1'" class="h-100">
           <v-card-text>
             <div class="text-overline mb-1">Available Cash</div>
             <div class="text-h4 mb-1">
@@ -32,10 +69,9 @@
             </div>
           </v-card-text>
         </v-card>
-      </v-col>
 
-      <v-col cols="12" md="3">
-        <v-card>
+        <!-- Item 2: Total Profit -->
+        <v-card v-if="item.i === '2'" class="h-100">
           <v-card-text>
             <div class="text-overline mb-1">Total Profit</div>
             <div class="text-h4 mb-1" :class="portfolio.totalProfit >= 0 ? 'text-success' : 'text-error'">
@@ -46,10 +82,9 @@
             </div>
           </v-card-text>
         </v-card>
-      </v-col>
 
-      <v-col cols="12" md="3">
-        <v-card>
+        <!-- Item 3: Win Rate -->
+        <v-card v-if="item.i === '3'" class="h-100">
           <v-card-text>
             <div class="text-overline mb-1">Win Rate</div>
             <div class="text-h4 mb-1">
@@ -60,14 +95,10 @@
             </div>
           </v-card-text>
         </v-card>
-      </v-col>
-    </v-row>
 
-    <!-- Open Positions -->
-    <v-row>
-      <v-col cols="12">
-        <v-card>
-          <v-card-title class="d-flex align-center">
+        <!-- Item 4: Open Positions -->
+        <v-card v-if="item.i === '4'" class="h-100 d-flex flex-column">
+          <v-card-title class="d-flex align-center flex-shrink-0">
             <v-icon icon="mdi-chart-line" class="mr-2"></v-icon>
             Open Positions ({{ livePositions.length }})
             <v-spacer></v-spacer>
@@ -79,7 +110,7 @@
               {{ totalUnrealizedPL >= 0 ? '+' : '' }}${{ totalUnrealizedPL.toFixed(2) }}
             </v-chip>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="flex-grow-1 overflow-auto">
             <v-data-table
               :headers="positionHeaders"
               :items="livePositions"
@@ -144,18 +175,14 @@
             </v-data-table>
           </v-card-text>
         </v-card>
-      </v-col>
-    </v-row>
 
-    <!-- Quick Stats Row -->
-    <v-row>
-      <v-col cols="12" md="6">
-        <v-card>
-          <v-card-title>
+        <!-- Item 5: Top Performers -->
+        <v-card v-if="item.i === '5'" class="h-100 d-flex flex-column">
+          <v-card-title class="flex-shrink-0">
             <v-icon icon="mdi-trophy" class="mr-2" color="success"></v-icon>
             Top Performers
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="flex-grow-1 overflow-auto">
             <v-list density="compact">
               <v-list-item
                 v-for="coin in topPerformers"
@@ -189,15 +216,14 @@
             </v-list>
           </v-card-text>
         </v-card>
-      </v-col>
 
-      <v-col cols="12" md="6">
-        <v-card>
-          <v-card-title>
+        <!-- Item 6: Worst Performers -->
+        <v-card v-if="item.i === '6'" class="h-100 d-flex flex-column">
+          <v-card-title class="flex-shrink-0">
             <v-icon icon="mdi-trending-down" class="mr-2" color="error"></v-icon>
             Worst Performers
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="flex-grow-1 overflow-auto">
             <v-list density="compact">
               <v-list-item
                 v-for="coin in worstPerformers"
@@ -231,18 +257,14 @@
             </v-list>
           </v-card-text>
         </v-card>
-      </v-col>
-    </v-row>
 
-    <!-- Recent Trades Row -->
-    <v-row>
-      <v-col cols="12" md="6">
-        <v-card>
-          <v-card-title>
+        <!-- Item 7: Recent Trades -->
+        <v-card v-if="item.i === '7'" class="h-100 d-flex flex-column">
+          <v-card-title class="flex-shrink-0">
             <v-icon icon="mdi-history" class="mr-2"></v-icon>
             Recent Trades
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="flex-grow-1 overflow-auto">
             <v-list density="compact">
               <v-list-item
                 v-for="trade in trades.slice(0, 5)"
@@ -279,20 +301,16 @@
             </v-list>
           </v-card-text>
         </v-card>
-      </v-col>
-    </v-row>
 
-    <!-- Recent Activity and Bot Logs -->
-    <v-row>
-      <v-col cols="12" md="6">
-        <v-card>
-          <v-card-title class="d-flex align-center">
+        <!-- Item 8: Recent Activity -->
+        <v-card v-if="item.i === '8'" class="h-100 d-flex flex-column">
+          <v-card-title class="d-flex align-center flex-shrink-0">
             <v-icon icon="mdi-bell" class="mr-2"></v-icon>
             Recent Activity
             <v-spacer></v-spacer>
             <v-btn size="x-small" variant="text" to="/activity">View All</v-btn>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="flex-grow-1 overflow-auto">
             <v-timeline density="compact" side="end">
               <v-timeline-item
                 v-for="(activity, index) in activities.slice(0, 5)"
@@ -333,18 +351,17 @@
             </v-timeline>
           </v-card-text>
         </v-card>
-      </v-col>
 
-      <v-col cols="12" md="6">
-        <v-card>
-          <v-card-title class="d-flex align-center">
+        <!-- Item 9: Bot Logs -->
+        <v-card v-if="item.i === '9'" class="h-100 d-flex flex-column">
+          <v-card-title class="d-flex align-center flex-shrink-0">
             <v-icon icon="mdi-console" class="mr-2"></v-icon>
             Bot Logs
             <v-chip size="x-small" class="ml-2" color="info" variant="tonal">newest at bottom</v-chip>
             <v-spacer></v-spacer>
             <v-btn size="x-small" variant="text" to="/logs">View All</v-btn>
           </v-card-title>
-          <v-card-text>
+          <v-card-text class="flex-grow-1 overflow-auto">
             <v-list density="compact" class="log-list">
               <v-list-item
                 v-for="(log, index) in recentLogs"
@@ -368,14 +385,15 @@
             </v-list>
           </v-card-text>
         </v-card>
-      </v-col>
-    </v-row>
+      </GridItem>
+    </GridLayout>
   </v-container>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useTrading } from '../composables/useTrading'
+import { GridLayout, GridItem } from 'grid-layout-plus'
 
 const { 
   portfolio, 
@@ -390,6 +408,49 @@ const {
   getCoinbaseUrl,
   openCoinbase 
 } = useTrading()
+
+// Default layout
+const defaultLayout = [
+  { x: 0, y: 0, w: 3, h: 4, i: '0' }, // Total Value
+  { x: 3, y: 0, w: 3, h: 4, i: '1' }, // Available Cash
+  { x: 6, y: 0, w: 3, h: 4, i: '2' }, // Total Profit
+  { x: 9, y: 0, w: 3, h: 4, i: '3' }, // Win Rate
+  { x: 0, y: 4, w: 12, h: 10, i: '4' }, // Open Positions
+  { x: 0, y: 14, w: 6, h: 8, i: '5' }, // Top Performers
+  { x: 6, y: 14, w: 6, h: 8, i: '6' }, // Worst Performers
+  { x: 0, y: 22, w: 6, h: 8, i: '7' }, // Recent Trades
+  { x: 6, y: 22, w: 6, h: 8, i: '8' }, // Recent Activity
+  { x: 0, y: 30, w: 12, h: 8, i: '9' }, // Bot Logs
+]
+
+const layout = ref([])
+const savingLayout = ref(false)
+
+onMounted(() => {
+  const savedLayout = localStorage.getItem('dashboardLayout')
+  if (savedLayout) {
+    try {
+      layout.value = JSON.parse(savedLayout)
+    } catch (e) {
+      layout.value = defaultLayout
+    }
+  } else {
+    layout.value = defaultLayout
+  }
+})
+
+const saveLayout = () => {
+  savingLayout.value = true
+  localStorage.setItem('dashboardLayout', JSON.stringify(layout.value))
+  setTimeout(() => {
+    savingLayout.value = false
+  }, 500)
+}
+
+const resetLayout = () => {
+  layout.value = defaultLayout
+  saveLayout()
+}
 
 // Get the last 10 logs in chronological order (oldest first, newest last)
 const recentLogs = computed(() => {
@@ -430,7 +491,92 @@ const positionHeaders = [
 
 <style scoped>
 .log-list {
-  max-height: 300px;
+  max-height: 100%;
   overflow-y: auto;
+}
+
+.grid-item-card {
+  touch-action: none;
+}
+
+:deep(.vgl-item__resizer) {
+  z-index: 100;
+}
+</style>
+
+<style>
+/* Grid Layout Plus Styles */
+.vgl-layout {
+  --vgl-placeholder-bg: #1976d2;
+  --vgl-placeholder-opacity: 20%;
+  --vgl-placeholder-z-index: 2;
+  --vgl-item-resizing-z-index: 3;
+  --vgl-item-resizing-opacity: 60%;
+  --vgl-item-dragging-z-index: 3;
+  --vgl-item-dragging-opacity: 100%;
+  --vgl-resizer-size: 10px;
+  --vgl-resizer-border-color: #666;
+  --vgl-resizer-border-width: 2px;
+
+  position: relative;
+  box-sizing: border-box;
+  transition: height 200ms ease;
+}
+
+.vgl-item {
+  position: absolute;
+  box-sizing: border-box;
+  transition: 200ms ease;
+  transition-property: left, top, right;
+}
+
+.vgl-item--placeholder {
+  z-index: var(--vgl-placeholder-z-index, 2);
+  user-select: none;
+  background-color: var(--vgl-placeholder-bg, #1976d2);
+  opacity: var(--vgl-placeholder-opacity, 20%);
+  transition-duration: 100ms;
+}
+
+.vgl-item--no-touch {
+  touch-action: none;
+}
+
+.vgl-item--transform {
+  right: auto;
+  left: 0;
+  transition-property: transform;
+}
+
+.vgl-item--resizing {
+  z-index: var(--vgl-item-resizing-z-index, 3);
+  user-select: none;
+  opacity: var(--vgl-item-resizing-opacity, 60%);
+}
+
+.vgl-item--dragging {
+  z-index: var(--vgl-item-dragging-z-index, 3);
+  user-select: none;
+  opacity: var(--vgl-item-dragging-opacity, 100%);
+  transition: none;
+}
+
+.vgl-item__resizer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  width: var(--vgl-resizer-size);
+  height: var(--vgl-resizer-size);
+  cursor: se-resize;
+}
+
+.vgl-item__resizer::before {
+  position: absolute;
+  inset: 0 3px 3px 0;
+  content: '';
+  border: 0 solid var(--vgl-resizer-border-color);
+  border-right-width: var(--vgl-resizer-border-width);
+  border-bottom-width: var(--vgl-resizer-border-width);
 }
 </style>

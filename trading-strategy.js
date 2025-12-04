@@ -117,18 +117,30 @@ export class TradingStrategy {
           continue;
         }
 
-        // Check if profit target reached
-        if (profitPercent >= config.PROFIT_TARGET) {
+        // Check if we have an active trailing stop (peak was set when we crossed profit target)
+        const existingPeak = this.peakPrices.get(position.productId);
+        
+        // Check if profit target reached OR we already have a peak set (trailing mode active)
+        if (profitPercent >= config.PROFIT_TARGET || existingPeak) {
           // Trailing profit mode - let it ride!
           if (config.ENABLE_TRAILING_PROFIT) {
-            // Get or set peak price
-            const currentPeak = this.peakPrices.get(position.productId) || currentPrice;
+            // Get or set peak price - initialize to current price if not set
+            let currentPeak = existingPeak;
+            
+            if (!currentPeak) {
+              // First time above profit target - set the peak
+              this.peakPrices.set(position.productId, currentPrice);
+              currentPeak = currentPrice;
+              console.log(`[STATUS] 🎯 ${position.symbol} hit profit target! Starting trailing mode at $${currentPrice.toFixed(6)} (+${profitPercent.toFixed(2)}%)`);
+              continue; // Give it a chance to climb
+            }
             
             if (currentPrice > currentPeak) {
               // New peak! Update and keep riding
               this.peakPrices.set(position.productId, currentPrice);
+              currentPeak = currentPrice;
               const peakProfit = ((currentPrice - position.entryPrice) / position.entryPrice) * 100;
-              console.log(`[STATUS] 🚀 ${position.symbol} NEW PEAK: $${currentPrice.toFixed(4)} (+${peakProfit.toFixed(2)}%) - Letting it ride!`);
+              console.log(`[STATUS] 🚀 ${position.symbol} NEW PEAK: $${currentPrice.toFixed(6)} (+${peakProfit.toFixed(2)}%) - Letting it ride!`);
               continue;
             }
             
@@ -136,11 +148,11 @@ export class TradingStrategy {
             const dropFromPeak = ((currentPeak - currentPrice) / currentPeak) * 100;
             const peakProfit = ((currentPeak - position.entryPrice) / position.entryPrice) * 100;
             
-            console.log(`[STATUS] 📊 ${position.symbol} trailing: Peak $${currentPeak.toFixed(4)} (+${peakProfit.toFixed(2)}%) | Now $${currentPrice.toFixed(4)} | Drop: ${dropFromPeak.toFixed(2)}%`);
+            console.log(`[STATUS] 📊 ${position.symbol} trailing: Peak $${currentPeak.toFixed(6)} (+${peakProfit.toFixed(2)}%) | Now $${currentPrice.toFixed(6)} (+${profitPercent.toFixed(2)}%) | Drop: ${dropFromPeak.toFixed(2)}% (trigger: ${config.TRAILING_STOP_PERCENT}%)`);
             
             // Check if price has dropped enough from peak to trigger trailing stop
             if (dropFromPeak >= config.TRAILING_STOP_PERCENT) {
-              console.log(`[STATUS] 📉 ${position.symbol} dropped ${dropFromPeak.toFixed(2)}% from peak - Taking profit!`);
+              console.log(`[STATUS] 📉 ${position.symbol} dropped ${dropFromPeak.toFixed(2)}% from peak (>= ${config.TRAILING_STOP_PERCENT}%) - SELLING!`);
               this.peakPrices.delete(position.productId);
               await this.paper.sell(position, currentPrice, `Trailing stop (peak +${peakProfit.toFixed(1)}%, sold +${profitPercent.toFixed(1)}%)`);
               continue;
@@ -155,7 +167,7 @@ export class TradingStrategy {
                 
                 // If momentum goes negative while above target, consider selling
                 if (recentMomentum < -config.MIN_MOMENTUM_TO_RIDE && dropFromPeak > config.TRAILING_STOP_PERCENT / 2) {
-                  console.log(`[STATUS] ⚠️ ${position.symbol} losing momentum - Taking profit!`);
+                  console.log(`[STATUS] ⚠️ ${position.symbol} losing momentum (${recentMomentum.toFixed(2)}%) - SELLING!`);
                   this.peakPrices.delete(position.productId);
                   await this.paper.sell(position, currentPrice, `Momentum fade (peak +${peakProfit.toFixed(1)}%, sold +${profitPercent.toFixed(1)}%)`);
                   continue;
