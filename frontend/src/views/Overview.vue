@@ -152,13 +152,13 @@
       <v-col cols="12" md="6">
         <v-card>
           <v-card-title>
-            <v-icon icon="mdi-trophy" class="mr-2"></v-icon>
+            <v-icon icon="mdi-trophy" class="mr-2" color="success"></v-icon>
             Top Performers
           </v-card-title>
           <v-card-text>
             <v-list density="compact">
               <v-list-item
-                v-for="coin in coinPerformance.slice(0, 5)"
+                v-for="coin in topPerformers"
                 :key="coin.symbol"
                 class="px-0"
               >
@@ -173,17 +173,17 @@
                   </v-chip>
                 </template>
                 <v-list-item-title>
-                  <span :class="coin.profit >= 0 ? 'text-success' : 'text-error'">
-                    ${{ coin.profit.toFixed(2) }}
+                  <span class="text-success">
+                    +${{ coin.profit.toFixed(2) }}
                   </span>
                 </v-list-item-title>
                 <v-list-item-subtitle>
                   {{ coin.trades }} trades · {{ coin.winRate.toFixed(0) }}% win
                 </v-list-item-subtitle>
               </v-list-item>
-              <v-list-item v-if="coinPerformance.length === 0" class="px-0">
+              <v-list-item v-if="topPerformers.length === 0" class="px-0">
                 <v-list-item-title class="text-medium-emphasis">
-                  No trades yet
+                  No profitable coins yet
                 </v-list-item-title>
               </v-list-item>
             </v-list>
@@ -191,6 +191,51 @@
         </v-card>
       </v-col>
 
+      <v-col cols="12" md="6">
+        <v-card>
+          <v-card-title>
+            <v-icon icon="mdi-trending-down" class="mr-2" color="error"></v-icon>
+            Worst Performers
+          </v-card-title>
+          <v-card-text>
+            <v-list density="compact">
+              <v-list-item
+                v-for="coin in worstPerformers"
+                :key="coin.symbol"
+                class="px-0"
+              >
+                <template v-slot:prepend>
+                  <v-chip 
+                    size="small" 
+                    color="accent"
+                    @click="openCoinbase(coin.symbol)"
+                    style="cursor: pointer;"
+                  >
+                    {{ coin.symbol }}
+                  </v-chip>
+                </template>
+                <v-list-item-title>
+                  <span class="text-error">
+                    ${{ coin.profit.toFixed(2) }}
+                  </span>
+                </v-list-item-title>
+                <v-list-item-subtitle>
+                  {{ coin.trades }} trades · {{ coin.winRate.toFixed(0) }}% win
+                </v-list-item-subtitle>
+              </v-list-item>
+              <v-list-item v-if="worstPerformers.length === 0" class="px-0">
+                <v-list-item-title class="text-medium-emphasis">
+                  No losing coins yet
+                </v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Recent Trades Row -->
+    <v-row>
       <v-col cols="12" md="6">
         <v-card>
           <v-card-title>
@@ -351,6 +396,16 @@ const recentLogs = computed(() => {
   const logs = botStatus.value.logs || []
   // Take last 10 logs (already in chronological order)
   return logs.slice(-10)
+})
+
+// Top performers - only positive profits
+const topPerformers = computed(() => {
+  return coinPerformance.value.filter(c => c.profit > 0).slice(0, 5)
+})
+
+// Worst performers - only negative profits, sorted worst first
+const worstPerformers = computed(() => {
+  return coinPerformance.value.filter(c => c.profit < 0).sort((a, b) => a.profit - b.profit).slice(0, 5)
 })
 
 const getLogClass = (message) => {
