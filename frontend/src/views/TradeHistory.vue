@@ -13,8 +13,12 @@
             <v-chip 
               size="small" 
               :color="totalProfit >= 0 ? 'success' : 'error'"
+              class="mr-2"
             >
               {{ totalProfit >= 0 ? '+' : '' }}${{ totalProfit.toFixed(2) }}
+            </v-chip>
+            <v-chip v-if="totalFees > 0" size="small" color="warning" variant="tonal">
+              Fees: ${{ totalFees.toFixed(2) }}
             </v-chip>
           </v-card-title>
           <v-card-text>
@@ -50,17 +54,22 @@
                 ${{ item.investedAmount?.toFixed(2) || '-' }}
               </template>
               <template v-slot:item.profit="{ item }">
-                <span :class="item.profit >= 0 ? 'text-success' : 'text-error'" class="font-weight-bold">
-                  {{ item.profit >= 0 ? '+' : '' }}${{ item.profit.toFixed(2) }}
-                </span>
+                <div>
+                  <span :class="(item.netProfit ?? item.profit) >= 0 ? 'text-success' : 'text-error'" class="font-weight-bold">
+                    {{ (item.netProfit ?? item.profit) >= 0 ? '+' : '' }}${{ (item.netProfit ?? item.profit).toFixed(2) }}
+                  </span>
+                  <div v-if="item.totalFees" class="text-caption text-medium-emphasis">
+                    Fees: ${{ item.totalFees.toFixed(2) }}
+                  </div>
+                </div>
               </template>
               <template v-slot:item.profitPercent="{ item }">
                 <v-chip 
                   size="small" 
-                  :color="item.profit >= 0 ? 'success' : 'error'"
+                  :color="(item.netProfit ?? item.profit) >= 0 ? 'success' : 'error'"
                   variant="flat"
                 >
-                  {{ item.profitPercent >= 0 ? '+' : '' }}{{ item.profitPercent.toFixed(2) }}%
+                  {{ (item.netProfitPercent ?? item.profitPercent) >= 0 ? '+' : '' }}{{ (item.netProfitPercent ?? item.profitPercent).toFixed(2) }}%
                 </v-chip>
               </template>
               <template v-slot:item.holdTimeMs="{ item }">
@@ -109,7 +118,7 @@
       <v-col cols="12" md="3">
         <v-card>
           <v-card-text class="text-center">
-            <div class="text-overline">Avg Profit</div>
+            <div class="text-overline">Avg Net Profit</div>
             <div class="text-h3" :class="avgProfit >= 0 ? 'text-success' : 'text-error'">
               ${{ avgProfit.toFixed(2) }}
             </div>
@@ -157,12 +166,16 @@ const tradeHeaders = [
 ]
 
 const totalProfit = computed(() => {
-  return trades.value.reduce((sum, t) => sum + t.profit, 0)
+  return trades.value.reduce((sum, t) => sum + (t.netProfit ?? t.profit), 0)
+})
+
+const totalFees = computed(() => {
+  return trades.value.reduce((sum, t) => sum + (t.totalFees || 0), 0)
 })
 
 const winRate = computed(() => {
   if (!trades.value.length) return 0
-  const wins = trades.value.filter(t => t.profit > 0).length
+  const wins = trades.value.filter(t => (t.netProfit ?? t.profit) > 0).length
   return (wins / trades.value.length) * 100
 })
 
@@ -179,7 +192,7 @@ const avgHoldTime = computed(() => {
 
 const biggestWin = computed(() => {
   if (!trades.value.length) return 0
-  return Math.max(...trades.value.map(t => t.profit), 0)
+  return Math.max(...trades.value.map(t => (t.netProfit ?? t.profit)), 0)
 })
 
 const getReasonColor = (reason) => {

@@ -177,8 +177,10 @@ app.get('/api/portfolio', async (req, res) => {
       totalValue += pos.investedAmount; // Use invested amount as current value estimate
     });
 
-    const totalProfit = portfolio.closedTrades.reduce((sum, t) => sum + t.profit, 0);
-    const winningTrades = portfolio.closedTrades.filter(t => t.profit > 0).length;
+    const totalProfit = portfolio.closedTrades.reduce((sum, t) => sum + (t.profit || 0), 0);
+    const totalNetProfit = portfolio.closedTrades.reduce((sum, t) => sum + (t.netProfit !== undefined ? t.netProfit : t.profit || 0), 0);
+    const totalFees = portfolio.closedTrades.reduce((sum, t) => sum + (t.totalFees || 0), 0);
+    const winningTrades = portfolio.closedTrades.filter(t => (t.netProfit !== undefined ? t.netProfit : t.profit) > 0).length;
     const totalTrades = portfolio.closedTrades.length;
 
     res.json({
@@ -191,6 +193,8 @@ app.get('/api/portfolio', async (req, res) => {
       losingTrades: totalTrades - winningTrades,
       winRate: totalTrades > 0 ? (winningTrades / totalTrades * 100) : 0,
       totalProfit,
+      totalNetProfit,
+      totalFees,
       roi: ((totalValue - 10000) / 10000 * 100),
       startingCapital: 10000,
     });
@@ -205,6 +209,8 @@ app.get('/api/portfolio', async (req, res) => {
       losingTrades: 0,
       winRate: 0,
       totalProfit: 0,
+      totalNetProfit: 0,
+      totalFees: 0,
       roi: 0,
       startingCapital: 10000,
     });
@@ -605,6 +611,86 @@ app.get('/api/positions/live', async (req, res) => {
   }
 });
 
+// Force sell a position
+app.post('/api/positions/sell', async (req, res) => {
+  try {
+    const { positionId } = req.body;
+    if (!positionId) {
+      return res.json({ success: false, message: 'Position ID required' });
+    }
+
+    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const portfolio = JSON.parse(data);
+    
+    // Find the position
+    const positionIndex = portfolio.positions.findIndex(p => p.id === positionId);
+    if (positionIndex === -1) {
+      return res.json({ success: false, message: 'Position not found' });
+    }
+    
+    const position = portfolio.positions[positionIndex];
+    
+    // Get current price
+    let currentPrice = position.entryPrice;
+    try {
+      const response = await fetch(`https://api.exchange.coinbase.com/products/${position.productId}/ticker`);
+      if (response.ok) {
+        const ticker = await response.json();
+        currentPrice = parseFloat(ticker.price);
+      }
+    } catch (e) {
+      console.log(`[FORCE SELL] Using entry price, couldn't fetch current price: ${e.message}`);
+    }
+    
+    // Calculate P&L with fees (0.6% trading fee)
+    const feePercent = 0.6;
+    const grossValue = position.quantity * currentPrice;
+    const sellFee = grossValue * (feePercent / 100);
+    const netValue = grossValue - sellFee;
+    const totalFees = (position.buyFee || 0) + sellFee;
+    
+    const grossProfit = grossValue - position.investedAmount;
+    const netProfit = grossProfit - totalFees;
+    const profitPercent = (grossProfit / position.investedAmount) * 100;
+    const netProfitPercent = (netProfit / position.investedAmount) * 100;
+    const holdTime = Date.now() - position.entryTime;
+    
+    // Remove position and add cash (net of sell fee)
+    portfolio.positions.splice(positionIndex, 1);
+    portfolio.cash += netValue;
+    
+    // Record closed trade
+    const trade = {
+      ...position,
+      exitPrice: currentPrice,
+      exitTime: Date.now(),
+      profit: grossProfit,
+      profitPercent,
+      netProfit,
+      netProfitPercent,
+      sellFee,
+      totalFees,
+      holdTimeMs: holdTime,
+      reason: 'Manual force sell',
+    };
+    portfolio.closedTrades.push(trade);
+    
+    // Save
+    await fs.writeFile('paper-trading-data.json', JSON.stringify(portfolio, null, 2));
+    
+    console.log(`[FORCE SELL] ${position.symbol} @ $${currentPrice.toFixed(6)} | Gross: $${grossProfit.toFixed(2)} | Net: $${netProfit.toFixed(2)} (fees: $${totalFees.toFixed(2)})`);
+    
+    res.json({ 
+      success: true, 
+      message: `Sold ${position.symbol} for $${netValue.toFixed(2)} (net of fees)`,
+      trade 
+    });
+  } catch (error) {
+    console.error('[FORCE SELL] Error:', error.message);
+    res.json({ success: false, message: error.message });
+  }
+});
+
 // Health check - enhanced for monitoring
 app.get('/api/health', async (req, res) => {
   try {
@@ -1002,7 +1088,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.11                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.12                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

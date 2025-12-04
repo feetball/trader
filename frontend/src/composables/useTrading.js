@@ -288,6 +288,20 @@ function cleanup() {
   initialized = false
 }
 
+// Force sell a position
+const forceSellPosition = async (positionId) => {
+  try {
+    const res = await axios.post(`${API_URL}/positions/sell`, { positionId })
+    if (res.data.success) {
+      await refreshData()
+    }
+    return res.data
+  } catch (error) {
+    console.error('Error force selling position:', error)
+    return { success: false, message: error.message }
+  }
+}
+
 export function useTrading() {
   // Function to clear update logs
   const clearUpdateLogs = () => {
@@ -328,5 +342,6 @@ export function useTrading() {
     initialize,
     cleanup,
     clearUpdateLogs,
+    forceSellPosition,
   }
 }

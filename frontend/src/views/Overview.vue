@@ -48,8 +48,11 @@
           <v-card class="h-100">
             <v-card-text class="pa-2">
               <div class="text-overline text-truncate">Total Profit</div>
-              <div class="text-h6" :class="portfolio.totalProfit >= 0 ? 'text-success' : 'text-error'">
-                ${{ portfolio.totalProfit?.toFixed(2) || '0.00' }}
+              <div class="text-h6" :class="(portfolio.totalNetProfit ?? portfolio.totalProfit) >= 0 ? 'text-success' : 'text-error'">
+                ${{ (portfolio.totalNetProfit ?? portfolio.totalProfit)?.toFixed(2) || '0.00' }}
+              </div>
+              <div v-if="portfolio.totalFees > 0" class="text-caption text-medium-emphasis">
+                Fees: ${{ portfolio.totalFees?.toFixed(2) }}
               </div>
             </v-card-text>
           </v-card>
@@ -95,14 +98,26 @@
                   {{ pos.symbol }}
                 </v-chip>
               </template>
-              <v-list-item-title class="d-flex justify-space-between">
+              <v-list-item-title class="d-flex justify-space-between align-center">
                 <span>${{ pos.entryPrice?.toFixed(6) }}</span>
-                <v-chip 
-                  size="x-small"
-                  :color="(pos.currentPLPercent || 0) >= 0 ? 'success' : 'error'"
-                >
-                  {{ (pos.currentPLPercent || 0) >= 0 ? '+' : '' }}{{ pos.currentPLPercent?.toFixed(2) || '0.00' }}%
-                </v-chip>
+                <div class="d-flex align-center">
+                  <v-chip 
+                    size="x-small"
+                    :color="(pos.currentPLPercent || 0) >= 0 ? 'success' : 'error'"
+                    class="mr-1"
+                  >
+                    {{ (pos.currentPLPercent || 0) >= 0 ? '+' : '' }}{{ pos.currentPLPercent?.toFixed(2) || '0.00' }}%
+                  </v-chip>
+                  <v-btn
+                    icon="mdi-cash-minus"
+                    size="x-small"
+                    color="warning"
+                    variant="text"
+                    density="compact"
+                    @click.stop="handleForceSell(pos)"
+                    :loading="sellingPosition === pos.id"
+                  ></v-btn>
+                </div>
               </v-list-item-title>
             </v-list-item>
             <v-list-item v-if="livePositions.length === 0" class="px-0">
@@ -215,11 +230,12 @@
         <v-card v-if="item.i === '2'" class="h-100">
           <v-card-text>
             <div class="text-overline mb-1">Total Profit</div>
-            <div class="text-h4 mb-1" :class="portfolio.totalProfit >= 0 ? 'text-success' : 'text-error'">
-              ${{ portfolio.totalProfit?.toFixed(2) || '0.00' }}
+            <div class="text-h4 mb-1" :class="(portfolio.totalNetProfit ?? portfolio.totalProfit) >= 0 ? 'text-success' : 'text-error'">
+              ${{ (portfolio.totalNetProfit ?? portfolio.totalProfit)?.toFixed(2) || '0.00' }}
             </div>
             <div class="text-caption text-medium-emphasis">
               {{ portfolio.totalTrades || 0 }} trades
+              <span v-if="portfolio.totalFees > 0"> · Fees: ${{ portfolio.totalFees?.toFixed(2) }}</span>
             </div>
           </v-card-text>
         </v-card>
@@ -306,6 +322,17 @@
               </template>
               <template v-slot:item.holdTime="{ item }">
                 {{ formatHoldTime(item.holdTime || (Date.now() - item.entryTime)) }}
+              </template>
+              <template v-slot:item.actions="{ item }">
+                <v-btn
+                  icon="mdi-cash-minus"
+                  size="x-small"
+                  color="warning"
+                  variant="text"
+                  title="Force Sell"
+                  @click="handleForceSell(item)"
+                  :loading="sellingPosition === item.id"
+                ></v-btn>
               </template>
               <template v-slot:no-data>
                 <div class="text-center py-4 text-medium-emphasis">
@@ -547,8 +574,31 @@ const {
   formatHoldTime,
   formatTimestamp,
   getCoinbaseUrl,
-  openCoinbase 
+  openCoinbase,
+  forceSellPosition,
+  refreshData
 } = useTrading()
+
+// Force sell state
+const sellingPosition = ref(null)
+const showSellConfirm = ref(false)
+const positionToSell = ref(null)
+
+const handleForceSell = async (position) => {
+  if (!confirm(`Force sell ${position.symbol}?\n\nCurrent P&L: ${position.currentPLPercent?.toFixed(2) || '0.00'}%`)) {
+    return
+  }
+  
+  sellingPosition.value = position.id
+  try {
+    const result = await forceSellPosition(position.id)
+    if (!result.success) {
+      alert(`Failed to sell: ${result.message}`)
+    }
+  } finally {
+    sellingPosition.value = null
+  }
+}
 
 // Responsive handling
 const isMobile = ref(window.innerWidth < 768)
@@ -666,6 +716,7 @@ const positionHeaders = [
   { title: 'Invested', key: 'investedAmount', sortable: true },
   { title: 'Purchased', key: 'entryTime', sortable: true },
   { title: 'Hold Time', key: 'holdTime', sortable: true },
+  { title: '', key: 'actions', sortable: false, width: '50px' },
 ]
 </script>
 

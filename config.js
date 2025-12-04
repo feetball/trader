@@ -35,4 +35,7 @@ export const config = {
   ENABLE_TRAILING_PROFIT: true,
   TRAILING_STOP_PERCENT: 0.4,
   MIN_MOMENTUM_TO_RIDE: 0.5,
+  
+  // Trading fees (Coinbase Advanced Trade taker fee ~0.6%)
+  TRADING_FEE_PERCENT: 0.6,
 };

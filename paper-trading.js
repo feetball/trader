@@ -51,7 +51,11 @@ export class PaperTradingEngine {
       return null;
     }
 
-    const quantity = usdAmount / price;
+    // Calculate buy fee
+    const feePercent = config.TRADING_FEE_PERCENT || 0.6;
+    const buyFee = usdAmount * (feePercent / 100);
+    const effectiveAmount = usdAmount - buyFee;
+    const quantity = effectiveAmount / price;
     const timestamp = Date.now();
 
     const position = {
@@ -61,6 +65,7 @@ export class PaperTradingEngine {
       entryPrice: price,
       quantity,
       investedAmount: usdAmount,
+      buyFee,
       entryTime: timestamp,
       targetPrice: price * (1 + config.PROFIT_TARGET / 100),
       stopLoss: price * (1 + config.STOP_LOSS / 100), // config.STOP_LOSS is negative, e.g., -2 = 2% below entry
@@ -71,7 +76,7 @@ export class PaperTradingEngine {
 
     await this.savePortfolio();
 
-    console.log(`✅ PAPER BUY: ${symbol} | Qty: ${quantity.toFixed(4)} @ $${price.toFixed(6)} | Invested: $${usdAmount.toFixed(2)}`);
+    console.log(`✅ PAPER BUY: ${symbol} | Qty: ${quantity.toFixed(4)} @ $${price.toFixed(6)} | Invested: $${usdAmount.toFixed(2)} (fee: $${buyFee.toFixed(2)})`);
     console.log(`   Target: $${position.targetPrice.toFixed(6)} (+${config.PROFIT_TARGET}%) | Stop: $${position.stopLoss.toFixed(6)} (${config.STOP_LOSS}%)`);
 
     return position;
@@ -81,24 +86,44 @@ export class PaperTradingEngine {
    * Execute a paper sell order
    */
   async sell(position, currentPrice, reason = 'Target reached') {
-    const currentValue = position.quantity * currentPrice;
-    const profit = currentValue - position.investedAmount;
-    const profitPercent = (profit / position.investedAmount) * 100;
+    const grossValue = position.quantity * currentPrice;
+    
+    // Calculate sell fee
+    const feePercent = config.TRADING_FEE_PERCENT || 0.6;
+    const sellFee = grossValue * (feePercent / 100);
+    const netValue = grossValue - sellFee;
+    
+    // Total fees for this trade
+    const totalFees = (position.buyFee || 0) + sellFee;
+    
+    // Gross profit (before fees)
+    const grossProfit = grossValue - position.investedAmount;
+    
+    // Net profit (after fees)
+    const netProfit = netValue - position.investedAmount + (position.buyFee || 0);
+    const netProfitActual = grossProfit - totalFees;
+    
+    const profitPercent = (grossProfit / position.investedAmount) * 100;
+    const netProfitPercent = (netProfitActual / position.investedAmount) * 100;
     const holdTime = Date.now() - position.entryTime;
 
     // Remove from positions
     this.portfolio.positions = this.portfolio.positions.filter(p => p.id !== position.id);
     
-    // Add cash
-    this.portfolio.cash += currentValue;
+    // Add cash (net of sell fee)
+    this.portfolio.cash += netValue;
 
     // Record trade
     const trade = {
       ...position,
       exitPrice: currentPrice,
       exitTime: Date.now(),
-      profit,
+      profit: grossProfit,
       profitPercent,
+      netProfit: netProfitActual,
+      netProfitPercent,
+      sellFee,
+      totalFees,
       holdTimeMs: holdTime,
       reason,
     };
@@ -108,7 +133,7 @@ export class PaperTradingEngine {
     await this.savePortfolio();
 
     console.log(`💰 PAPER SELL: ${position.symbol} | Qty: ${position.quantity.toFixed(4)} @ $${currentPrice.toFixed(4)}`);
-    console.log(`   Profit: $${profit.toFixed(2)} (${profitPercent.toFixed(2)}%) | Hold: ${(holdTime/60000).toFixed(1)}m | Reason: ${reason}`);
+    console.log(`   Gross: $${grossProfit.toFixed(2)} (${profitPercent.toFixed(2)}%) | Net: $${netProfitActual.toFixed(2)} (${netProfitPercent.toFixed(2)}%) | Fees: $${totalFees.toFixed(2)} | Reason: ${reason}`);
 
     return trade;
   }
@@ -145,8 +170,10 @@ export class PaperTradingEngine {
       totalValue += pos.quantity * currentPrice;
     });
 
-    const totalProfit = this.portfolio.closedTrades.reduce((sum, t) => sum + t.profit, 0);
-    const winningTrades = this.portfolio.closedTrades.filter(t => t.profit > 0).length;
+    const totalProfit = this.portfolio.closedTrades.reduce((sum, t) => sum + (t.profit || 0), 0);
+    const totalNetProfit = this.portfolio.closedTrades.reduce((sum, t) => sum + (t.netProfit || t.profit || 0), 0);
+    const totalFees = this.portfolio.closedTrades.reduce((sum, t) => sum + (t.totalFees || 0), 0);
+    const winningTrades = this.portfolio.closedTrades.filter(t => (t.netProfit || t.profit) > 0).length;
     const totalTrades = this.portfolio.closedTrades.length;
 
     return {
@@ -156,8 +183,11 @@ export class PaperTradingEngine {
       openPositions: this.portfolio.positions.length,
       totalTrades,
       winningTrades,
+      losingTrades: totalTrades - winningTrades,
       winRate: totalTrades > 0 ? (winningTrades / totalTrades * 100) : 0,
       totalProfit,
+      totalNetProfit,
+      totalFees,
       roi: ((totalValue - 10000) / 10000 * 100),
     };
   }
