@@ -2,7 +2,7 @@
 
 An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase and executes momentum-based trades using technical indicators. **Includes a beautiful Vue 3 + Vuetify multi-page dashboard!**
 
-**Version:** 1.6.1
+**Version:** 1.6.2
 
 ## ✨ Features
 
