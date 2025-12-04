@@ -602,6 +602,7 @@ app.get('/api/updates/check', async (req, res) => {
     
     const remotePackage = await response.json();
     const latestVersion = remotePackage.version;
+    console.log(`[UPDATE-CHECK] current=${currentVersion} latest=${latestVersion}`);
     
     // Compare versions
     const current = currentVersion.split('.').map(Number);
@@ -935,7 +936,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.6                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.7                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
