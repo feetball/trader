@@ -426,6 +426,10 @@ export const config = {
 `;
 
     await fs.writeFile('config.js', configContent);
+    
+    // Also save to user-settings.json for persistence across updates
+    await fs.writeFile('user-settings.json', JSON.stringify(newSettings, null, 2));
+    
     addLog('✅ Settings saved successfully');
     
     // Restart bot if it was running
@@ -654,6 +658,14 @@ app.post('/api/updates/apply', async (req, res) => {
       try {
         console.log('[UPDATE] Starting update process...');
         
+        // Backup current settings before update
+        let savedSettings = null;
+        const settingsPath = path.join(process.cwd(), 'user-settings.json');
+        if (fsSync.existsSync(settingsPath)) {
+          console.log('[UPDATE] Backing up user settings...');
+          savedSettings = fsSync.readFileSync(settingsPath, 'utf-8');
+        }
+        
         // Git pull
         console.log('[UPDATE] Pulling latest code from GitHub...');
         execSync('git pull origin master', { cwd: process.cwd(), stdio: 'inherit' });
@@ -668,6 +680,56 @@ app.post('/api/updates/apply', async (req, res) => {
         
         console.log('[UPDATE] Building frontend...');
         execSync('npm run build', { cwd: path.join(process.cwd(), 'frontend'), stdio: 'inherit' });
+        
+        // Restore user settings after update
+        if (savedSettings) {
+          console.log('[UPDATE] Restoring user settings...');
+          fsSync.writeFileSync(settingsPath, savedSettings);
+          
+          // Also restore config.js from saved settings
+          const settings = JSON.parse(savedSettings);
+          const configContent = `// Trading bot configuration
+export const config = {
+  // Paper trading mode (true = simulated trades, false = real trades)
+  PAPER_TRADING: ${settings.PAPER_TRADING ?? true},
+  
+  // Maximum price threshold for coins to trade
+  MAX_PRICE: ${settings.MAX_PRICE ?? 1.00},
+  
+  // Profit target percentage (lowered for faster trades)
+  PROFIT_TARGET: ${settings.PROFIT_TARGET ?? 2.5},
+  
+  // Minimum price change % in the last period to trigger a buy signal
+  MOMENTUM_THRESHOLD: ${settings.MOMENTUM_THRESHOLD ?? 1.5},
+  
+  // Time window for momentum calculation in minutes
+  MOMENTUM_WINDOW: ${settings.MOMENTUM_WINDOW ?? 10},
+  
+  // How often to scan markets (seconds)
+  // WebSocket provides real-time prices, so fast scans are possible
+  SCAN_INTERVAL: ${settings.SCAN_INTERVAL ?? 10},
+  
+  // Position size per trade (USD)
+  POSITION_SIZE: ${settings.POSITION_SIZE ?? 500},
+  
+  // Maximum number of concurrent positions
+  MAX_POSITIONS: ${settings.MAX_POSITIONS ?? 30},
+  
+  // Minimum 24h volume to consider (USD)
+  MIN_VOLUME: ${settings.MIN_VOLUME ?? 25000},
+  
+  // Stop loss percentage (tighter for faster cuts)
+  STOP_LOSS: ${settings.STOP_LOSS ?? -3.0},
+  
+  // Trailing profit settings - let winners ride while climbing
+  ENABLE_TRAILING_PROFIT: ${settings.ENABLE_TRAILING_PROFIT ?? true},
+  TRAILING_STOP_PERCENT: ${settings.TRAILING_STOP_PERCENT ?? 1.0},
+  MIN_MOMENTUM_TO_RIDE: ${settings.MIN_MOMENTUM_TO_RIDE ?? 0.5},
+};
+`;
+          fsSync.writeFileSync(path.join(process.cwd(), 'config.js'), configContent);
+          console.log('[UPDATE] User settings restored successfully!');
+        }
         
         // Save flag to restart bot after server restarts
         if (wasRunning) {
@@ -832,7 +894,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v1.6.5                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.5                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

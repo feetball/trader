@@ -15,6 +15,12 @@ trades.json
 positions.json
 data/*.json
 
+# User settings (preserved during updates)
+user-settings.json
+
+# Bot restart flag
+.restart-bot
+
 # Logs
 *.log
 npm-debug.log*
