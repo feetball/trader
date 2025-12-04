@@ -39,6 +39,16 @@
         <v-divider></v-divider>
         <v-list density="compact" nav>
           <v-list-item
+            prepend-icon="mdi-cloud-download"
+            title="Check for Updates"
+            @click="checkForUpdates"
+            rounded="xl"
+          >
+            <template v-slot:append v-if="updateAvailable">
+              <v-badge color="error" dot></v-badge>
+            </template>
+          </v-list-item>
+          <v-list-item
             prepend-icon="mdi-cog"
             title="Settings"
             @click="showSettingsDialog = true"
@@ -117,6 +127,66 @@
           <v-spacer></v-spacer>
           <v-btn color="grey" variant="text" @click="showResetDialog = false">Cancel</v-btn>
           <v-btn color="warning" variant="flat" @click="doResetPortfolio" :loading="resetLoading">Reset</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Update Dialog -->
+    <v-dialog v-model="showUpdateDialog" max-width="500">
+      <v-card>
+        <v-card-title class="text-h5">
+          <v-icon icon="mdi-update" color="primary" class="mr-2"></v-icon>
+          Software Update
+        </v-card-title>
+        <v-card-text>
+          <div v-if="checkingUpdates" class="text-center py-4">
+            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+            <div class="mt-2">Checking for updates...</div>
+          </div>
+          <div v-else-if="updateInfo.error">
+            <v-alert type="error" class="mb-0">
+              Failed to check for updates: {{ updateInfo.error }}
+            </v-alert>
+          </div>
+          <div v-else-if="updateInfo.updateAvailable">
+            <v-alert type="info" class="mb-4">
+              <div class="font-weight-bold">New version available!</div>
+              <div>Current: v{{ updateInfo.currentVersion }}</div>
+              <div>Latest: v{{ updateInfo.latestVersion }}</div>
+            </v-alert>
+            <p>Click "Update Now" to download and install the latest version. The server will restart automatically.</p>
+            <v-alert v-if="botStatus.running" type="warning" class="mt-4">
+              <v-icon icon="mdi-alert"></v-icon>
+              Please stop the bot before updating.
+            </v-alert>
+          </div>
+          <div v-else>
+            <v-alert type="success" class="mb-0">
+              <div class="font-weight-bold">You're up to date!</div>
+              <div>Current version: v{{ updateInfo.currentVersion }}</div>
+              <div v-if="updateInfo.lastCheck" class="text-caption mt-1">
+                Last checked: {{ formatLastCheck(updateInfo.lastCheck) }}
+              </div>
+            </v-alert>
+          </div>
+          <div v-if="updateInProgress" class="text-center py-4">
+            <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
+            <div class="mt-4 text-h6">Updating...</div>
+            <div class="text-caption">Please wait. The page will reload when complete.</div>
+          </div>
+        </v-card-text>
+        <v-card-actions v-if="!updateInProgress">
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="text" @click="showUpdateDialog = false">Close</v-btn>
+          <v-btn 
+            v-if="updateInfo.updateAvailable && !botStatus.running" 
+            color="primary" 
+            variant="flat" 
+            @click="applyUpdate"
+            :loading="updateInProgress"
+          >
+            Update Now
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -368,6 +438,75 @@ const showSettingsDialog = ref(false)
 const showSnackbar = ref(false)
 const snackbarText = ref('')
 
+// Update check state
+const showUpdateDialog = ref(false)
+const checkingUpdates = ref(false)
+const updateInProgress = ref(false)
+const updateAvailable = ref(false)
+const updateInfo = ref({
+  currentVersion: '',
+  latestVersion: '',
+  updateAvailable: false,
+  lastCheck: null,
+  error: null
+})
+
+const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3001/api'
+
+const checkForUpdates = async () => {
+  showUpdateDialog.value = true
+  checkingUpdates.value = true
+  updateInfo.value.error = null
+  
+  try {
+    const response = await fetch(`${API_URL}/updates/check`)
+    const data = await response.json()
+    updateInfo.value = data
+    updateAvailable.value = data.updateAvailable
+  } catch (error) {
+    updateInfo.value.error = error.message
+  } finally {
+    checkingUpdates.value = false
+  }
+}
+
+const applyUpdate = async () => {
+  updateInProgress.value = true
+  
+  try {
+    await fetch(`${API_URL}/updates/apply`, { method: 'POST' })
+    
+    // Wait for server to restart, then reload page
+    setTimeout(() => {
+      const checkServer = async () => {
+        try {
+          const response = await fetch(`${API_URL}/version`)
+          if (response.ok) {
+            window.location.reload()
+          } else {
+            setTimeout(checkServer, 2000)
+          }
+        } catch {
+          setTimeout(checkServer, 2000)
+        }
+      }
+      checkServer()
+    }, 5000)
+  } catch (error) {
+    updateInfo.value.error = error.message
+    updateInProgress.value = false
+  }
+}
+
+const formatLastCheck = (timestamp) => {
+  if (!timestamp) return 'Never'
+  const date = new Date(timestamp)
+  return date.toLocaleString()
+}
+
+// Check for updates periodically (every 6 hours) and on startup
+let updateCheckInterval = null
+
 const doResetPortfolio = async () => {
   resetLoading.value = true
   const success = await resetPortfolio()
@@ -400,10 +539,49 @@ const doSaveSettings = async () => {
 
 onMounted(() => {
   initialize()
+  
+  // Check for updates on startup (with delay to not block UI)
+  setTimeout(async () => {
+    try {
+      const response = await fetch(`${API_URL}/updates/check`)
+      const data = await response.json()
+      updateInfo.value = data
+      updateAvailable.value = data.updateAvailable
+      
+      // Show snackbar if update available
+      if (data.updateAvailable) {
+        snackbarText.value = `🆕 Update available: v${data.latestVersion}`
+        showSnackbar.value = true
+      }
+    } catch (e) {
+      // Silently fail on startup check
+    }
+  }, 3000)
+  
+  // Check every 6 hours
+  updateCheckInterval = setInterval(async () => {
+    try {
+      const response = await fetch(`${API_URL}/updates/check`)
+      const data = await response.json()
+      updateInfo.value = data
+      
+      // Only notify if newly available
+      if (data.updateAvailable && !updateAvailable.value) {
+        updateAvailable.value = true
+        snackbarText.value = `🆕 Update available: v${data.latestVersion}`
+        showSnackbar.value = true
+      }
+    } catch (e) {
+      // Silently fail
+    }
+  }, 6 * 60 * 60 * 1000)
 })
 
 onUnmounted(() => {
   cleanup()
+  if (updateCheckInterval) {
+    clearInterval(updateCheckInterval)
+  }
 })
 </script>
 

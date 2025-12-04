@@ -572,6 +572,112 @@ app.get('/api/version', async (req, res) => {
   }
 });
 
+// Update check state
+let lastUpdateCheck = null;
+let cachedUpdateInfo = null;
+
+// Check for updates from GitHub
+app.get('/api/updates/check', async (req, res) => {
+  try {
+    const pkg = JSON.parse(await fs.readFile('package.json', 'utf-8'));
+    const currentVersion = pkg.version;
+    
+    // Fetch latest package.json from GitHub
+    const response = await fetch('https://raw.githubusercontent.com/feetball/trader/master/package.json');
+    if (!response.ok) {
+      throw new Error(`GitHub fetch failed: ${response.status}`);
+    }
+    
+    const remotePackage = await response.json();
+    const latestVersion = remotePackage.version;
+    
+    // Compare versions
+    const current = currentVersion.split('.').map(Number);
+    const latest = latestVersion.split('.').map(Number);
+    
+    let updateAvailable = false;
+    for (let i = 0; i < 3; i++) {
+      if (latest[i] > current[i]) {
+        updateAvailable = true;
+        break;
+      } else if (latest[i] < current[i]) {
+        break;
+      }
+    }
+    
+    lastUpdateCheck = Date.now();
+    cachedUpdateInfo = {
+      currentVersion,
+      latestVersion,
+      updateAvailable,
+      lastCheck: lastUpdateCheck,
+    };
+    
+    res.json(cachedUpdateInfo);
+  } catch (error) {
+    console.error('Update check failed:', error.message);
+    res.json({
+      currentVersion: 'unknown',
+      latestVersion: 'unknown',
+      updateAvailable: false,
+      error: error.message,
+      lastCheck: lastUpdateCheck,
+    });
+  }
+});
+
+// Get cached update info
+app.get('/api/updates/status', (req, res) => {
+  res.json(cachedUpdateInfo || { updateAvailable: false, lastCheck: null });
+});
+
+// Perform update
+app.post('/api/updates/apply', async (req, res) => {
+  // Don't allow update while bot is running
+  if (botProcess) {
+    return res.json({ success: false, message: 'Stop the bot before updating' });
+  }
+
+  try {
+    const { execSync } = await import('child_process');
+    
+    // Send initial response
+    res.json({ success: true, message: 'Update started. Server will restart shortly.' });
+    
+    // Give time for response to be sent
+    setTimeout(async () => {
+      try {
+        console.log('[UPDATE] Starting update process...');
+        
+        // Git pull
+        console.log('[UPDATE] Pulling latest code from GitHub...');
+        execSync('git pull origin master', { cwd: process.cwd(), stdio: 'inherit' });
+        
+        // Install dependencies
+        console.log('[UPDATE] Installing backend dependencies...');
+        execSync('npm install', { cwd: process.cwd(), stdio: 'inherit' });
+        
+        // Install frontend dependencies and build
+        console.log('[UPDATE] Installing frontend dependencies...');
+        execSync('npm install', { cwd: path.join(process.cwd(), 'frontend'), stdio: 'inherit' });
+        
+        console.log('[UPDATE] Building frontend...');
+        execSync('npm run build', { cwd: path.join(process.cwd(), 'frontend'), stdio: 'inherit' });
+        
+        console.log('[UPDATE] Update complete! Restarting server...');
+        
+        // Exit process - Docker/PM2/systemd will restart it
+        process.exit(0);
+      } catch (error) {
+        console.error('[UPDATE] Update failed:', error.message);
+      }
+    }, 500);
+    
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
 // Get bot status
 app.get('/api/bot/status', (req, res) => {
   res.json(botStatus);
@@ -715,7 +821,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v1.5.5                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v1.5.7                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
