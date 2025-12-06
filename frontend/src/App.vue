@@ -50,12 +50,6 @@
             </template>
           </v-list-item>
           <v-list-item
-            prepend-icon="mdi-cog"
-            title="Settings"
-            @click="showSettingsDialog = true"
-            rounded="xl"
-          ></v-list-item>
-          <v-list-item
             prepend-icon="mdi-delete-sweep"
             title="Reset Portfolio"
             @click="showResetDialog = true"
@@ -200,430 +194,6 @@
       </v-card>
     </v-dialog>
 
-    <!-- Settings Dialog -->
-    <v-dialog v-model="showSettingsDialog" max-width="900" scrollable>
-      <v-card>
-        <v-card-title class="text-h5 d-flex align-center">
-          <v-icon icon="mdi-cog" class="mr-2"></v-icon>
-          Bot Settings
-          <v-spacer></v-spacer>
-          <v-btn icon="mdi-close" variant="text" @click="showSettingsDialog = false"></v-btn>
-        </v-card-title>
-        <v-divider></v-divider>
-        <v-card-text>
-          <v-alert v-if="botStatus.running" type="info" class="mb-4">
-            <v-icon icon="mdi-information" class="mr-2"></v-icon>
-            The bot will automatically restart when you apply changes.
-          </v-alert>
-          
-          <v-row>
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-switch
-                  v-model="settings.PAPER_TRADING"
-                  label="Paper Trading Mode"
-                  color="primary"
-                  hint="Simulate trades without real orders"
-                  persistent-hint
-                ></v-switch>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Paper Trading</b><br><br>Simulates buys/sells without using real money. Great for testing settings safely.<br><br><b>When ON:</b><br>• No real orders are sent<br>• Portfolio updates are virtual<br>• Safe to experiment with aggressive settings<br><br><b>When OFF:</b><br>• Real trades are executed via your API keys<br>• Use conservative risk controls<br><br><b>Recommendation:</b> Keep ON while tuning. Turn OFF only when you're confident.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.MAX_PRICE"
-                  label="Max Coin Price ($)"
-                  type="number"
-                  step="0.1"
-                  hint="Skip coins priced above this"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Max Coin Price</b><br><br>Ignores coins that cost more than this price per unit.<br><br><b>Why cap price?</b><br>• Expensive coins buy fewer units, harder to scale out<br>• Cheaper coins let you size positions evenly<br><br><b>Examples:</b><br>• $1 limit = Only trade sub-dollar coins<br>• $5 limit = Includes most mid-priced alts<br>• $50+ = Includes majors like BTC/ETH<br><br><b>Recommendation:</b> Keep low ($1-$5) for penny-crypto momentum; raise if you want larger caps.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.POSITION_SIZE"
-                  label="Position Size ($)"
-                  type="number"
-                  step="50"
-                  hint="Amount to invest per trade"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Position Size</b><br><br>Dollar amount invested in each individual trade.<br><br><b>How it works:</b> When the bot finds a buy signal, it purchases exactly this amount worth of the coin.<br><br><b>Capital calculation:</b><br>Position Size × Max Positions = Max Capital at Risk<br><br><b>Examples:</b><br>• $50 × 5 positions = $250 max exposure<br>• $100 × 5 positions = $500 max exposure<br>• $200 × 10 positions = $2,000 max exposure<br><br><b>Profit/Loss example:</b><br>$100 position with 5% profit = $5 gain<br>$100 position with -3% stop loss = $3 loss<br><br><b>Recommendation:</b> Start small ($50-100) while testing. Scale up once you're confident in your settings.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.MAX_POSITIONS"
-                  label="Max Positions"
-                  type="number"
-                  hint="Maximum concurrent open positions"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Max Positions</b><br><br>Maximum number of different coins the bot can hold at once.<br><br><b>Trade-offs:</b><br>• More positions = More diversification, less risk per coin<br>• Fewer positions = Concentrated bets, higher risk/reward<br><br><b>Examples:</b><br>• 3 positions: Focused strategy, easier to monitor<br>• 5 positions: Balanced approach (recommended)<br>• 10 positions: Maximum diversification<br>• 15+ positions: Very spread out, may dilute gains<br><br><b>Capital needed:</b><br>If Position Size = $100:<br>• 3 max = Need $300 capital<br>• 5 max = Need $500 capital<br>• 10 max = Need $1,000 capital<br><br><b>Recommendation:</b> 5-7 positions balances diversification with meaningful position sizes.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.MIN_VOLUME"
-                  label="Min 24h Volume ($)"
-                  type="number"
-                  step="1000"
-                  hint="Minimum trading volume required"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Minimum 24h Volume</b><br><br>Only trades coins with at least this much trading volume in the last 24 hours.<br><br><b>Why it matters:</b><br>• Low volume = Wide bid/ask spreads, hard to buy/sell<br>• High volume = Tight spreads, instant fills<br><br><b>What happens with low volume:</b><br>You might see +5% profit but only get +2% when selling due to slippage and spread.<br><br><b>Examples:</b><br>• $5,000: Very risky, may have 2-5% spreads<br>• $10,000: Minimum viable (default)<br>• $50,000: Good liquidity for most orders<br>• $100,000+: Excellent liquidity, minimal slippage<br><br><b>Recommendation:</b> $10,000 minimum. Increase to $50,000+ if you're trading larger position sizes ($500+).</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12">
-              <v-divider class="my-2"></v-divider>
-              <div class="text-subtitle-1 font-weight-bold mb-2">Entry & Exit Rules</div>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.MOMENTUM_THRESHOLD"
-                  label="Momentum Threshold (%)"
-                  type="number"
-                  step="0.1"
-                  hint="Min price increase to trigger buy"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Momentum Threshold</b><br><br>The coin's price must have increased by at least this percentage within the Momentum Window to trigger a buy.<br><br><b>How it works:</b><br>If set to 3% with a 5-minute window, the bot only buys coins that went up 3%+ in the last 5 minutes.<br><br><b>Trade-offs:</b><br>• Higher threshold = Fewer trades, stronger signals, might miss early moves<br>• Lower threshold = More trades, catches early moves, more false signals<br><br><b>Examples:</b><br>• 1%: Very sensitive, many signals (risky)<br>• 2%: Catches most pumps early<br>• 3%: Balanced approach (recommended)<br>• 5%: Only strong moves, fewer trades<br>• 10%: Only major pumps, very selective<br><br><b>Real example:</b> DOGE goes from $0.10 → $0.103 in 5 min = 3% momentum ✓ BUY<br><br><b>Recommendation:</b> Start at 3%, adjust based on how many trades you're getting.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.PROFIT_TARGET"
-                  label="Profit Target (%)"
-                  type="number"
-                  step="0.1"
-                  hint="Target profit before considering exit"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Profit Target</b><br><br>The profit percentage at which to sell (or activate trailing mode).<br><br><b>Without trailing:</b> Sells immediately when profit hits this target.<br><b>With trailing:</b> Activates trailing mode at this level, letting profits run higher.<br><br><b>Examples:</b><br>• 3%: Quick profits, exits early<br>• 5%: Balanced target (recommended)<br>• 8%: Lets winners run more<br>• 10%+: Requires strong moves to hit<br><br><b>Real example with $100 position:</b><br>• 3% target = Sell at $103 (+$3)<br>• 5% target = Sell at $105 (+$5)<br>• 10% target = Sell at $110 (+$10)<br><br><b>Important:</b> Higher targets mean fewer winning trades but larger wins. Lower targets mean more winners but smaller gains.<br><br><b>Recommendation:</b> 5% is a good starting point. If you enable trailing, you can set this lower (3%) as a minimum before letting it ride.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.MOMENTUM_WINDOW"
-                  label="Momentum Window (minutes)"
-                  type="number"
-                  hint="Time period to measure price increase"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Momentum Window</b><br><br>The time period (in minutes) used to calculate price momentum.<br><br><b>How it works:</b><br>Compares current price to price X minutes ago.<br>If Momentum Window = 5, it checks: "Is the price 3%+ higher than 5 minutes ago?"<br><br><b>Trade-offs:</b><br>• Shorter window = Catches fast pumps, more false signals<br>• Longer window = Smoother signals, might enter late<br><br><b>Examples:</b><br>• 3 min: Very fast, catches instant pumps, noisy<br>• 5 min: Quick response (recommended)<br>• 10 min: More reliable signals<br>• 15 min: Smoother, may miss the start<br>• 30 min: Very slow, likely entering too late<br><br><b>Real example:</b><br>SHIB at 12:00 = $0.00001000<br>SHIB at 12:05 = $0.00001030<br>5-min window sees 3% gain → BUY signal!<br><br><b>Recommendation:</b> 5 minutes balances speed with reliability.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.STOP_LOSS"
-                  label="Stop Loss (%)"
-                  type="number"
-                  step="0.5"
-                  hint="Max loss before selling (use negative)"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Stop Loss</b><br><br>Automatically sells when your loss reaches this percentage. <b>MUST be negative!</b><br><br><b>How it works:</b><br>If you buy at $100 with -5% stop loss, it sells if position drops to $95.<br><br><b>Examples:</b><br>• -3%: Tight stop, quick exits, may get stopped out often<br>• -5%: Balanced protection (recommended)<br>• -8%: Gives more room to recover<br>• -10%: Wide stop, larger potential losses<br><br><b>Real example with $100 position:</b><br>• -3% stop = Sells at $97 (lose $3)<br>• -5% stop = Sells at $95 (lose $5)<br>• -10% stop = Sells at $90 (lose $10)<br><br><b>Risk calculation:</b><br>With $100 position and -5% stop:<br>Max loss per trade = $5<br>With 5 positions = Max $25 at risk<br><br><b>⚠️ Common mistake:</b> Don't use positive numbers! -5 is correct, not 5.<br><br><b>Recommendation:</b> -5% for volatile penny cryptos. Tighter stops (-3%) get stopped out more often.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.SCAN_INTERVAL"
-                  label="Scan Interval (seconds)"
-                  type="number"
-                  hint="Time between market scans"
-                  persistent-hint
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Scan Interval</b><br><br>How often (in seconds) the bot scans all markets looking for buy opportunities.<br><br><b>What happens each scan:</b><br>1. Fetches all coin prices from Coinbase<br>2. Calculates momentum for each coin<br>3. Checks your open positions<br>4. Decides whether to buy or sell<br><br><b>Trade-offs:</b><br>• Faster scans = Catch pumps sooner, more API calls<br>• Slower scans = Fewer API calls, might miss fast moves<br><br><b>Examples:</b><br>• 15 sec: Very aggressive, may hit rate limits<br>• 30 sec: Fast and responsive (recommended)<br>• 60 sec: Balanced, good for most cases<br>• 120 sec: Conservative, saves API calls<br><br><b>API rate impact:</b><br>Each scan uses ~2-5 API calls<br>• 30 sec interval = ~120-300 calls/hour<br>• 60 sec interval = ~60-150 calls/hour<br><br><b>Recommendation:</b> 30-60 seconds. Only go faster if you're missing pumps, slower if hitting rate limits.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12">
-              <v-divider class="my-2"></v-divider>
-              <div class="text-subtitle-1 font-weight-bold mb-2">Entry Filters</div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-switch
-                  v-model="settings.VOLUME_SURGE_FILTER"
-                  label="Volume Surge Filter"
-                  color="primary"
-                  hint="Require above-average volume"
-                  persistent-hint
-                ></v-switch>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Volume Surge Filter</b><br><br>Only enter trades when the current volume is significantly above average.<br><br><b>Why it matters:</b><br>Price moves with high volume are more significant and likely to continue. Low-volume moves often reverse quickly.<br><br><b>How it works:</b><br>Compares current candle volume to the average of recent candles. Only buys if current volume exceeds the threshold.<br><br><b>Example:</b><br>If threshold = 150% and avg volume = 100k:<br>• Current volume 120k (120%) → Skip<br>• Current volume 160k (160%) → BUY ✓<br><br><b>Recommendation:</b> Enable this filter to avoid low-conviction trades.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.VOLUME_SURGE_THRESHOLD"
-                  label="Volume Threshold (%)"
-                  type="number"
-                  step="10"
-                  hint="Min volume vs average (e.g., 150 = 1.5x)"
-                  persistent-hint
-                  :disabled="!settings.VOLUME_SURGE_FILTER"
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Volume Surge Threshold</b><br><br>The minimum volume percentage compared to average required to enter a trade.<br><br><b>Examples:</b><br>• 100% = At least average volume (no filter)<br>• 150% = 1.5x average volume (recommended)<br>• 200% = 2x average volume (strong confirmation)<br>• 300% = 3x average volume (very selective)<br><br><b>Trade-offs:</b><br>• Lower threshold = More trades, weaker signals<br>• Higher threshold = Fewer trades, stronger confirmation<br><br><b>Recommendation:</b> 150% provides good balance between trade frequency and signal quality.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <!-- Placeholder for alignment -->
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-switch
-                  v-model="settings.RSI_FILTER"
-                  label="RSI Entry Filter"
-                  color="primary"
-                  hint="Only enter within RSI range"
-                  persistent-hint
-                ></v-switch>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>RSI Entry Filter</b><br><br>Only enter trades when RSI (Relative Strength Index) is within a specified range. Helps avoid overbought conditions.<br><br><b>What is RSI?</b><br>RSI measures momentum on a 0-100 scale:<br>• 0-30: Oversold (might bounce)<br>• 30-70: Neutral<br>• 70-100: Overbought (might drop)<br><br><b>Why filter by RSI:</b><br>Buying at RSI 85+ often means you're buying the top. The coin has already pumped hard and may reverse soon.<br><br><b>Recommendation:</b> Enable with range 30-75 to catch momentum while avoiding extreme overbought conditions.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.RSI_MIN"
-                  label="RSI Min"
-                  type="number"
-                  hint="Minimum RSI to enter"
-                  persistent-hint
-                  :disabled="!settings.RSI_FILTER"
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>RSI Minimum</b><br><br>Don't enter trades if RSI is below this value.<br><br><b>Why set a minimum?</b><br>While oversold (low RSI) coins might seem like good buys, in a momentum strategy we want coins that are already moving up, not falling knives.<br><br><b>Examples:</b><br>• 0: No minimum (catch oversold bounces)<br>• 30: Avoid deeply oversold (still falling)<br>• 40: Require some upward momentum<br>• 60: Only enter strong uptrends<br><br><b>Recommendation:</b> 30-40 to avoid catching falling knives while still entering early in moves.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.RSI_MAX"
-                  label="RSI Max"
-                  type="number"
-                  hint="Maximum RSI to enter"
-                  persistent-hint
-                  :disabled="!settings.RSI_FILTER"
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>RSI Maximum</b><br><br>Don't enter trades if RSI is above this value (overbought).<br><br><b>Why set a maximum?</b><br>High RSI means the coin has already pumped significantly. Buying at RSI 85+ often means buying the top just before a reversal.<br><br><b>Examples:</b><br>• 100: No maximum (buy any momentum)<br>• 80: Avoid extremely overbought<br>• 75: Conservative overbought filter (recommended)<br>• 70: Strict overbought filter<br><br><b>Trade-off:</b><br>Lower max = Miss some big pumps, but avoid more reversals<br>Higher max = Catch more of the pump, risk buying tops<br><br><b>Recommendation:</b> 75-80 to catch strong moves while avoiding the most extreme overbought conditions.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12">
-              <v-divider class="my-2"></v-divider>
-              <div class="text-subtitle-1 font-weight-bold mb-2">Trailing Profit</div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-switch
-                  v-model="settings.ENABLE_TRAILING_PROFIT"
-                  label="Enable Trailing"
-                  color="primary"
-                  hint="Let winners ride after target"
-                  persistent-hint
-                ></v-switch>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Enable Trailing Profit</b><br><br>Instead of selling at the profit target, lets winners keep running and trails the price up.<br><br><b>How it works:</b><br>1. Position hits profit target (e.g., 5%)<br>2. Instead of selling, trailing mode activates<br>3. Bot tracks the highest price (peak)<br>4. Sells only when price drops X% from peak<br><br><b>Example WITHOUT trailing:</b><br>Buy at $1.00, target 5%<br>Price hits $1.05 → SELL at 5% profit<br>Price continues to $1.20 → You missed 15% more!<br><br><b>Example WITH trailing (2% trail):</b><br>Buy at $1.00, target 5%<br>Price hits $1.05 → Trailing activates<br>Price rises to $1.15 → New peak tracked<br>Price drops to $1.127 (2% from peak) → SELL at 12.7%!<br><br><b>When to use:</b><br>✓ Enable if you want to catch big pumps<br>✗ Disable if you prefer guaranteed smaller profits<br><br><b>Recommendation:</b> Enable it! Penny cryptos often pump 10-20%+ and trailing captures those moves.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.TRAILING_STOP_PERCENT"
-                  label="Trailing Stop (%)"
-                  type="number"
-                  step="0.1"
-                  hint="Sell when drops this much from peak"
-                  persistent-hint
-                  :disabled="!settings.ENABLE_TRAILING_PROFIT"
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Trailing Stop Percentage</b><br><br>Once trailing mode is active, sell when price drops this much from its peak.<br><br><b>How it works:</b><br>Bot constantly tracks the highest price since trailing started. When current price drops X% from that peak, it sells.<br><br><b>Trade-offs:</b><br>• Tighter stop (1-2%) = Locks in more profit, exits sooner<br>• Wider stop (3-5%) = Rides longer, risks giving back gains<br><br><b>Detailed example with 2% trailing stop:</b><br>• Buy at $1.00<br>• Price hits $1.05 (5%) → Trailing starts<br>• Price rises to $1.10 → Peak = $1.10<br>• Price rises to $1.15 → Peak = $1.15<br>• Price drops to $1.13 (1.7% from peak) → Still holding<br>• Price drops to $1.127 (2% from peak) → SELL!<br>• Final profit: 12.7% instead of 5%<br><br><b>Examples:</b><br>• 1%: Very tight, quick exits<br>• 2%: Good balance (recommended)<br>• 3%: More room, risks giving back gains<br>• 5%: Very wide, for major pump riding<br><br><b>Recommendation:</b> 2% works well for most penny crypto volatility.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.MIN_MOMENTUM_TO_RIDE"
-                  label="Min Momentum to Ride (%)"
-                  type="number"
-                  step="0.1"
-                  hint="Min momentum to keep riding"
-                  persistent-hint
-                  :disabled="!settings.ENABLE_TRAILING_PROFIT"
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Minimum Momentum to Ride</b><br><br>Exit trailing mode early if the coin's momentum drops below this level, even if trailing stop hasn't triggered.<br><br><b>Why this matters:</b><br>Sometimes a pump loses steam gradually rather than dropping sharply. This setting catches "dying momentum" and sells before a reversal.<br><br><b>How it works:</b><br>While in trailing mode, bot checks recent momentum.<br>If momentum falls below this %, it sells immediately.<br><br><b>Example:</b><br>• You're riding a coin at +8% profit<br>• Trailing stop is 2% (would sell at +6%)<br>• But momentum drops to 0.3% (below 1% threshold)<br>• Bot sells NOW at +8% instead of waiting for -2% drop<br><br><b>Trade-offs:</b><br>• Higher value = Exits sooner when pump slows<br>• Lower value = Rides longer, trusts trailing stop more<br><br><b>Examples:</b><br>• 0.5%: Very patient, relies mostly on trailing stop<br>• 1%: Balanced (recommended)<br>• 2%: Quick exit when momentum fades<br><br><b>Recommendation:</b> 1% catches momentum exhaustion while letting strong moves continue.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-          </v-row>
-        </v-card-text>
-        <v-divider></v-divider>
-        <v-card-actions>
-          <v-btn color="grey" variant="text" @click="loadSettings">Reset to Current</v-btn>
-          <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="showSettingsDialog = false">Cancel</v-btn>
-          <v-btn color="primary" variant="flat" @click="doSaveSettings" :loading="settingsLoading">
-            <v-icon start icon="mdi-check"></v-icon>
-            {{ botStatus.running ? 'Apply & Restart' : 'Save Settings' }}
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
     <!-- Main Content -->
     <v-main>
       <router-view></router-view>
@@ -664,6 +234,7 @@ const routes = [
   { path: '/trades', name: 'TradeHistory', meta: { icon: 'mdi-history', title: 'Trade History' } },
   { path: '/activity', name: 'Activity', meta: { icon: 'mdi-bell', title: 'Recent Activity' } },
   { path: '/logs', name: 'Logs', meta: { icon: 'mdi-console', title: 'Bot Logs' } },
+  { path: '/settings', name: 'Settings', meta: { icon: 'mdi-cog', title: 'Settings' } },
   { path: '/help', name: 'Help', meta: { icon: 'mdi-help-circle', title: 'Help & Info' } },
 ]
 
@@ -677,12 +248,9 @@ const {
   appVersion,
   updateLogs,
   botStatus,
-  settings,
   startBot,
   stopBot,
   resetPortfolio,
-  loadSettings,
-  saveSettings,
   refreshData,
   initialize,
   cleanup,
@@ -701,9 +269,7 @@ const handleResize = () => {
     drawer.value = false
   }
 }
-const settingsLoading = ref(false)
 const showResetDialog = ref(false)
-const showSettingsDialog = ref(false)
 const showSnackbar = ref(false)
 const snackbarText = ref('')
 
@@ -794,25 +360,6 @@ const doResetPortfolio = async () => {
   }
 }
 
-const doSaveSettings = async () => {
-  settingsLoading.value = true
-  try {
-    const res = await saveSettings()
-    showSettingsDialog.value = false
-    if (res.restarted) {
-      snackbarText.value = '✅ Settings saved - Bot restarting...'
-    } else {
-      snackbarText.value = '✅ Settings saved successfully'
-    }
-    showSnackbar.value = true
-  } catch (error) {
-    snackbarText.value = '❌ Failed to save settings'
-    showSnackbar.value = true
-  } finally {
-    settingsLoading.value = false
-  }
-}
-
 onMounted(() => {
   initialize()
   window.addEventListener('resize', handleResize)
@@ -867,16 +414,5 @@ onUnmounted(() => {
 <style>
 .v-navigation-drawer--rail .v-list-item-title {
   opacity: 0;
-}
-
-.setting-field {
-  position: relative;
-}
-
-.info-icon {
-  position: absolute;
-  top: -4px;
-  right: -4px;
-  z-index: 1;
 }
 </style>

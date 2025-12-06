@@ -623,7 +623,14 @@ onMounted(() => {
   const savedLayout = localStorage.getItem('dashboardLayout')
   if (savedLayout) {
     try {
-      layout.value = JSON.parse(savedLayout)
+      const parsed = JSON.parse(savedLayout)
+      // Check if it's the old tall layout (last item y was 30) or has different number of items
+      const isOldLayout = parsed.some(item => item.y >= 20) || parsed.length !== defaultLayout.length
+      if (isOldLayout) {
+        layout.value = JSON.parse(JSON.stringify(defaultLayout))
+      } else {
+        layout.value = parsed
+      }
     } catch (e) {
       layout.value = JSON.parse(JSON.stringify(defaultLayout))
     }
@@ -638,16 +645,16 @@ onUnmounted(() => {
 
 // Default layout
 const defaultLayout = [
-  { x: 0, y: 0, w: 3, h: 4, i: '0' }, // Total Value
-  { x: 3, y: 0, w: 3, h: 4, i: '1' }, // Available Cash
-  { x: 6, y: 0, w: 3, h: 4, i: '2' }, // Total Profit
-  { x: 9, y: 0, w: 3, h: 4, i: '3' }, // Win Rate
-  { x: 0, y: 4, w: 12, h: 10, i: '4' }, // Open Positions
-  { x: 0, y: 14, w: 6, h: 8, i: '5' }, // Top Performers
-  { x: 6, y: 14, w: 6, h: 8, i: '6' }, // Worst Performers
-  { x: 0, y: 22, w: 6, h: 8, i: '7' }, // Recent Trades
-  { x: 6, y: 22, w: 6, h: 8, i: '8' }, // Recent Activity
-  { x: 0, y: 30, w: 12, h: 8, i: '9' }, // Bot Logs
+  { x: 0, y: 0, w: 3, h: 3, i: '0' }, // Total Value
+  { x: 3, y: 0, w: 3, h: 3, i: '1' }, // Available Cash
+  { x: 6, y: 0, w: 3, h: 3, i: '2' }, // Total Profit
+  { x: 9, y: 0, w: 3, h: 3, i: '3' }, // Win Rate
+  { x: 0, y: 3, w: 8, h: 10, i: '4' }, // Open Positions
+  { x: 8, y: 3, w: 4, h: 10, i: '9' }, // Bot Logs
+  { x: 0, y: 13, w: 3, h: 6, i: '5' }, // Top Performers
+  { x: 3, y: 13, w: 3, h: 6, i: '6' }, // Worst Performers
+  { x: 6, y: 13, w: 3, h: 6, i: '7' }, // Recent Trades
+  { x: 9, y: 13, w: 3, h: 6, i: '8' }, // Recent Activity
 ]
 
 const layout = ref([])

@@ -5,6 +5,7 @@ import TradeHistory from '../views/TradeHistory.vue'
 import Activity from '../views/Activity.vue'
 import Logs from '../views/Logs.vue'
 import BotStatus from '../views/BotStatus.vue'
+import Settings from '../views/Settings.vue'
 import Help from '../views/Help.vue'
 
 const routes = [
@@ -43,6 +44,12 @@ const routes = [
     name: 'Logs',
     component: Logs,
     meta: { icon: 'mdi-console', title: 'Bot Logs' }
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: Settings,
+    meta: { icon: 'mdi-cog', title: 'Settings' }
   },
   {
     path: '/help',
