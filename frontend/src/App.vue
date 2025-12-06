@@ -378,6 +378,99 @@
             
             <v-col cols="12">
               <v-divider class="my-2"></v-divider>
+              <div class="text-subtitle-1 font-weight-bold mb-2">Entry Filters</div>
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <v-tooltip location="top" max-width="400">
+                <template v-slot:activator="{ props }">
+                  <v-switch
+                    v-bind="props"
+                    v-model="settings.VOLUME_SURGE_FILTER"
+                    label="Volume Surge Filter"
+                    color="primary"
+                    hint="Require above-average volume"
+                    persistent-hint
+                  ></v-switch>
+                </template>
+                <span><b>Volume Surge Filter</b><br><br>Only enter trades when the current volume is significantly above average.<br><br><b>Why it matters:</b><br>Price moves with high volume are more significant and likely to continue. Low-volume moves often reverse quickly.<br><br><b>How it works:</b><br>Compares current candle volume to the average of recent candles. Only buys if current volume exceeds the threshold.<br><br><b>Example:</b><br>If threshold = 150% and avg volume = 100k:<br>• Current volume 120k (120%) → Skip<br>• Current volume 160k (160%) → BUY ✓<br><br><b>Recommendation:</b> Enable this filter to avoid low-conviction trades.</span>
+              </v-tooltip>
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <v-tooltip location="top" max-width="400">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    v-model.number="settings.VOLUME_SURGE_THRESHOLD"
+                    label="Volume Threshold (%)"
+                    type="number"
+                    step="10"
+                    hint="Min volume vs average (e.g., 150 = 1.5x)"
+                    persistent-hint
+                    :disabled="!settings.VOLUME_SURGE_FILTER"
+                  ></v-text-field>
+                </template>
+                <span><b>Volume Surge Threshold</b><br><br>The minimum volume percentage compared to average required to enter a trade.<br><br><b>Examples:</b><br>• 100% = At least average volume (no filter)<br>• 150% = 1.5x average volume (recommended)<br>• 200% = 2x average volume (strong confirmation)<br>• 300% = 3x average volume (very selective)<br><br><b>Trade-offs:</b><br>• Lower threshold = More trades, weaker signals<br>• Higher threshold = Fewer trades, stronger confirmation<br><br><b>Recommendation:</b> 150% provides good balance between trade frequency and signal quality.</span>
+              </v-tooltip>
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <!-- Placeholder for alignment -->
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <v-tooltip location="top" max-width="400">
+                <template v-slot:activator="{ props }">
+                  <v-switch
+                    v-bind="props"
+                    v-model="settings.RSI_FILTER"
+                    label="RSI Entry Filter"
+                    color="primary"
+                    hint="Only enter within RSI range"
+                    persistent-hint
+                  ></v-switch>
+                </template>
+                <span><b>RSI Entry Filter</b><br><br>Only enter trades when RSI (Relative Strength Index) is within a specified range. Helps avoid overbought conditions.<br><br><b>What is RSI?</b><br>RSI measures momentum on a 0-100 scale:<br>• 0-30: Oversold (might bounce)<br>• 30-70: Neutral<br>• 70-100: Overbought (might drop)<br><br><b>Why filter by RSI:</b><br>Buying at RSI 85+ often means you're buying the top. The coin has already pumped hard and may reverse soon.<br><br><b>Recommendation:</b> Enable with range 30-75 to catch momentum while avoiding extreme overbought conditions.</span>
+              </v-tooltip>
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <v-tooltip location="top" max-width="400">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    v-model.number="settings.RSI_MIN"
+                    label="RSI Min"
+                    type="number"
+                    hint="Minimum RSI to enter"
+                    persistent-hint
+                    :disabled="!settings.RSI_FILTER"
+                  ></v-text-field>
+                </template>
+                <span><b>RSI Minimum</b><br><br>Don't enter trades if RSI is below this value.<br><br><b>Why set a minimum?</b><br>While oversold (low RSI) coins might seem like good buys, in a momentum strategy we want coins that are already moving up, not falling knives.<br><br><b>Examples:</b><br>• 0: No minimum (catch oversold bounces)<br>• 30: Avoid deeply oversold (still falling)<br>• 40: Require some upward momentum<br>• 60: Only enter strong uptrends<br><br><b>Recommendation:</b> 30-40 to avoid catching falling knives while still entering early in moves.</span>
+              </v-tooltip>
+            </v-col>
+            
+            <v-col cols="12" md="4">
+              <v-tooltip location="top" max-width="400">
+                <template v-slot:activator="{ props }">
+                  <v-text-field
+                    v-bind="props"
+                    v-model.number="settings.RSI_MAX"
+                    label="RSI Max"
+                    type="number"
+                    hint="Maximum RSI to enter"
+                    persistent-hint
+                    :disabled="!settings.RSI_FILTER"
+                  ></v-text-field>
+                </template>
+                <span><b>RSI Maximum</b><br><br>Don't enter trades if RSI is above this value (overbought).<br><br><b>Why set a maximum?</b><br>High RSI means the coin has already pumped significantly. Buying at RSI 85+ often means buying the top just before a reversal.<br><br><b>Examples:</b><br>• 100: No maximum (buy any momentum)<br>• 80: Avoid extremely overbought<br>• 75: Conservative overbought filter (recommended)<br>• 70: Strict overbought filter<br><br><b>Trade-off:</b><br>Lower max = Miss some big pumps, but avoid more reversals<br>Higher max = Catch more of the pump, risk buying tops<br><br><b>Recommendation:</b> 75-80 to catch strong moves while avoiding the most extreme overbought conditions.</span>
+              </v-tooltip>
+            </v-col>
+            
+            <v-col cols="12">
+              <v-divider class="my-2"></v-divider>
               <div class="text-subtitle-1 font-weight-bold mb-2">Trailing Profit</div>
             </v-col>
             

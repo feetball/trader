@@ -220,10 +220,23 @@ export class MarketScanner {
           const momentum = await this.calculateMomentum(coin.productId, price);
           
           if (momentum && momentum.score >= config.MOMENTUM_THRESHOLD) {
-            // Skip if RSI is overbought
-            if (momentum.rsi !== null && momentum.rsi > 75) {
-              console.log(`[STATUS] ⚠️ Skipping ${coin.symbol}: RSI ${momentum.rsi.toFixed(0)} (overbought)`);
-              return null;
+            // RSI filter - skip if RSI is outside configured range
+            if (config.RSI_FILTER && momentum.rsi !== null) {
+              const rsiMin = config.RSI_MIN ?? 0;
+              const rsiMax = config.RSI_MAX ?? 100;
+              if (momentum.rsi < rsiMin || momentum.rsi > rsiMax) {
+                console.log(`[STATUS] ⚠️ Skipping ${coin.symbol}: RSI ${momentum.rsi.toFixed(0)} (outside ${rsiMin}-${rsiMax} range)`);
+                return null;
+              }
+            }
+            
+            // Volume surge filter - require volume to meet threshold
+            if (config.VOLUME_SURGE_FILTER && momentum.volumeSurge) {
+              const threshold = (config.VOLUME_SURGE_THRESHOLD ?? 150) / 100;
+              if (momentum.volumeSurge.ratio < threshold) {
+                console.log(`[STATUS] ⚠️ Skipping ${coin.symbol}: Volume ${(momentum.volumeSurge.ratio * 100).toFixed(0)}% (need ${config.VOLUME_SURGE_THRESHOLD}%+)`);
+                return null;
+              }
             }
             
             return {

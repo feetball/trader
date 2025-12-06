@@ -427,6 +427,11 @@ app.get('/api/settings', async (req, res) => {
       ENABLE_TRAILING_PROFIT: /ENABLE_TRAILING_PROFIT:\s*(true|false)/,
       TRAILING_STOP_PERCENT: /TRAILING_STOP_PERCENT:\s*([\d.]+)/,
       MIN_MOMENTUM_TO_RIDE: /MIN_MOMENTUM_TO_RIDE:\s*([\d.]+)/,
+      VOLUME_SURGE_FILTER: /VOLUME_SURGE_FILTER:\s*(true|false)/,
+      VOLUME_SURGE_THRESHOLD: /VOLUME_SURGE_THRESHOLD:\s*(\d+)/,
+      RSI_FILTER: /RSI_FILTER:\s*(true|false)/,
+      RSI_MIN: /RSI_MIN:\s*(\d+)/,
+      RSI_MAX: /RSI_MAX:\s*(\d+)/,
     };
 
     for (const [key, pattern] of Object.entries(patterns)) {
@@ -497,6 +502,15 @@ export const config = {
   ENABLE_TRAILING_PROFIT: ${newSettings.ENABLE_TRAILING_PROFIT ?? true},
   TRAILING_STOP_PERCENT: ${newSettings.TRAILING_STOP_PERCENT ?? 1.0},
   MIN_MOMENTUM_TO_RIDE: ${newSettings.MIN_MOMENTUM_TO_RIDE ?? 0.5},
+  
+  // Volume surge filter - require volume to be X% of average (e.g., 150 = 1.5x average)
+  VOLUME_SURGE_FILTER: ${newSettings.VOLUME_SURGE_FILTER ?? true},
+  VOLUME_SURGE_THRESHOLD: ${newSettings.VOLUME_SURGE_THRESHOLD ?? 150},
+  
+  // RSI entry filter - only enter if RSI is within this range (avoid overbought)
+  RSI_FILTER: ${newSettings.RSI_FILTER ?? true},
+  RSI_MIN: ${newSettings.RSI_MIN ?? 60},
+  RSI_MAX: ${newSettings.RSI_MAX ?? 80},
 };
 `;
 
@@ -1088,7 +1102,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.12                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.13                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

@@ -10,7 +10,7 @@ export const config = {
   PROFIT_TARGET: 1.5,
   
   // Minimum price change % in the last period to trigger a buy signal
-  MOMENTUM_THRESHOLD: 0.75,
+  MOMENTUM_THRESHOLD: 1,
   
   // Time window for momentum calculation in minutes
   MOMENTUM_WINDOW: 3,
@@ -36,6 +36,12 @@ export const config = {
   TRAILING_STOP_PERCENT: 0.4,
   MIN_MOMENTUM_TO_RIDE: 0.5,
   
-  // Trading fees (Coinbase Advanced Trade taker fee ~0.6%)
-  TRADING_FEE_PERCENT: 0.6,
+  // Volume surge filter - require volume to be X% of average (e.g., 150 = 1.5x average)
+  VOLUME_SURGE_FILTER: true,
+  VOLUME_SURGE_THRESHOLD: 150,
+  
+  // RSI entry filter - only enter if RSI is within this range (avoid overbought)
+  RSI_FILTER: true,
+  RSI_MIN: 60,
+  RSI_MAX: 80,
 };

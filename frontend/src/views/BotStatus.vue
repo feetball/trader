@@ -190,6 +190,18 @@
                   <v-list-item-subtitle>{{ settings.ENABLE_TRAILING_PROFIT ? 'Enabled' : 'Disabled' }}</v-list-item-subtitle>
                 </v-list-item>
               </v-col>
+              <v-col cols="6" md="3">
+                <v-list-item class="px-0">
+                  <v-list-item-title>Volume Surge</v-list-item-title>
+                  <v-list-item-subtitle>{{ settings.VOLUME_SURGE_FILTER ? `≥${settings.VOLUME_SURGE_THRESHOLD}%` : 'Disabled' }}</v-list-item-subtitle>
+                </v-list-item>
+              </v-col>
+              <v-col cols="6" md="3">
+                <v-list-item class="px-0">
+                  <v-list-item-title>RSI Filter</v-list-item-title>
+                  <v-list-item-subtitle>{{ settings.RSI_FILTER ? `${settings.RSI_MIN}-${settings.RSI_MAX}` : 'Disabled' }}</v-list-item-subtitle>
+                </v-list-item>
+              </v-col>
             </v-row>
           </v-card-text>
         </v-card>
