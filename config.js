@@ -1,47 +1,21 @@
-// Trading bot configuration
+// Trading bot configuration (auto-generated from user settings)
 export const config = {
-  // Paper trading mode (true = simulated trades, false = real trades)
   PAPER_TRADING: true,
-  
-  // Maximum price threshold for coins to trade
   MAX_PRICE: 1,
-  
-  // Profit target percentage (lowered for faster trades)
-  PROFIT_TARGET: 1.2,
-  
-  // Minimum price change % in the last period to trigger a buy signal
-  MOMENTUM_THRESHOLD: 0.8,
-  
-  // Time window for momentum calculation in minutes
-  MOMENTUM_WINDOW: 3,
-  
-  // How often to scan markets (seconds)
-  // WebSocket provides real-time prices, so fast scans are possible
-  SCAN_INTERVAL: 5,
-  
-  // Position size per trade (USD)
+  PROFIT_TARGET: 1.8,
+  MOMENTUM_THRESHOLD: 1.4,
+  MOMENTUM_WINDOW: 4,
+  SCAN_INTERVAL: 10,
   POSITION_SIZE: 500,
-  
-  // Maximum number of concurrent positions
-  MAX_POSITIONS: 30,
-  
-  // Minimum 24h volume to consider (USD)
-  MIN_VOLUME: 25000,
-  
-  // Stop loss percentage (tighter for faster cuts)
-  STOP_LOSS: -1,
-  
-  // Trailing profit settings - let winners ride while climbing
+  MAX_POSITIONS: 10,
+  MIN_VOLUME: 150000,
+  STOP_LOSS: -2.2,
   ENABLE_TRAILING_PROFIT: true,
-  TRAILING_STOP_PERCENT: 0.2,
-  MIN_MOMENTUM_TO_RIDE: 0.5,
-  
-  // Volume surge filter - require volume to be X% of average (e.g., 150 = 1.5x average)
+  TRAILING_STOP_PERCENT: 0.7,
+  MIN_MOMENTUM_TO_RIDE: 0.7,
   VOLUME_SURGE_FILTER: true,
-  VOLUME_SURGE_THRESHOLD: 120,
-  
-  // RSI entry filter - only enter if RSI is within this range (avoid overbought)
+  VOLUME_SURGE_THRESHOLD: 125,
   RSI_FILTER: true,
-  RSI_MIN: 50,
-  RSI_MAX: 80,
+  RSI_MIN: 55,
+  RSI_MAX: 77,
 };

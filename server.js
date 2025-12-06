@@ -377,6 +377,9 @@ app.post('/api/portfolio/reset', async (req, res) => {
       botStatus.apiCalls = 0;
       botStatus.logs = [];
       
+      // Broadcast status update immediately
+      broadcast('botStatus', botStatus);
+      
       botProcess = spawn('node', ['bot-daemon.js'], {
         cwd: process.cwd(),
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -398,6 +401,8 @@ app.post('/api/portfolio/reset', async (req, res) => {
             addLog(line.replace('[STATUS]', '').trim());
           }
         });
+        // Broadcast after processing output
+        broadcast('botStatus', botStatus);
       });
       
       botProcess.stderr.on('data', (data) => {
@@ -408,6 +413,7 @@ app.post('/api/portfolio/reset', async (req, res) => {
         botProcess = null;
         botStatus.running = false;
         botStatus.message = `Bot stopped (exit code: ${code})`;
+        broadcast('botStatus', botStatus);
       });
       
       console.log('[RESET] Bot started after portfolio reset');
@@ -1070,7 +1076,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.0                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.1                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
