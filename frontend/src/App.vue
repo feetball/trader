@@ -164,13 +164,20 @@
               </div>
             </v-alert>
           </div>
-          <div v-if="updateInProgress" class="text-center py-4">
+          <div v-if="updateInProgress && !updateFailed" class="text-center py-4">
             <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
             <div class="mt-4 text-h6">Updating...</div>
             <div class="text-caption">Please wait. The page will reload when complete.</div>
           </div>
 
-          <div v-if="updateInProgress || updateLogs.length" class="mt-4">
+          <div v-if="updateFailed" class="mt-4">
+            <v-alert type="error" class="mb-4">
+              <div class="font-weight-bold">Update Failed</div>
+              <div>{{ updateInfo.error || 'An error occurred during the update.' }}</div>
+            </v-alert>
+          </div>
+
+          <div v-if="updateInProgress || updateFailed || updateLogs.length" class="mt-4">
             <div class="text-subtitle-2 mb-1">Update log</div>
             <v-sheet color="grey-darken-4" class="pa-2 rounded" style="max-height: 220px; overflow-y: auto; font-family: monospace; font-size: 12px;">
               <div v-if="!updateLogs.length" class="text-medium-emphasis text-caption">Waiting for update output...</div>
@@ -178,17 +185,35 @@
             </v-sheet>
           </div>
         </v-card-text>
-        <v-card-actions v-if="!updateInProgress">
+        <v-card-actions v-if="!updateInProgress || updateFailed">
           <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="showUpdateDialog = false">Close</v-btn>
+          <v-btn v-if="!updateFailed" color="grey" variant="text" @click="showUpdateDialog = false">Close</v-btn>
           <v-btn 
-            v-if="updateInfo.updateAvailable" 
+            v-if="updateInfo.updateAvailable && !updateFailed" 
             color="primary" 
             variant="flat" 
             @click="applyUpdate"
             :loading="updateInProgress"
           >
             Update Now
+          </v-btn>
+          <v-btn 
+            v-if="updateFailed" 
+            color="warning" 
+            variant="flat" 
+            @click="retryUpdate"
+          >
+            <v-icon start icon="mdi-refresh"></v-icon>
+            Retry Update
+          </v-btn>
+          <v-btn 
+            v-if="updateFailed" 
+            color="primary" 
+            variant="flat" 
+            @click="forceReload"
+          >
+            <v-icon start icon="mdi-reload"></v-icon>
+            Reload App
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -277,6 +302,7 @@ const snackbarText = ref('')
 const showUpdateDialog = ref(false)
 const checkingUpdates = ref(false)
 const updateInProgress = ref(false)
+const updateFailed = ref(false)
 const updateAvailable = ref(false)
 const updateInfo = ref({
   currentVersion: '',
@@ -314,30 +340,58 @@ const applyUpdate = async () => {
   
   clearUpdateLogs()
   updateInProgress.value = true
+  updateFailed.value = false
+  updateInfo.value.error = null
   
   try {
     await fetch(`${API_URL}/updates/apply`, { method: 'POST' })
     
     // Wait for server to restart, then reload page
-    setTimeout(() => {
-      const checkServer = async () => {
-        try {
-          const response = await fetch(`${API_URL}/version`)
-          if (response.ok) {
-            window.location.reload()
+    // Set a timeout - if server doesn't come back in 2 minutes, show error
+    let attempts = 0
+    const maxAttempts = 60 // 2 minutes (2s intervals)
+    
+    const checkServer = async () => {
+      attempts++
+      try {
+        const response = await fetch(`${API_URL}/version`)
+        if (response.ok) {
+          window.location.reload()
+        } else {
+          if (attempts >= maxAttempts) {
+            updateFailed.value = true
+            updateInProgress.value = false
+            updateInfo.value.error = 'Server did not respond after update. It may still be restarting.'
           } else {
             setTimeout(checkServer, 2000)
           }
-        } catch {
+        }
+      } catch {
+        if (attempts >= maxAttempts) {
+          updateFailed.value = true
+          updateInProgress.value = false
+          updateInfo.value.error = 'Server did not respond after update. It may still be restarting.'
+        } else {
           setTimeout(checkServer, 2000)
         }
       }
-      checkServer()
-    }, 5000)
+    }
+    
+    setTimeout(checkServer, 5000)
   } catch (error) {
     updateInfo.value.error = error.message
+    updateFailed.value = true
     updateInProgress.value = false
   }
+}
+
+const retryUpdate = () => {
+  updateFailed.value = false
+  applyUpdate()
+}
+
+const forceReload = () => {
+  window.location.reload()
 }
 
 const formatLastCheck = (timestamp) => {
