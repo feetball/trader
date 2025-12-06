@@ -933,11 +933,9 @@ export const config = {
           updateLog('[UPDATE] User settings restored successfully!');
         }
         
-        // Save flag to restart bot after server restarts
-        if (wasRunning) {
-          fsSync.writeFileSync(path.join(process.cwd(), '.restart-bot'), 'true');
-          updateLog('[UPDATE] Bot will be restarted after update.');
-        }
+        // Save flag to start bot after server restarts (always start after upgrade)
+        fsSync.writeFileSync(path.join(process.cwd(), '.restart-bot'), 'true');
+        updateLog('[UPDATE] Bot will be started after update.');
         
         updateLog('[UPDATE] ✅ Update complete! Restarting server...');
         
@@ -1102,7 +1100,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.20                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.21                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
