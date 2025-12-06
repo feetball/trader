@@ -187,6 +187,9 @@ const refreshLivePositions = async () => {
   }
 }
 
+// Track if an update is in progress - reload when server comes back up
+let updateInProgress = false
+
 // WebSocket connection
 function connectWebSocket() {
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -199,6 +202,15 @@ function connectWebSocket() {
   ws.onopen = () => {
     console.log('[WS] Connected to server')
     wsConnected.value = true
+    
+    // If we were waiting for an update to complete, reload the page now
+    if (updateInProgress) {
+      console.log('[WS] Server is back after update, reloading page...')
+      updateLogs.value.push('[UPDATE] Server is back online, reloading...')
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
+    }
   }
   
   ws.onmessage = (event) => {
@@ -211,11 +223,13 @@ function connectWebSocket() {
       } else if (type === 'updateLog') {
         updateLogs.value.push(data.message)
       } else if (type === 'updateComplete') {
-        // Server is about to restart after update - reload page after brief delay
-        updateLogs.value.push('[UPDATE] Server restarting, reloading page...')
+        // Server is about to restart after update - set flag and reload when reconnected
+        updateInProgress = true
+        updateLogs.value.push('[UPDATE] Server restarting, will reload when back online...')
+        // Also try immediate reload after delay as fallback
         setTimeout(() => {
           window.location.reload()
-        }, 2000)
+        }, 3000)
       } else if (type === 'portfolio') {
         if (data.positions) {
           positions.value = data.positions
@@ -239,7 +253,9 @@ function connectWebSocket() {
   ws.onclose = () => {
     console.log('[WS] Disconnected, reconnecting in 3s...')
     wsConnected.value = false
-    reconnectTimeout = setTimeout(connectWebSocket, 3000)
+    // Use shorter reconnect time if update is in progress
+    const delay = updateInProgress ? 1000 : 3000
+    reconnectTimeout = setTimeout(connectWebSocket, delay)
   }
   
   ws.onerror = (error) => {

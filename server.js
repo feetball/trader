@@ -1100,7 +1100,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.21                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.22                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
