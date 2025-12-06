@@ -44,4 +44,7 @@ export const config = {
   RSI_FILTER: true,
   RSI_MIN: 60,
   RSI_MAX: 80,
+  
+  // Trading fee percentage (used for paper trading net profit calculations)
+  TRADING_FEE_PERCENT: 0.6,
 };
