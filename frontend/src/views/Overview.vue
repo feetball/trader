@@ -197,9 +197,9 @@
         class="grid-item-card"
       >
         <!-- Item 0: Total Value -->
-        <v-card v-if="item.i === '0'" class="h-100">
+        <v-card v-if="item.i === '0'" class="h-100 d-flex align-center">
           <v-card-text>
-            <div class="text-overline mb-1">Total Value</div>
+            <div class="text-overline">Total Value</div>
             <div class="text-h4 mb-1">
               ${{ portfolio.totalValue?.toFixed(2) || '0.00' }}
             </div>
@@ -214,9 +214,9 @@
         </v-card>
 
         <!-- Item 1: Available Cash -->
-        <v-card v-if="item.i === '1'" class="h-100">
+        <v-card v-if="item.i === '1'" class="h-100 d-flex align-center">
           <v-card-text>
-            <div class="text-overline mb-1">Available Cash</div>
+            <div class="text-overline">Available Cash</div>
             <div class="text-h4 mb-1">
               ${{ portfolio.cash?.toFixed(2) || '0.00' }}
             </div>
@@ -227,9 +227,9 @@
         </v-card>
 
         <!-- Item 2: Total Profit -->
-        <v-card v-if="item.i === '2'" class="h-100">
+        <v-card v-if="item.i === '2'" class="h-100 d-flex align-center">
           <v-card-text>
-            <div class="text-overline mb-1">Total Profit</div>
+            <div class="text-overline">Total Profit</div>
             <div class="text-h4 mb-1" :class="(portfolio.totalNetProfit ?? portfolio.totalProfit) >= 0 ? 'text-success' : 'text-error'">
               ${{ (portfolio.totalNetProfit ?? portfolio.totalProfit)?.toFixed(2) || '0.00' }}
             </div>
@@ -241,9 +241,9 @@
         </v-card>
 
         <!-- Item 3: Win Rate -->
-        <v-card v-if="item.i === '3'" class="h-100">
+        <v-card v-if="item.i === '3'" class="h-100 d-flex align-center">
           <v-card-text>
-            <div class="text-overline mb-1">Win Rate</div>
+            <div class="text-overline">Win Rate</div>
             <div class="text-h4 mb-1">
               {{ portfolio.winRate?.toFixed(1) || '0.0' }}%
             </div>

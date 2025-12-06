@@ -383,7 +383,7 @@ onMounted(() => {
     }
   }, 3000)
   
-  // Check every minute (temporarily for testing)
+  // Check for updates every 15 minutes
   updateCheckInterval = setInterval(async () => {
     try {
       const response = await fetch(`${API_URL}/updates/check`)
@@ -399,7 +399,7 @@ onMounted(() => {
     } catch (e) {
       // Silently fail
     }
-  }, 60 * 1000)
+  }, 15 * 60 * 1000)
 })
 
 onUnmounted(() => {
