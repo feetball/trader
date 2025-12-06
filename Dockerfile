@@ -18,7 +18,7 @@ COPY package*.json ./
 RUN npm ci --only=production
 
 COPY *.js ./
-COPY config.js ./
+COPY config.default.js ./
 
 # Copy full frontend (source + built dist) for in-app updates
 COPY frontend/ ./frontend/

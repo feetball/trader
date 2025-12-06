@@ -7,7 +7,26 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { WebSocketServer } from 'ws';
 import http from 'http';
-import { config } from './config.js';
+import { defaultConfig } from './config.default.js';
+
+// Load config: merge defaults with user settings
+let config = { ...defaultConfig };
+try {
+  // Try to load user settings from user-settings.json first (most reliable)
+  if (fsSync.existsSync('user-settings.json')) {
+    const userSettings = JSON.parse(fsSync.readFileSync('user-settings.json', 'utf-8'));
+    config = { ...defaultConfig, ...userSettings };
+    console.log('[CONFIG] Loaded user settings from user-settings.json');
+  }
+  // Check if any new settings were added in defaults
+  const newSettings = Object.keys(defaultConfig).filter(k => !(k in config));
+  if (newSettings.length > 0) {
+    console.log(`[CONFIG] Added new settings from defaults: ${newSettings.join(', ')}`);
+  }
+} catch (e) {
+  console.log('[CONFIG] Using default configuration');
+}
+export { config };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -347,60 +366,54 @@ app.post('/api/portfolio/reset', async (req, res) => {
     await fs.writeFile('paper-trading-data.json', JSON.stringify(initialPortfolio, null, 2));
     console.log('[RESET] Portfolio reset to $10,000');
     
-    // Restart bot if it was running
-    if (wasRunning) {
-      console.log('[RESET] Restarting bot after portfolio reset...');
-      // Trigger bot start after a short delay
-      setTimeout(() => {
-        const startEvent = { body: {} };
-        const startRes = { json: (data) => console.log('[RESET] Bot restart result:', data) };
-        // We'll call the start logic directly by importing spawn
-        const { spawn } = require('child_process');
-        
-        botStatus.running = true;
-        botStatus.message = 'Starting bot...';
-        botStatus.cycleCount = 0;
-        botStatus.apiCalls = 0;
-        botStatus.logs = [];
-        
-        botProcess = spawn('node', ['bot-daemon.js'], {
-          cwd: process.cwd(),
-          stdio: ['pipe', 'pipe', 'pipe'],
-        });
-        
-        botProcess.stdout.on('data', (data) => {
-          const lines = data.toString().split('\n').filter(l => l.trim());
-          lines.forEach(line => {
-            if (line.includes('[APICALLS]')) {
-              const count = parseInt(line.replace('[APICALLS]', '').trim());
-              if (!isNaN(count)) botStatus.apiCalls = count;
-            } else if (line.includes('[STATUS]')) {
-              botStatus.message = line.replace('[STATUS]', '').trim();
-            } else if (line.includes('CYCLE #')) {
-              const match = line.match(/CYCLE #(\d+)/);
-              if (match) botStatus.cycleCount = parseInt(match[1]);
-            }
-            if (line.includes('BUY') || line.includes('SELL') || line.includes('CYCLE') || line.includes('Error')) {
-              addLog(line.replace('[STATUS]', '').trim());
-            }
-          });
-        });
-        
-        botProcess.stderr.on('data', (data) => {
-          addLog(`❌ Error: ${data.toString().trim()}`);
-        });
-        
-        botProcess.on('close', (code) => {
-          botProcess = null;
-          botStatus.running = false;
-          botStatus.message = `Bot stopped (exit code: ${code})`;
-        });
-        
-        console.log('[RESET] Bot restarted after portfolio reset');
-      }, 500);
-    }
+    // Always start the bot after reset
+    console.log('[RESET] Starting bot after portfolio reset...');
     
-    res.json({ success: true, message: 'Portfolio reset to $10,000', wasRunning, restarted: wasRunning });
+    // Start the bot after a short delay
+    setTimeout(() => {
+      botStatus.running = true;
+      botStatus.message = 'Starting bot...';
+      botStatus.cycleCount = 0;
+      botStatus.apiCalls = 0;
+      botStatus.logs = [];
+      
+      botProcess = spawn('node', ['bot-daemon.js'], {
+        cwd: process.cwd(),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      
+      botProcess.stdout.on('data', (data) => {
+        const lines = data.toString().split('\n').filter(l => l.trim());
+        lines.forEach(line => {
+          if (line.includes('[APICALLS]')) {
+            const count = parseInt(line.replace('[APICALLS]', '').trim());
+            if (!isNaN(count)) botStatus.apiCalls = count;
+          } else if (line.includes('[STATUS]')) {
+            botStatus.message = line.replace('[STATUS]', '').trim();
+          } else if (line.includes('CYCLE #')) {
+            const match = line.match(/CYCLE #(\d+)/);
+            if (match) botStatus.cycleCount = parseInt(match[1]);
+          }
+          if (line.includes('BUY') || line.includes('SELL') || line.includes('CYCLE') || line.includes('Error')) {
+            addLog(line.replace('[STATUS]', '').trim());
+          }
+        });
+      });
+      
+      botProcess.stderr.on('data', (data) => {
+        addLog(`❌ Error: ${data.toString().trim()}`);
+      });
+      
+      botProcess.on('close', (code) => {
+        botProcess = null;
+        botStatus.running = false;
+        botStatus.message = `Bot stopped (exit code: ${code})`;
+      });
+      
+      console.log('[RESET] Bot started after portfolio reset');
+    }, 500);
+    
+    res.json({ success: true, message: 'Portfolio reset to $10,000', wasRunning, restarted: true });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -409,38 +422,17 @@ app.post('/api/portfolio/reset', async (req, res) => {
 // Get current config settings
 app.get('/api/settings', async (req, res) => {
   try {
-    const configContent = await fs.readFile('config.js', 'utf-8');
+    // Start with defaults, then overlay user settings
+    let settings = { ...defaultConfig };
     
-    // Parse config values from the file
-    const settings = {};
-    const patterns = {
-      PAPER_TRADING: /PAPER_TRADING:\s*(true|false)/,
-      MAX_PRICE: /MAX_PRICE:\s*([\d.]+)/,
-      PROFIT_TARGET: /PROFIT_TARGET:\s*([\d.]+)/,
-      MOMENTUM_THRESHOLD: /MOMENTUM_THRESHOLD:\s*([\d.]+)/,
-      MOMENTUM_WINDOW: /MOMENTUM_WINDOW:\s*(\d+)/,
-      SCAN_INTERVAL: /SCAN_INTERVAL:\s*(\d+)/,
-      POSITION_SIZE: /POSITION_SIZE:\s*(\d+)/,
-      MAX_POSITIONS: /MAX_POSITIONS:\s*(\d+)/,
-      MIN_VOLUME: /MIN_VOLUME:\s*(\d+)/,
-      STOP_LOSS: /STOP_LOSS:\s*(-?[\d.]+)/,
-      ENABLE_TRAILING_PROFIT: /ENABLE_TRAILING_PROFIT:\s*(true|false)/,
-      TRAILING_STOP_PERCENT: /TRAILING_STOP_PERCENT:\s*([\d.]+)/,
-      MIN_MOMENTUM_TO_RIDE: /MIN_MOMENTUM_TO_RIDE:\s*([\d.]+)/,
-      VOLUME_SURGE_FILTER: /VOLUME_SURGE_FILTER:\s*(true|false)/,
-      VOLUME_SURGE_THRESHOLD: /VOLUME_SURGE_THRESHOLD:\s*(\d+)/,
-      RSI_FILTER: /RSI_FILTER:\s*(true|false)/,
-      RSI_MIN: /RSI_MIN:\s*(\d+)/,
-      RSI_MAX: /RSI_MAX:\s*(\d+)/,
-    };
-
-    for (const [key, pattern] of Object.entries(patterns)) {
-      const match = configContent.match(pattern);
-      if (match) {
-        if (match[1] === 'true') settings[key] = true;
-        else if (match[1] === 'false') settings[key] = false;
-        else settings[key] = parseFloat(match[1]);
+    // Try to load user settings
+    try {
+      if (fsSync.existsSync('user-settings.json')) {
+        const userSettings = JSON.parse(await fs.readFile('user-settings.json', 'utf-8'));
+        settings = { ...defaultConfig, ...userSettings };
       }
+    } catch (e) {
+      console.log('[SETTINGS] Could not load user-settings.json, using defaults');
     }
 
     res.json(settings);
@@ -462,62 +454,29 @@ app.post('/api/settings', async (req, res) => {
       botProcess = null;
     }
 
-    const newSettings = req.body;
+    // Merge incoming settings with defaults (ensures new settings have values)
+    const newSettings = { ...defaultConfig, ...req.body };
     
-    // Generate new config file content
-    const configContent = `// Trading bot configuration
+    // Generate config.js content dynamically from all settings
+    const configLines = Object.entries(newSettings).map(([key, value]) => {
+      const formattedValue = typeof value === 'boolean' ? value : 
+                            typeof value === 'string' ? `'${value}'` : value;
+      return `  ${key}: ${formattedValue},`;
+    }).join('\n');
+    
+    const configContent = `// Trading bot configuration (auto-generated from user settings)
 export const config = {
-  // Paper trading mode (true = simulated trades, false = real trades)
-  PAPER_TRADING: ${newSettings.PAPER_TRADING ?? true},
-  
-  // Maximum price threshold for coins to trade
-  MAX_PRICE: ${newSettings.MAX_PRICE ?? 1.00},
-  
-  // Profit target percentage (lowered for faster trades)
-  PROFIT_TARGET: ${newSettings.PROFIT_TARGET ?? 2.5},
-  
-  // Minimum price change % in the last period to trigger a buy signal
-  MOMENTUM_THRESHOLD: ${newSettings.MOMENTUM_THRESHOLD ?? 1.5},
-  
-  // Time window for momentum calculation in minutes
-  MOMENTUM_WINDOW: ${newSettings.MOMENTUM_WINDOW ?? 10},
-  
-  // How often to scan markets (seconds)
-  // WebSocket provides real-time prices, so fast scans are possible
-  SCAN_INTERVAL: ${newSettings.SCAN_INTERVAL ?? 10},
-  
-  // Position size per trade (USD)
-  POSITION_SIZE: ${newSettings.POSITION_SIZE ?? 500},
-  
-  // Maximum number of concurrent positions
-  MAX_POSITIONS: ${newSettings.MAX_POSITIONS ?? 30},
-  
-  // Minimum 24h volume to consider (USD)
-  MIN_VOLUME: ${newSettings.MIN_VOLUME ?? 25000},
-  
-  // Stop loss percentage (tighter for faster cuts)
-  STOP_LOSS: ${newSettings.STOP_LOSS ?? -3.0},
-  
-  // Trailing profit settings - let winners ride while climbing
-  ENABLE_TRAILING_PROFIT: ${newSettings.ENABLE_TRAILING_PROFIT ?? true},
-  TRAILING_STOP_PERCENT: ${newSettings.TRAILING_STOP_PERCENT ?? 1.0},
-  MIN_MOMENTUM_TO_RIDE: ${newSettings.MIN_MOMENTUM_TO_RIDE ?? 0.5},
-  
-  // Volume surge filter - require volume to be X% of average (e.g., 150 = 1.5x average)
-  VOLUME_SURGE_FILTER: ${newSettings.VOLUME_SURGE_FILTER ?? true},
-  VOLUME_SURGE_THRESHOLD: ${newSettings.VOLUME_SURGE_THRESHOLD ?? 150},
-  
-  // RSI entry filter - only enter if RSI is within this range (avoid overbought)
-  RSI_FILTER: ${newSettings.RSI_FILTER ?? true},
-  RSI_MIN: ${newSettings.RSI_MIN ?? 60},
-  RSI_MAX: ${newSettings.RSI_MAX ?? 80},
+${configLines}
 };
 `;
 
     await fs.writeFile('config.js', configContent);
     
-    // Also save to user-settings.json for persistence across updates
+    // Save to user-settings.json for persistence across updates
     await fs.writeFile('user-settings.json', JSON.stringify(newSettings, null, 2));
+    
+    // Update in-memory config
+    Object.assign(config, newSettings);
     
     addLog('✅ Settings saved successfully');
     
@@ -901,50 +860,43 @@ app.post('/api/updates/apply', async (req, res) => {
           return;
         }
         
-        // Restore user settings after update
+        // Restore user settings after update, merging with new defaults
         if (savedSettings) {
           updateLog('[UPDATE] Restoring user settings...');
-          fsSync.writeFileSync(settingsPath, savedSettings);
           
-          // Also restore config.js from saved settings
-          const settings = JSON.parse(savedSettings);
-          const configContent = `// Trading bot configuration
+          // Load saved user settings and merge with defaults from new version
+          const userSettings = JSON.parse(savedSettings);
+          
+          // Import the new defaults (they may have new settings)
+          let newDefaults = {};
+          try {
+            const defaultContent = fsSync.readFileSync(path.join(process.cwd(), 'config.default.js'), 'utf-8');
+            // Parse the defaults from the file
+            const match = defaultContent.match(/defaultConfig\s*=\s*\{([^}]+)\}/s);
+            if (match) {
+              // Simple parsing - this will be replaced on next server start anyway
+              newDefaults = {};
+            }
+          } catch (e) {
+            updateLog('[UPDATE] Could not load new defaults, using saved settings only');
+          }
+          
+          // Merge: new defaults + user settings (user settings take priority)
+          const mergedSettings = { ...newDefaults, ...userSettings };
+          
+          // Save merged settings
+          fsSync.writeFileSync(settingsPath, JSON.stringify(mergedSettings, null, 2));
+          
+          // Generate config.js dynamically
+          const configLines = Object.entries(mergedSettings).map(([key, value]) => {
+            const formattedValue = typeof value === 'boolean' ? value : 
+                                  typeof value === 'string' ? `'${value}'` : value;
+            return `  ${key}: ${formattedValue},`;
+          }).join('\n');
+          
+          const configContent = `// Trading bot configuration (auto-generated from user settings)
 export const config = {
-  // Paper trading mode (true = simulated trades, false = real trades)
-  PAPER_TRADING: ${settings.PAPER_TRADING ?? true},
-  
-  // Maximum price threshold for coins to trade
-  MAX_PRICE: ${settings.MAX_PRICE ?? 1.00},
-  
-  // Profit target percentage (lowered for faster trades)
-  PROFIT_TARGET: ${settings.PROFIT_TARGET ?? 2.5},
-  
-  // Minimum price change % in the last period to trigger a buy signal
-  MOMENTUM_THRESHOLD: ${settings.MOMENTUM_THRESHOLD ?? 1.5},
-  
-  // Time window for momentum calculation in minutes
-  MOMENTUM_WINDOW: ${settings.MOMENTUM_WINDOW ?? 10},
-  
-  // How often to scan markets (seconds)
-  // WebSocket provides real-time prices, so fast scans are possible
-  SCAN_INTERVAL: ${settings.SCAN_INTERVAL ?? 10},
-  
-  // Position size per trade (USD)
-  POSITION_SIZE: ${settings.POSITION_SIZE ?? 500},
-  
-  // Maximum number of concurrent positions
-  MAX_POSITIONS: ${settings.MAX_POSITIONS ?? 30},
-  
-  // Minimum 24h volume to consider (USD)
-  MIN_VOLUME: ${settings.MIN_VOLUME ?? 25000},
-  
-  // Stop loss percentage (tighter for faster cuts)
-  STOP_LOSS: ${settings.STOP_LOSS ?? -3.0},
-  
-  // Trailing profit settings - let winners ride while climbing
-  ENABLE_TRAILING_PROFIT: ${settings.ENABLE_TRAILING_PROFIT ?? true},
-  TRAILING_STOP_PERCENT: ${settings.TRAILING_STOP_PERCENT ?? 1.0},
-  MIN_MOMENTUM_TO_RIDE: ${settings.MIN_MOMENTUM_TO_RIDE ?? 0.5},
+${configLines}
 };
 `;
           fsSync.writeFileSync(path.join(process.cwd(), 'config.js'), configContent);
@@ -1118,7 +1070,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.23                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.0                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

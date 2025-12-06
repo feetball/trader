@@ -453,7 +453,47 @@
           </v-card-text>
         </v-card>
       </v-col>
+
+      <v-col cols="12" lg="6" xl="4">
+        <v-card class="setting-card" variant="tonal" color="error">
+          <v-card-title class="pb-1">
+            <v-icon icon="mdi-alert" class="mr-2"></v-icon>
+            Danger Zone
+          </v-card-title>
+          <v-card-text class="pt-1">
+            <div class="mb-3">
+              <div class="text-body-2 mb-2">Reset your paper trading portfolio to start fresh with $10,000.</div>
+              <v-btn 
+                color="error" 
+                variant="flat" 
+                @click="showResetDialog = true"
+                prepend-icon="mdi-delete-sweep"
+              >
+                Reset Portfolio
+              </v-btn>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
     </v-row>
+
+    <!-- Reset Confirmation Dialog -->
+    <v-dialog v-model="showResetDialog" max-width="400">
+      <v-card>
+        <v-card-title class="text-h5">
+          <v-icon icon="mdi-alert" color="warning" class="mr-2"></v-icon>
+          Reset Portfolio?
+        </v-card-title>
+        <v-card-text>
+          This will clear all positions and trade history, and reset your cash to $10,000. This action cannot be undone.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="text" @click="showResetDialog = false">Cancel</v-btn>
+          <v-btn color="warning" variant="flat" @click="doResetPortfolio" :loading="resetLoading">Reset</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -461,9 +501,11 @@
 import { onMounted, ref } from 'vue'
 import { useTrading } from '../composables/useTrading'
 
-const { botStatus, settings, loadSettings, saveSettings } = useTrading()
+const { botStatus, settings, loadSettings, saveSettings, resetPortfolio } = useTrading()
 
 const settingsLoading = ref(false)
+const showResetDialog = ref(false)
+const resetLoading = ref(false)
 
 const refreshSettings = async () => {
   settingsLoading.value = true
@@ -480,6 +522,16 @@ const persistSettings = async () => {
     await saveSettings()
   } finally {
     settingsLoading.value = false
+  }
+}
+
+const doResetPortfolio = async () => {
+  resetLoading.value = true
+  try {
+    await resetPortfolio()
+    showResetDialog.value = false
+  } finally {
+    resetLoading.value = false
   }
 }
 

@@ -49,12 +49,6 @@
               <v-badge color="error" dot></v-badge>
             </template>
           </v-list-item>
-          <v-list-item
-            prepend-icon="mdi-delete-sweep"
-            title="Reset Portfolio"
-            @click="showResetDialog = true"
-            rounded="xl"
-          ></v-list-item>
         </v-list>
       </template>
     </v-navigation-drawer>
@@ -107,24 +101,6 @@
       
       <v-btn icon="mdi-refresh" size="small" @click="refreshData" :loading="loading"></v-btn>
     </v-app-bar>
-
-    <!-- Reset Confirmation Dialog -->
-    <v-dialog v-model="showResetDialog" max-width="400">
-      <v-card>
-        <v-card-title class="text-h5">
-          <v-icon icon="mdi-alert" color="warning" class="mr-2"></v-icon>
-          Reset Portfolio?
-        </v-card-title>
-        <v-card-text>
-          This will clear all positions and trade history, and reset your cash to $10,000. This action cannot be undone.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer></v-spacer>
-          <v-btn color="grey" variant="text" @click="showResetDialog = false">Cancel</v-btn>
-          <v-btn color="warning" variant="flat" @click="doResetPortfolio" :loading="resetLoading">Reset</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
 
     <!-- Update Dialog -->
     <v-dialog v-model="showUpdateDialog" max-width="500">
@@ -275,7 +251,6 @@ const {
   botStatus,
   startBot,
   stopBot,
-  resetPortfolio,
   refreshData,
   initialize,
   cleanup,
@@ -285,7 +260,6 @@ const {
 const drawer = ref(true)
 const rail = ref(true)
 const isMobile = ref(window.innerWidth < 600)
-const resetLoading = ref(false)
 
 // Handle window resize for mobile detection
 const handleResize = () => {
@@ -294,7 +268,6 @@ const handleResize = () => {
     drawer.value = false
   }
 }
-const showResetDialog = ref(false)
 const showSnackbar = ref(false)
 const snackbarText = ref('')
 
@@ -402,17 +375,6 @@ const formatLastCheck = (timestamp) => {
 
 // Check for updates periodically (every 6 hours) and on startup
 let updateCheckInterval = null
-
-const doResetPortfolio = async () => {
-  resetLoading.value = true
-  const success = await resetPortfolio()
-  showResetDialog.value = false
-  resetLoading.value = false
-  if (success) {
-    snackbarText.value = '✅ Portfolio reset successfully'
-    showSnackbar.value = true
-  }
-}
 
 onMounted(() => {
   initialize()
