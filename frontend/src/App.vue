@@ -2,69 +2,57 @@
   <v-app>
     <!-- Navigation Drawer -->
     <v-navigation-drawer
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-switch
-                  v-model="settings.ENABLE_TRAILING_PROFIT"
-                  label="Enable Trailing"
-                  color="primary"
-                  hint="Let winners ride after target"
-                  persistent-hint
-                ></v-switch>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Enable Trailing Profit</b><br><br>Instead of selling at the profit target, lets winners keep running and trails the price up.<br><br><b>How it works:</b><br>1. Position hits profit target (e.g., 5%)<br>2. Instead of selling, trailing mode activates<br>3. Bot tracks the highest price (peak)<br>4. Sells only when price drops X% from peak<br><br><b>Example WITHOUT trailing:</b><br>Buy at $1.00, target 5%<br>Price hits $1.05 → SELL at 5% profit<br>Price continues to $1.20 → You missed 15% more!<br><br><b>Example WITH trailing (2% trail):</b><br>Buy at $1.00, target 5%<br>Price hits $1.05 → Trailing activates<br>Price rises to $1.10 → Peak = $1.10<br>Price rises to $1.15 → Peak = $1.15<br>Price drops to $1.13 (1.7% from peak) → Still holding<br>Price drops to $1.127 (2% from peak) → SELL!<br>Final profit: 12.7% instead of 5%<br><br><b>When to use:</b><br>✓ Enable if you want to catch big pumps<br>✗ Disable if you prefer guaranteed smaller profits<br><br><b>Recommendation:</b> Enable it! Penny cryptos often pump 10-20%+ and trailing captures those moves.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.TRAILING_STOP_PERCENT"
-                  label="Trailing Stop (%)"
-                  type="number"
-                  step="0.1"
-                  hint="Sell when drops this much from peak"
-                  persistent-hint
-                  :disabled="!settings.ENABLE_TRAILING_PROFIT"
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Trailing Stop Percentage</b><br><br>Once trailing mode is active, sell when price drops this much from its peak.<br><br><b>How it works:</b><br>Bot constantly tracks the highest price since trailing started. When current price drops X% from that peak, it sells.<br><br><b>Trade-offs:</b><br>• Tighter stop (1-2%) = Locks in more profit, exits sooner<br>• Wider stop (3-5%) = Rides longer, risks giving back gains<br><br><b>Detailed example with 2% trailing stop:</b><br>• Buy at $1.00<br>• Price hits $1.05 (5%) → Trailing starts<br>• Price rises to $1.10 → Peak = $1.10<br>• Price rises to $1.15 → Peak = $1.15<br>• Price drops to $1.13 (1.7% from peak) → Still holding<br>• Price drops to $1.127 (2% from peak) → SELL!<br>• Final profit: 12.7% instead of 5%<br><br><b>Examples:</b><br>• 1%: Very tight, quick exits<br>• 2%: Good balance (recommended)<br>• 3%: More room, risks giving back gains<br>• 5%: Very wide, for major pump riding<br><br><b>Recommendation:</b> 2% works well for most penny crypto volatility.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
-            
-            <v-col cols="12" md="4">
-              <div class="setting-field">
-                <v-text-field
-                  v-model.number="settings.MIN_MOMENTUM_TO_RIDE"
-                  label="Min Momentum to Ride (%)"
-                  type="number"
-                  step="0.1"
-                  hint="Min momentum to keep riding"
-                  persistent-hint
-                  :disabled="!settings.ENABLE_TRAILING_PROFIT"
-                ></v-text-field>
-                <v-tooltip location="top" max-width="400">
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
-                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
-                    </v-btn>
-                  </template>
-                  <span><b>Minimum Momentum to Ride</b><br><br>Exit trailing mode early if the coin's momentum drops below this level, even if trailing stop hasn't triggered.<br><br><b>Why this matters:</b><br>Sometimes a pump loses steam gradually rather than dropping sharply. This setting catches "dying momentum" and sells before a reversal.<br><br><b>How it works:</b><br>While in trailing mode, bot checks recent momentum.<br>If momentum falls below this %, it sells immediately.<br><br><b>Example:</b><br>• You're riding a coin at +8% profit<br>• Trailing stop is 2% (would sell at +6%)<br>• But momentum drops to 0.3% (below 1% threshold)<br>• Bot sells NOW at +8% instead of waiting for -2% drop<br><br><b>Trade-offs:</b><br>• Higher value = Exits sooner when pump slows<br>• Lower value = Rides longer, trusts trailing stop more<br><br><b>Examples:</b><br>• 0.5%: Very patient, relies mostly on trailing stop<br>• 1%: Balanced (recommended)<br>• 2%: Quick exit when momentum fades<br><br><b>Recommendation:</b> 1% catches momentum exhaustion while letting strong moves continue.</span>
-                </v-tooltip>
-              </div>
-            </v-col>
+      v-model="drawer"
+      :rail="!isMobile && rail"
+      :temporary="isMobile"
+      :permanent="!isMobile"
+      @click="isMobile ? null : (rail = false)"
+    >
+      <v-list-item
+        prepend-icon="mdi-robot"
+        title="Crypto Trader"
+        nav
+      >
+        <template v-slot:append>
+          <v-btn
+            icon="mdi-chevron-left"
+            variant="text"
+            @click.stop="rail = !rail"
+          ></v-btn>
+        </template>
+      </v-list-item>
+
+      <v-divider></v-divider>
+
+      <v-list density="compact" nav>
+        <v-list-item
+          v-for="route in routes"
+          :key="route.path"
+          :to="route.path"
+          :prepend-icon="route.meta.icon"
+          :title="route.meta.title"
+          :value="route.name"
+          rounded="xl"
+        ></v-list-item>
+      </v-list>
+
+      <template v-slot:append>
+        <v-divider></v-divider>
+        <v-list density="compact" nav>
+          <v-list-item
+            prepend-icon="mdi-cloud-download"
+            title="Check for Updates"
+            @click="checkForUpdates"
+            rounded="xl"
+          >
+            <template v-slot:append v-if="updateAvailable">
+              <v-badge color="error" dot></v-badge>
+            </template>
+          </v-list-item>
+          <v-list-item
+            prepend-icon="mdi-cog"
+            title="Settings"
+            @click="showSettingsDialog = true"
             rounded="xl"
           ></v-list-item>
           <v-list-item
@@ -229,10 +217,26 @@
           </v-alert>
           
           <v-row>
-            <v-col cols="12">
-              <div class="text-subtitle-1 font-weight-bold mb-2">Trading Parameters</div>
+            <v-col cols="12" md="6">
+              <div class="setting-field">
+                <v-switch
+                  v-model="settings.PAPER_TRADING"
+                  label="Paper Trading Mode"
+                  color="primary"
+                  hint="Simulate trades without real orders"
+                  persistent-hint
+                ></v-switch>
+                <v-tooltip location="top" max-width="400">
+                  <template v-slot:activator="{ props }">
+                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
+                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
+                    </v-btn>
+                  </template>
+                  <span><b>Paper Trading</b><br><br>Simulates buys/sells without using real money. Great for testing settings safely.<br><br><b>When ON:</b><br>• No real orders are sent<br>• Portfolio updates are virtual<br>• Safe to experiment with aggressive settings<br><br><b>When OFF:</b><br>• Real trades are executed via your API keys<br>• Use conservative risk controls<br><br><b>Recommendation:</b> Keep ON while tuning. Turn OFF only when you're confident.</span>
+                </v-tooltip>
+              </div>
             </v-col>
-            
+
             <v-col cols="12" md="6">
               <div class="setting-field">
                 <v-text-field
@@ -240,7 +244,7 @@
                   label="Max Coin Price ($)"
                   type="number"
                   step="0.1"
-                  hint="Only trade coins below this price"
+                  hint="Skip coins priced above this"
                   persistent-hint
                 ></v-text-field>
                 <v-tooltip location="top" max-width="400">
@@ -249,11 +253,11 @@
                       <v-icon icon="mdi-information-outline" size="small"></v-icon>
                     </v-btn>
                   </template>
-                  <span><b>Max Coin Price</b><br><br>Only considers coins trading below this price.<br><br><b>Why it matters:</b> Lower-priced coins (penny cryptos) tend to have higher percentage volatility. A $0.10 coin moving to $0.12 is a 20% gain, while a $50,000 coin rarely moves 20% in a day.<br><br><b>Examples:</b><br>• $0.50 = Very volatile micro-caps only<br>• $1.00 = Sub-dollar penny cryptos (default)<br>• $5.00 = Includes more established small caps<br>• $50.00 = Most altcoins except top 10<br><br><b>Recommendation:</b> Start with $1.00 for maximum momentum potential, increase if you want more coin options.</span>
+                  <span><b>Max Coin Price</b><br><br>Ignores coins that cost more than this price per unit.<br><br><b>Why cap price?</b><br>• Expensive coins buy fewer units, harder to scale out<br>• Cheaper coins let you size positions evenly<br><br><b>Examples:</b><br>• $1 limit = Only trade sub-dollar coins<br>• $5 limit = Includes most mid-priced alts<br>• $50+ = Includes majors like BTC/ETH<br><br><b>Recommendation:</b> Keep low ($1-$5) for penny-crypto momentum; raise if you want larger caps.</span>
                 </v-tooltip>
               </div>
             </v-col>
-            
+
             <v-col cols="12" md="6">
               <div class="setting-field">
                 <v-text-field
@@ -543,55 +547,67 @@
             </v-col>
             
             <v-col cols="12" md="4">
-              <v-tooltip location="top" max-width="400">
-                <template v-slot:activator="{ props }">
-                  <v-switch
-                    v-bind="props"
-                    v-model="settings.ENABLE_TRAILING_PROFIT"
-                    label="Enable Trailing"
-                    color="primary"
-                    hint="Let winners ride after target"
-                    persistent-hint
-                  ></v-switch>
-                </template>
-                <span><b>Enable Trailing Profit</b><br><br>Instead of selling at the profit target, lets winners keep running and trails the price up.<br><br><b>How it works:</b><br>1. Position hits profit target (e.g., 5%)<br>2. Instead of selling, trailing mode activates<br>3. Bot tracks the highest price (peak)<br>4. Sells only when price drops X% from peak<br><br><b>Example WITHOUT trailing:</b><br>Buy at $1.00, target 5%<br>Price hits $1.05 → SELL at 5% profit<br>Price continues to $1.20 → You missed 15% more!<br><br><b>Example WITH trailing (2% trail):</b><br>Buy at $1.00, target 5%<br>Price hits $1.05 → Trailing activates<br>Price rises to $1.15 → New peak tracked<br>Price drops to $1.127 (2% from peak) → SELL at 12.7%!<br><br><b>When to use:</b><br>✓ Enable if you want to catch big pumps<br>✗ Disable if you prefer guaranteed smaller profits<br><br><b>Recommendation:</b> Enable it! Penny cryptos often pump 10-20%+ and trailing captures those moves.</span>
-              </v-tooltip>
+              <div class="setting-field">
+                <v-switch
+                  v-model="settings.ENABLE_TRAILING_PROFIT"
+                  label="Enable Trailing"
+                  color="primary"
+                  hint="Let winners ride after target"
+                  persistent-hint
+                ></v-switch>
+                <v-tooltip location="top" max-width="400">
+                  <template v-slot:activator="{ props }">
+                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
+                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
+                    </v-btn>
+                  </template>
+                  <span><b>Enable Trailing Profit</b><br><br>Instead of selling at the profit target, lets winners keep running and trails the price up.<br><br><b>How it works:</b><br>1. Position hits profit target (e.g., 5%)<br>2. Instead of selling, trailing mode activates<br>3. Bot tracks the highest price (peak)<br>4. Sells only when price drops X% from peak<br><br><b>Example WITHOUT trailing:</b><br>Buy at $1.00, target 5%<br>Price hits $1.05 → SELL at 5% profit<br>Price continues to $1.20 → You missed 15% more!<br><br><b>Example WITH trailing (2% trail):</b><br>Buy at $1.00, target 5%<br>Price hits $1.05 → Trailing activates<br>Price rises to $1.15 → New peak tracked<br>Price drops to $1.127 (2% from peak) → SELL at 12.7%!<br><br><b>When to use:</b><br>✓ Enable if you want to catch big pumps<br>✗ Disable if you prefer guaranteed smaller profits<br><br><b>Recommendation:</b> Enable it! Penny cryptos often pump 10-20%+ and trailing captures those moves.</span>
+                </v-tooltip>
+              </div>
             </v-col>
             
             <v-col cols="12" md="4">
-              <v-tooltip location="top" max-width="400">
-                <template v-slot:activator="{ props }">
-                  <v-text-field
-                    v-bind="props"
-                    v-model.number="settings.TRAILING_STOP_PERCENT"
-                    label="Trailing Stop (%)"
-                    type="number"
-                    step="0.1"
-                    hint="Sell when drops this much from peak"
-                    persistent-hint
-                    :disabled="!settings.ENABLE_TRAILING_PROFIT"
-                  ></v-text-field>
-                </template>
-                <span><b>Trailing Stop Percentage</b><br><br>Once trailing mode is active, sell when price drops this much from its peak.<br><br><b>How it works:</b><br>Bot constantly tracks the highest price since trailing started. When current price drops X% from that peak, it sells.<br><br><b>Trade-offs:</b><br>• Tighter stop (1-2%) = Locks in more profit, exits sooner<br>• Wider stop (3-5%) = Rides longer, risks giving back gains<br><br><b>Detailed example with 2% trailing stop:</b><br>• Buy at $1.00<br>• Price hits $1.05 (5%) → Trailing starts<br>• Price rises to $1.10 → Peak = $1.10<br>• Price rises to $1.15 → Peak = $1.15<br>• Price drops to $1.13 (1.7% from peak) → Still holding<br>• Price drops to $1.127 (2% from peak) → SELL!<br>• Final profit: 12.7% instead of 5%<br><br><b>Examples:</b><br>• 1%: Very tight, quick exits<br>• 2%: Good balance (recommended)<br>• 3%: More room, risks giving back gains<br>• 5%: Very wide, for major pump riding<br><br><b>Recommendation:</b> 2% works well for most penny crypto volatility.</span>
-              </v-tooltip>
+              <div class="setting-field">
+                <v-text-field
+                  v-model.number="settings.TRAILING_STOP_PERCENT"
+                  label="Trailing Stop (%)"
+                  type="number"
+                  step="0.1"
+                  hint="Sell when drops this much from peak"
+                  persistent-hint
+                  :disabled="!settings.ENABLE_TRAILING_PROFIT"
+                ></v-text-field>
+                <v-tooltip location="top" max-width="400">
+                  <template v-slot:activator="{ props }">
+                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
+                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
+                    </v-btn>
+                  </template>
+                  <span><b>Trailing Stop Percentage</b><br><br>Once trailing mode is active, sell when price drops this much from its peak.<br><br><b>How it works:</b><br>Bot constantly tracks the highest price since trailing started. When current price drops X% from that peak, it sells.<br><br><b>Trade-offs:</b><br>• Tighter stop (1-2%) = Locks in more profit, exits sooner<br>• Wider stop (3-5%) = Rides longer, risks giving back gains<br><br><b>Detailed example with 2% trailing stop:</b><br>• Buy at $1.00<br>• Price hits $1.05 (5%) → Trailing starts<br>• Price rises to $1.10 → Peak = $1.10<br>• Price rises to $1.15 → Peak = $1.15<br>• Price drops to $1.13 (1.7% from peak) → Still holding<br>• Price drops to $1.127 (2% from peak) → SELL!<br>• Final profit: 12.7% instead of 5%<br><br><b>Examples:</b><br>• 1%: Very tight, quick exits<br>• 2%: Good balance (recommended)<br>• 3%: More room, risks giving back gains<br>• 5%: Very wide, for major pump riding<br><br><b>Recommendation:</b> 2% works well for most penny crypto volatility.</span>
+                </v-tooltip>
+              </div>
             </v-col>
             
             <v-col cols="12" md="4">
-              <v-tooltip location="top" max-width="400">
-                <template v-slot:activator="{ props }">
-                  <v-text-field
-                    v-bind="props"
-                    v-model.number="settings.MIN_MOMENTUM_TO_RIDE"
-                    label="Min Momentum to Ride (%)"
-                    type="number"
-                    step="0.1"
-                    hint="Min momentum to keep riding"
-                    persistent-hint
-                    :disabled="!settings.ENABLE_TRAILING_PROFIT"
-                  ></v-text-field>
-                </template>
-                <span><b>Minimum Momentum to Ride</b><br><br>Exit trailing mode early if the coin's momentum drops below this level, even if trailing stop hasn't triggered.<br><br><b>Why this matters:</b><br>Sometimes a pump loses steam gradually rather than dropping sharply. This setting catches "dying momentum" and sells before a reversal.<br><br><b>How it works:</b><br>While in trailing mode, bot checks recent momentum.<br>If momentum falls below this %, it sells immediately.<br><br><b>Example:</b><br>• You're riding a coin at +8% profit<br>• Trailing stop is 2% (would sell at +6%)<br>• But momentum drops to 0.3% (below 1% threshold)<br>• Bot sells NOW at +8% instead of waiting for -2% drop<br><br><b>Trade-offs:</b><br>• Higher value = Exits sooner when pump slows<br>• Lower value = Rides longer, trusts trailing stop more<br><br><b>Examples:</b><br>• 0.5%: Very patient, relies mostly on trailing stop<br>• 1%: Balanced (recommended)<br>• 2%: Quick exit when momentum fades<br><br><b>Recommendation:</b> 1% catches momentum exhaustion while letting strong moves continue.</span>
-              </v-tooltip>
+              <div class="setting-field">
+                <v-text-field
+                  v-model.number="settings.MIN_MOMENTUM_TO_RIDE"
+                  label="Min Momentum to Ride (%)"
+                  type="number"
+                  step="0.1"
+                  hint="Min momentum to keep riding"
+                  persistent-hint
+                  :disabled="!settings.ENABLE_TRAILING_PROFIT"
+                ></v-text-field>
+                <v-tooltip location="top" max-width="400">
+                  <template v-slot:activator="{ props }">
+                    <v-btn v-bind="props" icon variant="text" size="x-small" class="info-icon">
+                      <v-icon icon="mdi-information-outline" size="small"></v-icon>
+                    </v-btn>
+                  </template>
+                  <span><b>Minimum Momentum to Ride</b><br><br>Exit trailing mode early if the coin's momentum drops below this level, even if trailing stop hasn't triggered.<br><br><b>Why this matters:</b><br>Sometimes a pump loses steam gradually rather than dropping sharply. This setting catches "dying momentum" and sells before a reversal.<br><br><b>How it works:</b><br>While in trailing mode, bot checks recent momentum.<br>If momentum falls below this %, it sells immediately.<br><br><b>Example:</b><br>• You're riding a coin at +8% profit<br>• Trailing stop is 2% (would sell at +6%)<br>• But momentum drops to 0.3% (below 1% threshold)<br>• Bot sells NOW at +8% instead of waiting for -2% drop<br><br><b>Trade-offs:</b><br>• Higher value = Exits sooner when pump slows<br>• Lower value = Rides longer, trusts trailing stop more<br><br><b>Examples:</b><br>• 0.5%: Very patient, relies mostly on trailing stop<br>• 1%: Balanced (recommended)<br>• 2%: Quick exit when momentum fades<br><br><b>Recommendation:</b> 1% catches momentum exhaustion while letting strong moves continue.</span>
+                </v-tooltip>
+              </div>
             </v-col>
           </v-row>
         </v-card-text>
