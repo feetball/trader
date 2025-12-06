@@ -845,13 +845,19 @@ app.post('/api/updates/apply', async (req, res) => {
           savedSettings = fsSync.readFileSync(settingsPath, 'utf-8');
         }
         
-        // Git pull
+        // Git pull - force reset to match remote (overwrite local changes)
         updateLog('[UPDATE] Pulling latest code from GitHub...');
         try {
-          const { stdout: gitOut } = await execAsync('git pull origin master', { cwd: process.cwd() });
+          // Fetch latest and hard reset to match origin/master
+          await execAsync('git fetch origin master', { cwd: process.cwd() });
+          const { stdout: gitOut } = await execAsync('git reset --hard origin/master', { cwd: process.cwd() });
           if (gitOut) updateLog(gitOut.trim());
         } catch (e) {
-          updateLog(`[GIT] ${e.stdout || e.message}`);
+          const errorOutput = e.stdout || e.stderr || e.message;
+          updateLog(`[GIT] ❌ Git pull failed: ${errorOutput}`);
+          updateLog('[UPDATE] ❌ Update failed! Server will not restart.');
+          broadcast('updateFailed', { message: 'Git pull failed' });
+          return;
         }
         
         // Install dependencies
@@ -861,7 +867,10 @@ app.post('/api/updates/apply', async (req, res) => {
           const lines = npmOut.split('\n').filter(l => l.trim() && !l.includes('npm WARN'));
           lines.forEach(l => updateLog(l));
         } catch (e) {
-          updateLog(`[NPM] ${e.message}`);
+          updateLog(`[NPM] ❌ Backend install failed: ${e.message}`);
+          updateLog('[UPDATE] ❌ Update failed! Server will not restart.');
+          broadcast('updateFailed', { message: 'Backend install failed' });
+          return;
         }
         
         // Install frontend dependencies and build
@@ -871,16 +880,25 @@ app.post('/api/updates/apply', async (req, res) => {
           const lines = npmFrontOut.split('\n').filter(l => l.trim() && !l.includes('npm WARN'));
           lines.forEach(l => updateLog(l));
         } catch (e) {
-          updateLog(`[NPM] ${e.message}`);
+          updateLog(`[NPM] ❌ Frontend install failed: ${e.message}`);
+          updateLog('[UPDATE] ❌ Update failed! Server will not restart.');
+          broadcast('updateFailed', { message: 'Frontend install failed' });
+          return;
         }
         
         updateLog('[UPDATE] Building frontend...');
         try {
-          const { stdout: buildOut } = await execAsync('npm run build 2>&1', { cwd: path.join(process.cwd(), 'frontend') });
+          const { stdout: buildOut, stderr: buildErr } = await execAsync('npm run build 2>&1', { cwd: path.join(process.cwd(), 'frontend') });
           const lines = buildOut.split('\n').filter(l => l.trim());
           lines.slice(-5).forEach(l => updateLog(l)); // Last 5 lines of build output
         } catch (e) {
-          updateLog(`[BUILD] ${e.message}`);
+          // Show the actual error output
+          const errorOutput = e.stdout || e.stderr || e.message;
+          const errorLines = errorOutput.split('\n').filter(l => l.trim());
+          errorLines.slice(-10).forEach(l => updateLog(`[BUILD] ${l}`));
+          updateLog('[UPDATE] ❌ Frontend build failed! Server will not restart.');
+          broadcast('updateFailed', { message: 'Frontend build failed' });
+          return;
         }
         
         // Restore user settings after update
@@ -1100,7 +1118,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.22                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.6.23                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

@@ -222,6 +222,10 @@ function connectWebSocket() {
         lastUpdate.value = new Date().toLocaleTimeString()
       } else if (type === 'updateLog') {
         updateLogs.value.push(data.message)
+      } else if (type === 'updateFailed') {
+        // Update failed - clear the in-progress flag and notify user
+        updateInProgress = false
+        updateLogs.value.push(`[UPDATE] ❌ Update failed: ${data.message}`)
       } else if (type === 'updateComplete') {
         // Server is about to restart after update - set flag and reload when reconnected
         updateInProgress = true

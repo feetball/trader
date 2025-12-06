@@ -7,17 +7,17 @@ export const config = {
   MAX_PRICE: 1,
   
   // Profit target percentage (lowered for faster trades)
-  PROFIT_TARGET: 1.5,
+  PROFIT_TARGET: 1.2,
   
   // Minimum price change % in the last period to trigger a buy signal
-  MOMENTUM_THRESHOLD: 1,
+  MOMENTUM_THRESHOLD: 0.8,
   
   // Time window for momentum calculation in minutes
   MOMENTUM_WINDOW: 3,
   
   // How often to scan markets (seconds)
   // WebSocket provides real-time prices, so fast scans are possible
-  SCAN_INTERVAL: 20,
+  SCAN_INTERVAL: 5,
   
   // Position size per trade (USD)
   POSITION_SIZE: 500,
@@ -33,15 +33,15 @@ export const config = {
   
   // Trailing profit settings - let winners ride while climbing
   ENABLE_TRAILING_PROFIT: true,
-  TRAILING_STOP_PERCENT: 0.4,
+  TRAILING_STOP_PERCENT: 0.2,
   MIN_MOMENTUM_TO_RIDE: 0.5,
   
   // Volume surge filter - require volume to be X% of average (e.g., 150 = 1.5x average)
   VOLUME_SURGE_FILTER: true,
-  VOLUME_SURGE_THRESHOLD: 150,
+  VOLUME_SURGE_THRESHOLD: 120,
   
   // RSI entry filter - only enter if RSI is within this range (avoid overbought)
   RSI_FILTER: true,
-  RSI_MIN: 60,
+  RSI_MIN: 50,
   RSI_MAX: 80,
 };

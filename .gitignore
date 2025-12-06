@@ -17,6 +17,7 @@ data/*.json
 
 # User settings (preserved during updates)
 user-settings.json
+config.js
 
 # Bot restart flag
 .restart-bot
