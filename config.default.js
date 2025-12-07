@@ -47,4 +47,8 @@ export const defaultConfig = {
   RSI_FILTER: true,
   RSI_MIN: 60,
   RSI_MAX: 80,
+  
+  // Trading fees and taxes (percentages)
+  TRADING_FEE_PERCENT: 0.6,  // Exchange trading fee per transaction
+  TAX_PERCENT: 0,            // Tax rate on profits (for tracking purposes)
 };

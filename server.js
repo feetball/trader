@@ -621,8 +621,8 @@ app.post('/api/positions/sell', async (req, res) => {
       console.log(`[FORCE SELL] Using entry price, couldn't fetch current price: ${e.message}`);
     }
     
-    // Calculate P&L with fees (0.6% trading fee)
-    const feePercent = 0.6;
+    // Calculate P&L with fees
+    const feePercent = config.TRADING_FEE_PERCENT || 0.6;
     const grossValue = position.quantity * currentPrice;
     const sellFee = grossValue * (feePercent / 100);
     const netValue = grossValue - sellFee;
@@ -1076,7 +1076,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.2                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.3                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

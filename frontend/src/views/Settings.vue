@@ -455,6 +455,59 @@
       </v-col>
 
       <v-col cols="12" lg="6" xl="4">
+        <v-card class="setting-card" variant="tonal">
+          <v-card-title class="pb-1">Fees & Taxes</v-card-title>
+          <v-card-text class="pt-1">
+            <v-row dense>
+              <v-col cols="12" sm="6">
+                <div class="setting-field">
+                  <v-text-field
+                    v-model.number="settings.TRADING_FEE_PERCENT"
+                    label="Trading Fee (%)"
+                    type="number"
+                    step="0.01"
+                  ></v-text-field>
+                  <div class="setting-hint">
+                    <v-tooltip location="top" max-width="360">
+                      <template #activator="{ props }">
+                        <v-btn v-bind="props" icon variant="text" size="x-small">
+                          <v-icon icon="mdi-information-outline" size="small"></v-icon>
+                        </v-btn>
+                      </template>
+                      <span><b>Trading Fee</b><br><br>Exchange fee charged per transaction. Coinbase Advanced is typically 0.4-0.6%.</span>
+                    </v-tooltip>
+                    <span>Fee per buy/sell transaction</span>
+                  </div>
+                </div>
+              </v-col>
+
+              <v-col cols="12" sm="6">
+                <div class="setting-field">
+                  <v-text-field
+                    v-model.number="settings.TAX_PERCENT"
+                    label="Tax Rate (%)"
+                    type="number"
+                    step="0.1"
+                  ></v-text-field>
+                  <div class="setting-hint">
+                    <v-tooltip location="top" max-width="360">
+                      <template #activator="{ props }">
+                        <v-btn v-bind="props" icon variant="text" size="x-small">
+                          <v-icon icon="mdi-information-outline" size="small"></v-icon>
+                        </v-btn>
+                      </template>
+                      <span><b>Tax Rate</b><br><br>Capital gains tax rate for profit calculations. Used for tracking purposes only.</span>
+                    </v-tooltip>
+                    <span>Tax rate on profits (tracking)</span>
+                  </div>
+                </div>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" lg="6" xl="4">
         <v-card class="setting-card" variant="tonal" color="error">
           <v-card-title class="pb-1">
             <v-icon icon="mdi-alert" class="mr-2"></v-icon>

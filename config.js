@@ -18,4 +18,6 @@ export const config = {
   RSI_FILTER: true,
   RSI_MIN: 55,
   RSI_MAX: 77,
+  TRADING_FEE_PERCENT: 0.6,
+  TAX_PERCENT: 0,
 };
