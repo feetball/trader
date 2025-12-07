@@ -933,15 +933,11 @@ ${configLines}
   }
 });
 
-// Get bot status
-app.get('/api/bot/status', (req, res) => {
-  res.json(botStatus);
-});
-
-// Start the bot
-app.post('/api/bot/start', (req, res) => {
+// Start bot function (reusable for API and auto-start)
+function startBot() {
   if (botProcess) {
-    return res.json({ success: false, message: 'Bot is already running' });
+    console.log('[BOT] Bot is already running');
+    return false;
   }
 
   try {
@@ -1033,11 +1029,30 @@ app.post('/api/bot/start', (req, res) => {
       portfolioBroadcastInterval = setInterval(broadcastPortfolio, 2000);
     }
 
-    res.json({ success: true, message: 'Bot started' });
+    return true;
   } catch (error) {
     botStatus.running = false;
     botStatus.message = `Failed to start: ${error.message}`;
-    res.json({ success: false, message: error.message });
+    return false;
+  }
+}
+
+// Get bot status
+app.get('/api/bot/status', (req, res) => {
+  res.json(botStatus);
+});
+
+// Start the bot
+app.post('/api/bot/start', (req, res) => {
+  if (botProcess) {
+    return res.json({ success: false, message: 'Bot is already running' });
+  }
+
+  const started = startBot();
+  if (started) {
+    res.json({ success: true, message: 'Bot started' });
+  } else {
+    res.json({ success: false, message: botStatus.message });
   }
 });
 
@@ -1076,7 +1091,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.4                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.5                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
