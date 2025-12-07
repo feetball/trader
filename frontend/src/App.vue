@@ -126,10 +126,6 @@
               <div>Latest: v{{ updateInfo.latestVersion }}</div>
             </v-alert>
             <p>Click "Update Now" to download and install the latest version. The server will restart automatically.</p>
-            <v-alert v-if="botStatus.running" type="warning" class="mt-4">
-              <v-icon icon="mdi-alert" class="mr-2"></v-icon>
-              The bot will be automatically stopped before updating and restarted after.
-            </v-alert>
           </div>
           <div v-else>
             <v-alert type="success" class="mb-0">
@@ -305,12 +301,6 @@ const checkForUpdates = async () => {
 }
 
 const applyUpdate = async () => {
-  // Confirm if bot is running
-  if (botStatus.value.running) {
-    const confirmed = confirm('The bot will be stopped before updating and automatically restarted after. Continue?')
-    if (!confirmed) return
-  }
-  
   clearUpdateLogs()
   updateInProgress.value = true
   updateFailed.value = false
