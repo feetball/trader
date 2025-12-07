@@ -28,6 +28,10 @@ COPY --from=frontend-build /app/frontend/node_modules ./frontend/node_modules
 # Create default paper-trading-data.json (will be overwritten by volume if mounted)
 RUN echo '{"cash":10000,"positions":[],"closedTrades":[]}' > /app/paper-trading-data.json
 
+# Create config.js from default template at build time (for safety)
+# This ensures config.js exists as a file, never as a directory
+RUN cp /app/config.default.js /app/config.js
+
 # Initialize git repo for in-app updates (clone fresh if .git not available)
 RUN git init && \
     git remote add origin https://github.com/feetball/trader.git && \

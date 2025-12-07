@@ -67,6 +67,16 @@ start() {
         echo '{"cash":10000,"positions":[],"closedTrades":[]}' > "$SCRIPT_DIR/paper-trading-data.json"
     fi
     
+    # Ensure config.js exists as a file (not directory)
+    if [ -d "$SCRIPT_DIR/config.js" ]; then
+        log_warn "Found config.js directory instead of file - removing..."
+        rm -rf "$SCRIPT_DIR/config.js"
+    fi
+    if [ ! -f "$SCRIPT_DIR/config.js" ]; then
+        log_info "Creating config.js from default template..."
+        cp "$SCRIPT_DIR/config.default.js" "$SCRIPT_DIR/config.js"
+    fi
+    
     docker_compose up -d
     
     log_info "$APP_NAME started!"
