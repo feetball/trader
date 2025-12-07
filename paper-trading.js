@@ -51,8 +51,8 @@ export class PaperTradingEngine {
       return null;
     }
 
-    // Calculate buy fee
-    const feePercent = config.TRADING_FEE_PERCENT || 0.6;
+    // Calculate buy fee (use maker fee for limit orders)
+    const feePercent = config.MAKER_FEE_PERCENT || 0.25;
     const buyFee = usdAmount * (feePercent / 100);
     const effectiveAmount = usdAmount - buyFee;
     const quantity = effectiveAmount / price;
@@ -88,8 +88,8 @@ export class PaperTradingEngine {
   async sell(position, currentPrice, reason = 'Target reached') {
     const grossValue = position.quantity * currentPrice;
     
-    // Calculate sell fee
-    const feePercent = config.TRADING_FEE_PERCENT || 0.6;
+    // Calculate sell fee (use taker fee for market orders)
+    const feePercent = config.TAKER_FEE_PERCENT || 0.50;
     const sellFee = grossValue * (feePercent / 100);
     const netValue = grossValue - sellFee;
     

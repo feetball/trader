@@ -462,8 +462,8 @@
               <v-col cols="12" sm="6">
                 <div class="setting-field">
                   <v-text-field
-                    v-model.number="settings.TRADING_FEE_PERCENT"
-                    label="Trading Fee (%)"
+                    v-model.number="settings.MAKER_FEE_PERCENT"
+                    label="Maker Fee (%)"
                     type="number"
                     step="0.01"
                   ></v-text-field>
@@ -474,9 +474,31 @@
                           <v-icon icon="mdi-information-outline" size="small"></v-icon>
                         </v-btn>
                       </template>
-                      <span><b>Trading Fee</b><br><br>Exchange fee charged per transaction. Coinbase Advanced is typically 0.4-0.6%.</span>
+                      <span><b>Maker Fee</b><br><br>Fee for limit orders that add liquidity to the order book. Typically lower than taker fees. Coinbase Advanced maker fee is 0.00-0.40%.</span>
                     </v-tooltip>
-                    <span>Fee per buy/sell transaction</span>
+                    <span>Limit orders (add liquidity)</span>
+                  </div>
+                </div>
+              </v-col>
+
+              <v-col cols="12" sm="6">
+                <div class="setting-field">
+                  <v-text-field
+                    v-model.number="settings.TAKER_FEE_PERCENT"
+                    label="Taker Fee (%)"
+                    type="number"
+                    step="0.01"
+                  ></v-text-field>
+                  <div class="setting-hint">
+                    <v-tooltip location="top" max-width="360">
+                      <template #activator="{ props }">
+                        <v-btn v-bind="props" icon variant="text" size="x-small">
+                          <v-icon icon="mdi-information-outline" size="small"></v-icon>
+                        </v-btn>
+                      </template>
+                      <span><b>Taker Fee</b><br><br>Fee for market orders that take liquidity from the order book. Typically higher than maker fees. Coinbase Advanced taker fee is 0.05-0.60%.</span>
+                    </v-tooltip>
+                    <span>Market orders (take liquidity)</span>
                   </div>
                 </div>
               </v-col>

@@ -49,6 +49,7 @@ export const defaultConfig = {
   RSI_MAX: 80,
   
   // Trading fees and taxes (percentages)
-  TRADING_FEE_PERCENT: 0.6,  // Exchange trading fee per transaction
+  MAKER_FEE_PERCENT: 0.25,   // Maker fee (limit orders that add liquidity)
+  TAKER_FEE_PERCENT: 0.50,   // Taker fee (market orders that take liquidity)
   TAX_PERCENT: 0,            // Tax rate on profits (for tracking purposes)
 };

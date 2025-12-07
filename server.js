@@ -622,7 +622,7 @@ app.post('/api/positions/sell', async (req, res) => {
     }
     
     // Calculate P&L with fees
-    const feePercent = config.TRADING_FEE_PERCENT || 0.6;
+    const feePercent = config.TAKER_FEE_PERCENT || 0.50;
     const grossValue = position.quantity * currentPrice;
     const sellFee = grossValue * (feePercent / 100);
     const netValue = grossValue - sellFee;
@@ -1091,7 +1091,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.6                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.7                                          ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
