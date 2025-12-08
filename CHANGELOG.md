@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.9] - 2025-12-08
+
+### Added
+- **JSON Import/Export for Settings** - Added "Import Settings" and "Export Settings" buttons to the Settings page
+- Users can now backup and restore complete bot configurations via JSON files
+- Exported files include timestamp in filename for easy organization
+- Import feature includes validation and security filtering to prevent malicious input
+- Success/error notifications with specific feedback messages
+
 ## [1.3.0] - 2025-11-30
 
 ### Added
