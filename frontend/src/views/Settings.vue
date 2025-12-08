@@ -702,7 +702,7 @@ const handleFileImport = async (event) => {
     Object.assign(settings.value, filteredSettings)
     
     // Show success message
-    snackbarMessage.value = 'Settings imported successfully! Click "Save Settings" to apply.'
+    snackbarMessage.value = 'Settings imported successfully! Click the save button to apply.'
     snackbarColor.value = 'success'
     showSnackbar.value = true
   } catch (error) {
