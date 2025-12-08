@@ -11,6 +11,14 @@
         </div>
         <div class="d-flex flex-wrap gap-2 settings-actions">
           <v-btn color="grey" variant="text" @click="refreshSettings" :loading="settingsLoading">Reset to Current</v-btn>
+          <v-btn color="info" variant="outlined" @click="exportSettings">
+            <v-icon start icon="mdi-download"></v-icon>
+            Export Settings
+          </v-btn>
+          <v-btn color="info" variant="outlined" @click="triggerImport">
+            <v-icon start icon="mdi-upload"></v-icon>
+            Import Settings
+          </v-btn>
           <v-btn color="primary" variant="flat" @click="persistSettings" :loading="settingsLoading">
             <v-icon start icon="mdi-check"></v-icon>
             {{ botStatus.running ? 'Apply & Restart' : 'Save Settings' }}
@@ -569,6 +577,20 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Hidden file input for import -->
+    <input
+      ref="fileInput"
+      type="file"
+      accept=".json"
+      style="display: none"
+      @change="handleFileImport"
+    />
+
+    <!-- Import/Export Snackbar -->
+    <v-snackbar v-model="showSnackbar" :color="snackbarColor" :timeout="3000">
+      {{ snackbarMessage }}
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -581,6 +603,10 @@ const { botStatus, settings, loadSettings, saveSettings, resetPortfolio } = useT
 const settingsLoading = ref(false)
 const showResetDialog = ref(false)
 const resetLoading = ref(false)
+const fileInput = ref(null)
+const showSnackbar = ref(false)
+const snackbarMessage = ref('')
+const snackbarColor = ref('success')
 
 const refreshSettings = async () => {
   settingsLoading.value = true
@@ -607,6 +633,93 @@ const doResetPortfolio = async () => {
     showResetDialog.value = false
   } finally {
     resetLoading.value = false
+  }
+}
+
+const exportSettings = () => {
+  try {
+    // Create JSON blob from current settings
+    const settingsJson = JSON.stringify(settings.value, null, 2)
+    const blob = new Blob([settingsJson], { type: 'application/json' })
+    
+    // Create download link with timestamp including time
+    const now = new Date()
+    const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5) // Format: 2025-12-08T14-33-47
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `trader-settings-${timestamp}.json`
+    
+    // Trigger download
+    document.body.appendChild(link)
+    link.click()
+    
+    // Cleanup
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+    
+    // Show success message
+    snackbarMessage.value = 'Settings exported successfully!'
+    snackbarColor.value = 'success'
+    showSnackbar.value = true
+  } catch (error) {
+    console.error('Export error:', error)
+    snackbarMessage.value = 'Failed to export settings'
+    snackbarColor.value = 'error'
+    showSnackbar.value = true
+  }
+}
+
+const triggerImport = () => {
+  // Trigger the hidden file input
+  fileInput.value?.click()
+}
+
+const handleFileImport = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  
+  try {
+    // Read file content
+    const text = await file.text()
+    const importedSettings = JSON.parse(text)
+    
+    // Validate that it's an object with expected settings
+    if (typeof importedSettings !== 'object' || importedSettings === null) {
+      throw new Error('Invalid settings format')
+    }
+    
+    // Only import known setting keys to prevent unexpected property overwrites
+    const validKeys = Object.keys(settings.value)
+    const filteredSettings = {}
+    for (const key of validKeys) {
+      if (key in importedSettings) {
+        filteredSettings[key] = importedSettings[key]
+      }
+    }
+    
+    // Update settings with validated imported values
+    Object.assign(settings.value, filteredSettings)
+    
+    // Show success message
+    snackbarMessage.value = 'Settings imported successfully! Click the save button to apply.'
+    snackbarColor.value = 'success'
+    showSnackbar.value = true
+  } catch (error) {
+    console.error('Import error:', error)
+    // Provide specific error messages based on error type
+    if (error instanceof SyntaxError) {
+      snackbarMessage.value = 'Invalid JSON format. Please check the file contains valid JSON.'
+    } else if (error.message === 'Invalid settings format') {
+      snackbarMessage.value = 'Invalid settings format. Please select a valid settings file.'
+    } else {
+      snackbarMessage.value = 'Failed to import settings. Please check the file format.'
+    }
+    snackbarColor.value = 'error'
+    showSnackbar.value = true
+  } finally {
+    // Reset file input
+    event.target.value = ''
   }
 }
 
