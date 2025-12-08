@@ -687,8 +687,17 @@ const handleFileImport = async (event) => {
       throw new Error('Invalid settings format')
     }
     
-    // Update settings with imported values
-    Object.assign(settings.value, importedSettings)
+    // Only import known setting keys to prevent unexpected property overwrites
+    const validKeys = Object.keys(settings.value)
+    const filteredSettings = {}
+    for (const key of validKeys) {
+      if (key in importedSettings) {
+        filteredSettings[key] = importedSettings[key]
+      }
+    }
+    
+    // Update settings with validated imported values
+    Object.assign(settings.value, filteredSettings)
     
     // Show success message
     snackbarMessage.value = 'Settings imported successfully! Click "Save Settings" to apply.'
