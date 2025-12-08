@@ -642,11 +642,13 @@ const exportSettings = () => {
     const settingsJson = JSON.stringify(settings.value, null, 2)
     const blob = new Blob([settingsJson], { type: 'application/json' })
     
-    // Create download link
+    // Create download link with timestamp including time
+    const now = new Date()
+    const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5) // Format: 2025-12-08T14-33-47
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `trader-settings-${new Date().toISOString().split('T')[0]}.json`
+    link.download = `trader-settings-${timestamp}.json`
     
     // Trigger download
     document.body.appendChild(link)
@@ -705,9 +707,14 @@ const handleFileImport = async (event) => {
     showSnackbar.value = true
   } catch (error) {
     console.error('Import error:', error)
-    snackbarMessage.value = error.message === 'Invalid settings format' 
-      ? 'Invalid JSON format. Please select a valid settings file.'
-      : 'Failed to import settings. Please check the file format.'
+    // Provide specific error messages based on error type
+    if (error instanceof SyntaxError) {
+      snackbarMessage.value = 'Invalid JSON format. Please check the file contains valid JSON.'
+    } else if (error.message === 'Invalid settings format') {
+      snackbarMessage.value = 'Invalid settings format. Please select a valid settings file.'
+    } else {
+      snackbarMessage.value = 'Failed to import settings. Please check the file format.'
+    }
     snackbarColor.value = 'error'
     showSnackbar.value = true
   } finally {
