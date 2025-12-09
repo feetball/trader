@@ -1180,7 +1180,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.7                                          ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.8.0 (Next.js Frontend)                      ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
@@ -1199,7 +1199,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('║                                                                              ║');
   console.log('║   LANGUAGES & FRAMEWORKS:                                                    ║');
   console.log('║   • Backend:  Node.js, Express, WebSocket (ws)                              ║');
-  console.log('║   • Frontend: Vue 3, Vuetify 3, Vue Router 4, Vite                          ║');
+  console.log('║   • Frontend: Next.js 14, React 18, Tailwind CSS 3, Lucide Icons           ║');
   console.log('║   • Trading:  Coinbase Advanced Trade API, Custom indicators.js            ║');
   console.log('║   • Deploy:   Docker, Docker Compose                                        ║');
   console.log('║                                                                              ║');
