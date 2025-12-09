@@ -23,7 +23,7 @@ COPY config.default.js ./
 
 # Copy full frontend (source + built dist) for in-app updates
 COPY frontend/ ./frontend/
-COPY --from=frontend-build /app/frontend/dist ./frontend/public
+COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 COPY --from=frontend-build /app/frontend/node_modules ./frontend/node_modules
 
 # Create default paper-trading-data.json (will be overwritten by volume if mounted)
