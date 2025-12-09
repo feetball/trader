@@ -1230,7 +1230,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.10 (Next.js Frontend)             ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.12 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

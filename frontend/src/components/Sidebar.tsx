@@ -3,7 +3,7 @@
 import { useTrading } from '@/hooks/useTrading'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, Menu, X, Zap } from 'lucide-react'
+import { BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, Menu, X, Zap, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
@@ -20,6 +20,19 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [checking, setChecking] = useState(false)
+  const { apiClient } = useTrading()
+
+  const handleCheckUpdates = async () => {
+    setChecking(true)
+    try {
+      await apiClient.post('/updates/check')
+    } catch (error) {
+      console.error('Failed to check for updates:', error)
+    } finally {
+      setChecking(false)
+    }
+  }
 
   return (
     <>
@@ -94,7 +107,17 @@ export default function Sidebar() {
         </nav>
 
         {/* Bottom Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/5">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/5 space-y-3">
+          <button
+            onClick={handleCheckUpdates}
+            disabled={checking}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-primary-600/20 to-info-600/20 border border-primary-500/30 hover:from-primary-600/30 hover:to-info-600/30 text-primary-300 hover:text-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-sm"
+            title="Check for available updates"
+          >
+            <RefreshCw size={16} className={checking ? 'animate-spin' : ''} />
+            {checking ? 'Checking...' : 'Check Updates'}
+          </button>
+          
           <div className="glass-light rounded-xl p-3">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse"></div>
