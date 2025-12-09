@@ -5,6 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-12-08
+
+### Changed - MAJOR FRONTEND MIGRATION
+- **Migrated from Vue 3 to Next.js** - Complete frontend rewrite from Vue 3 + Vuetify to Next.js + React + Tailwind CSS
+- **Component library** - Replaced Vuetify Material components with custom Tailwind CSS components
+- **State management** - Converted Vue composables to React Context API with hooks
+- **Routing** - Migrated from Vue Router to Next.js file-based App Router
+- **Build system** - Changed from Vite to Next.js with static export
+- **Styling** - Moved from Vuetify Material Design to Tailwind CSS utility classes
+- **Icon library** - Replaced MDI icons with Lucide React icons
+
+### Added
+- Next.js 14+ with App Router and TypeScript support
+- React 18 with modern hooks and context API
+- Tailwind CSS 3 with custom dark theme configuration
+- Comprehensive frontend documentation in frontend/README.md
+- Migration guide (MIGRATION.md) documenting Vue → Next.js changes
+- Index files for cleaner imports from components, hooks, and lib
+
+### Removed
+- Vue 3, Vue Router, Vuetify dependencies
+- Vite build system
+- Vue-specific plugin configurations
+
+### Maintained
+- All trading logic and API integration
+- WebSocket real-time updates (unchanged)
+- Settings management with history tracking
+- Import/export functionality
+- Paper trading mode
+- All 8 dashboard pages with same functionality
+
+### Fixed
+- Improved state management with React hooks
+- Better TypeScript type safety throughout
+- Mobile responsive design with Tailwind CSS
+- Cleaner component architecture
+
 ## [0.7.9] - 2025-12-08
 
 ### Added
