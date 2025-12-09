@@ -903,6 +903,64 @@ app.get('/api/updates/check', async (req, res) => {
   }
 });
 
+// Check for updates and broadcast to clients
+app.post('/api/updates/check', async (req, res) => {
+  try {
+    const pkg = JSON.parse(await fs.readFile('package.json', 'utf-8'));
+    const currentVersion = pkg.version;
+    
+    // Fetch latest package.json from GitHub (with cache bust)
+    const cacheBust = Date.now();
+    const response = await fetch(`https://raw.githubusercontent.com/feetball/trader/master/package.json?cb=${cacheBust}`);
+    if (!response.ok) {
+      throw new Error(`GitHub fetch failed: ${response.status}`);
+    }
+    
+    const remotePackage = await response.json();
+    const latestVersion = remotePackage.version;
+    console.log(`[UPDATE-CHECK] (manual) current=${currentVersion} latest=${latestVersion}`);
+    
+    // Compare versions
+    const current = currentVersion.split('.').map(Number);
+    const latest = latestVersion.split('.').map(Number);
+    
+    let updateAvailable = false;
+    for (let i = 0; i < 3; i++) {
+      if (latest[i] > current[i]) {
+        updateAvailable = true;
+        break;
+      } else if (latest[i] < current[i]) {
+        break;
+      }
+    }
+    
+    lastUpdateCheck = Date.now();
+    cachedUpdateInfo = {
+      currentVersion,
+      latestVersion,
+      updateAvailable,
+      lastCheck: lastUpdateCheck,
+      newVersion: latestVersion,
+    };
+    
+    // Broadcast update status to all clients
+    if (updateAvailable) {
+      broadcast('updateAvailable', { newVersion: latestVersion });
+    }
+    
+    res.json(cachedUpdateInfo);
+  } catch (error) {
+    console.error('Update check failed:', error.message);
+    res.json({
+      currentVersion: 'unknown',
+      latestVersion: 'unknown',
+      updateAvailable: false,
+      error: error.message,
+      lastCheck: lastUpdateCheck,
+    });
+  }
+});
+
 // Get cached update info
 app.get('/api/updates/status', (req, res) => {
   res.json(cachedUpdateInfo || { updateAvailable: false, lastCheck: null });
@@ -1230,7 +1288,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.13 (Next.js Frontend)             ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.14 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

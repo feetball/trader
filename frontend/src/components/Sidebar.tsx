@@ -21,13 +21,27 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [checking, setChecking] = useState(false)
+  const [toast, setToast] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null)
+
+  const showToast = (type: 'info' | 'success' | 'error', message: string) => {
+    setToast({ type, message })
+    setTimeout(() => setToast(null), 4000)
+  }
 
   const handleCheckUpdates = async () => {
     setChecking(true)
     try {
-      await fetch('/api/updates/check', { method: 'POST' })
+      const response = await fetch('/api/updates/check', { method: 'POST' })
+      const data = await response.json()
+      
+      if (data.updateAvailable) {
+        showToast('info', `Update available: v${data.newVersion}. Check the update dialog to proceed.`)
+      } else {
+        showToast('success', 'You are running the latest version!')
+      }
     } catch (error) {
       console.error('Failed to check for updates:', error)
+      showToast('error', 'Failed to check for updates')
     } finally {
       setChecking(false)
     }
@@ -133,6 +147,21 @@ export default function Sidebar() {
           className="fixed inset-0 bg-black/70 backdrop-blur-sm md:hidden z-30 transition-opacity duration-300"
           onClick={() => setOpen(false)}
         />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-sm z-50 animate-in slide-in-from-bottom-4">
+          <div className={`p-4 rounded-lg border backdrop-blur-sm ${
+            toast.type === 'success' 
+              ? 'bg-success-500/20 border-success-500/50 text-success-300'
+              : toast.type === 'error'
+              ? 'bg-danger-500/20 border-danger-500/50 text-danger-300'
+              : 'bg-info-500/20 border-info-500/50 text-info-300'
+          }`}>
+            <p className="text-sm font-medium">{toast.message}</p>
+          </div>
+        </div>
       )}
     </>
   )
