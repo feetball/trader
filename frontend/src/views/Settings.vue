@@ -538,6 +538,39 @@
       </v-col>
 
       <v-col cols="12" lg="6" xl="4">
+        <v-card class="setting-card" variant="tonal">
+          <v-card-title class="pb-1">Notes & History</v-card-title>
+          <v-card-text class="pt-1">
+            <div class="mb-4">
+              <v-textarea
+                v-model="settingsComment"
+                label="Save Comment"
+                variant="outlined"
+                rows="2"
+                auto-grow
+                maxlength="200"
+                counter="200"
+              ></v-textarea>
+              <div class="text-caption text-medium-emphasis mt-n2">Comments are saved with each settings change.</div>
+            </div>
+
+            <div class="text-subtitle-2 mb-2">Recent Changes</div>
+            <v-list density="compact" class="history-list">
+              <template v-if="settingsHistory.length">
+                <v-list-item v-for="(entry, idx) in settingsHistory.slice(0, 8)" :key="entry.savedAt + idx">
+                  <v-list-item-title>{{ formatHistoryTimestamp(entry.savedAt) }}</v-list-item-title>
+                  <v-list-item-subtitle>{{ entry.comment || 'No comment' }}</v-list-item-subtitle>
+                </v-list-item>
+              </template>
+              <v-list-item v-else>
+                <v-list-item-title>No history yet</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <v-col cols="12" lg="6" xl="4">
         <v-card class="setting-card" variant="tonal" color="error">
           <v-card-title class="pb-1">
             <v-icon icon="mdi-alert" class="mr-2"></v-icon>
@@ -598,7 +631,7 @@
 import { onMounted, ref } from 'vue'
 import { useTrading } from '../composables/useTrading'
 
-const { botStatus, settings, loadSettings, saveSettings, resetPortfolio } = useTrading()
+const { botStatus, settings, settingsHistory, settingsComment, loadSettings, saveSettings, resetPortfolio } = useTrading()
 
 const settingsLoading = ref(false)
 const showResetDialog = ref(false)
@@ -638,8 +671,14 @@ const doResetPortfolio = async () => {
 
 const exportSettings = () => {
   try {
-    // Create JSON blob from current settings
-    const settingsJson = JSON.stringify(settings.value, null, 2)
+    // Package settings plus comment (and a little metadata) for export
+    const payload = {
+      settings: settings.value,
+      comment: settingsComment.value || '',
+      exportedAt: new Date().toISOString(),
+    }
+
+    const settingsJson = JSON.stringify(payload, null, 2)
     const blob = new Blob([settingsJson], { type: 'application/json' })
     
     // Create download link with timestamp including time
@@ -682,8 +721,12 @@ const handleFileImport = async (event) => {
   try {
     // Read file content
     const text = await file.text()
-    const importedSettings = JSON.parse(text)
+    const imported = JSON.parse(text)
     
+    // Support both legacy (flat settings object) and new (settings + comment) shapes
+    const importedSettings = imported && imported.settings ? imported.settings : imported
+    const importedComment = imported && imported.comment ? imported.comment : ''
+
     // Validate that it's an object with expected settings
     if (typeof importedSettings !== 'object' || importedSettings === null) {
       throw new Error('Invalid settings format')
@@ -698,8 +741,9 @@ const handleFileImport = async (event) => {
       }
     }
     
-    // Update settings with validated imported values
+    // Update settings with validated imported values and carry over comment
     Object.assign(settings.value, filteredSettings)
+    settingsComment.value = typeof importedComment === 'string' ? importedComment : ''
     
     // Show success message
     snackbarMessage.value = 'Settings imported successfully! Click the save button to apply.'
@@ -721,6 +765,11 @@ const handleFileImport = async (event) => {
     // Reset file input
     event.target.value = ''
   }
+}
+
+const formatHistoryTimestamp = (value) => {
+  if (!value) return 'Unknown time'
+  return new Date(value).toLocaleString()
 }
 
 onMounted(() => {
@@ -766,6 +815,13 @@ onMounted(() => {
 
 .settings-actions {
   justify-content: flex-end;
+}
+
+.history-list {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+  border-radius: 8px;
 }
 
 @media (max-width: 960px) {

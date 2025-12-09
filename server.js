@@ -28,6 +28,10 @@ try {
 }
 export { config };
 
+// File paths for persisted settings and history
+const SETTINGS_FILE = 'user-settings.json';
+const SETTINGS_HISTORY_FILE = 'settings-history.json';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -68,6 +72,26 @@ function broadcast(type, data) {
 function updateLog(message) {
   console.log(`[UPDATE] ${message}`);
   broadcast('updateLog', { message });
+}
+
+// Read settings history from disk (returns array)
+async function readSettingsHistory() {
+  try {
+    if (fsSync.existsSync(SETTINGS_HISTORY_FILE)) {
+      const raw = await fs.readFile(SETTINGS_HISTORY_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+  } catch (e) {
+    console.log('[SETTINGS] Could not read settings history, starting fresh');
+  }
+  return [];
+}
+
+// Persist settings history (keeps most recent 50 entries)
+async function writeSettingsHistory(historyEntries) {
+  const trimmed = historyEntries.slice(-50);
+  await fs.writeFile(SETTINGS_HISTORY_FILE, JSON.stringify(trimmed, null, 2));
 }
 
 app.use(cors());
@@ -433,8 +457,8 @@ app.get('/api/settings', async (req, res) => {
     
     // Try to load user settings
     try {
-      if (fsSync.existsSync('user-settings.json')) {
-        const userSettings = JSON.parse(await fs.readFile('user-settings.json', 'utf-8'));
+      if (fsSync.existsSync(SETTINGS_FILE)) {
+        const userSettings = JSON.parse(await fs.readFile(SETTINGS_FILE, 'utf-8'));
         settings = { ...defaultConfig, ...userSettings };
       }
     } catch (e) {
@@ -442,6 +466,16 @@ app.get('/api/settings', async (req, res) => {
     }
 
     res.json(settings);
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+// Get settings history (most recent first)
+app.get('/api/settings/history', async (req, res) => {
+  try {
+    const history = await readSettingsHistory();
+    res.json(history.slice().reverse());
   } catch (error) {
     res.json({ error: error.message });
   }
@@ -460,8 +494,17 @@ app.post('/api/settings', async (req, res) => {
       botProcess = null;
     }
 
+    // Extract optional comment and filter only known setting keys
+    const settingsComment = typeof req.body?.settingsComment === 'string'
+      ? req.body.settingsComment.trim()
+      : '';
+
+    const incomingSettings = Object.fromEntries(
+      Object.entries(req.body || {}).filter(([key]) => key in defaultConfig)
+    );
+
     // Merge incoming settings with defaults (ensures new settings have values)
-    const newSettings = { ...defaultConfig, ...req.body };
+    const newSettings = { ...defaultConfig, ...incomingSettings };
     
     // Generate config.js content dynamically from all settings
     const configLines = Object.entries(newSettings).map(([key, value]) => {
@@ -479,10 +522,19 @@ ${configLines}
     await fs.writeFile('config.js', configContent);
     
     // Save to user-settings.json for persistence across updates
-    await fs.writeFile('user-settings.json', JSON.stringify(newSettings, null, 2));
+    await fs.writeFile(SETTINGS_FILE, JSON.stringify(newSettings, null, 2));
     
     // Update in-memory config
     Object.assign(config, newSettings);
+
+    // Append to settings history
+    const history = await readSettingsHistory();
+    history.push({
+      savedAt: new Date().toISOString(),
+      comment: settingsComment,
+      settings: newSettings,
+    });
+    await writeSettingsHistory(history);
     
     addLog('✅ Settings saved successfully');
     

@@ -44,7 +44,18 @@ const settings = ref({
   ENABLE_TRAILING_PROFIT: true,
   TRAILING_STOP_PERCENT: 1.0,
   MIN_MOMENTUM_TO_RIDE: 0.5,
+  VOLUME_SURGE_FILTER: true,
+  VOLUME_SURGE_THRESHOLD: 150,
+  RSI_FILTER: true,
+  RSI_MIN: 60,
+  RSI_MAX: 80,
+  MAKER_FEE_PERCENT: 0.25,
+  TAKER_FEE_PERCENT: 0.5,
+  TAX_PERCENT: 0,
 })
+
+const settingsHistory = ref([])
+const settingsComment = ref('')
 
 let ws = null
 let reconnectTimeout = null
@@ -116,10 +127,24 @@ const resetPortfolio = async () => {
   }
 }
 
+const loadSettingsHistory = async () => {
+  try {
+    const res = await axios.get(`${API_URL}/settings/history`)
+    settingsHistory.value = Array.isArray(res.data) ? res.data : []
+  } catch (error) {
+    console.error('Error loading settings history:', error)
+  }
+}
+
 const loadSettings = async () => {
   try {
-    const res = await axios.get(`${API_URL}/settings`)
-    settings.value = res.data
+    const [settingsRes, historyRes] = await Promise.all([
+      axios.get(`${API_URL}/settings`),
+      axios.get(`${API_URL}/settings/history`),
+    ])
+    settings.value = settingsRes.data
+    settingsHistory.value = Array.isArray(historyRes.data) ? historyRes.data : []
+    settingsComment.value = ''
   } catch (error) {
     console.error('Error loading settings:', error)
   }
@@ -127,7 +152,9 @@ const loadSettings = async () => {
 
 const saveSettings = async () => {
   try {
-    const res = await axios.post(`${API_URL}/settings`, settings.value)
+    const payload = { ...settings.value, settingsComment: settingsComment.value }
+    const res = await axios.post(`${API_URL}/settings`, payload)
+    await loadSettingsHistory()
     return res.data
   } catch (error) {
     console.error('Error saving settings:', error)
@@ -344,6 +371,8 @@ export function useTrading() {
     activities,
     botStatus,
     settings,
+    settingsHistory,
+    settingsComment,
     totalUnrealizedPL,
     
     // Functions
@@ -355,6 +384,7 @@ export function useTrading() {
     stopBot,
     resetPortfolio,
     loadSettings,
+    loadSettingsHistory,
     saveSettings,
     refreshBotStatus,
     refreshData,
