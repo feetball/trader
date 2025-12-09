@@ -645,6 +645,22 @@
     <v-snackbar v-model="showSnackbar" :color="snackbarColor" :timeout="3000">
       {{ snackbarMessage }}
     </v-snackbar>
+    
+    <!-- Update confirmation dialog -->
+    <v-dialog v-model="updatePrompt.visible" max-width="480">
+      <v-card>
+        <v-card-title class="text-h6">Update Ready</v-card-title>
+        <v-card-text>
+          <div>Version <strong>{{ updatePrompt.newVersion || 'unknown' }}</strong> has been prepared.</div>
+          <div class="mt-2">Click <strong>Restart</strong> to restart the server and apply the update now, or <strong>Cancel</strong> to postpone.</div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="grey" variant="text" @click="updatePrompt.visible = false">Cancel</v-btn>
+          <v-btn color="primary" variant="flat" @click="confirmUpdate">Restart</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -652,7 +668,7 @@
 import { onMounted, ref } from 'vue'
 import { useTrading } from '../composables/useTrading'
 
-const { botStatus, settings, settingsHistory, settingsComment, loadSettings, saveSettings, resetPortfolio } = useTrading()
+const { botStatus, settings, settingsHistory, settingsComment, updatePrompt, confirmUpdate, loadSettings, saveSettings, resetPortfolio } = useTrading()
 
 const settingsLoading = ref(false)
 const showResetDialog = ref(false)

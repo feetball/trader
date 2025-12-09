@@ -11,6 +11,7 @@ const wsConnected = ref(false)
 const lastUpdate = ref('')
 const appVersion = ref('...')
 const updateLogs = ref([])
+const updatePrompt = ref({ visible: false, newVersion: null })
 
 const portfolio = ref({})
 const positions = ref([])
@@ -215,6 +216,18 @@ const refreshLivePositions = async () => {
   }
 }
 
+const confirmUpdate = async () => {
+  try {
+    updatePrompt.value.visible = false
+    const res = await axios.post(`${API_URL}/updates/confirm`)
+    updateLogs.value.push(res.data?.message || 'Requested server restart')
+    return res.data
+  } catch (err) {
+    updateLogs.value.push(`[UPDATE] Error confirming update: ${err.message}`)
+    throw err
+  }
+}
+
 // Track if an update is in progress - reload when server comes back up
 let updateInProgress = false
 
@@ -254,14 +267,15 @@ function connectWebSocket() {
         // Update failed - clear the in-progress flag and notify user
         updateInProgress = false
         updateLogs.value.push(`[UPDATE] ❌ Update failed: ${data.message}`)
-      } else if (type === 'updateComplete') {
-        // Server is about to restart after update - set flag and reload when reconnected
+      } else if (type === 'updateComplete' || type === 'updateReady') {
+        // Server completed update build and is waiting for user confirmation
         updateInProgress = true
-        updateLogs.value.push('[UPDATE] Server restarting, will reload when back online...')
-        // Also try immediate reload after delay as fallback
-        setTimeout(() => {
-          window.location.reload()
-        }, 3000)
+        const versionText = data?.newVersion ? ` (v${data.newVersion})` : ''
+        updateLogs.value.push(`[UPDATE] Update ready${versionText}. Waiting for user confirmation...`)
+
+        // Show in-app prompt to confirm restart
+        updatePrompt.value = { visible: true, newVersion: data?.newVersion || null }
+        updateLogs.value.push('[UPDATE] Prompting user to confirm restart...')
       } else if (type === 'portfolio') {
         if (data.positions) {
           positions.value = data.positions
@@ -364,6 +378,7 @@ export function useTrading() {
     lastUpdate,
     appVersion,
     updateLogs,
+    updatePrompt,
     portfolio,
     positions,
     livePositions,
@@ -387,6 +402,7 @@ export function useTrading() {
     loadSettings,
     loadSettingsHistory,
     saveSettings,
+    confirmUpdate,
     refreshBotStatus,
     refreshData,
     refreshLivePositions,
