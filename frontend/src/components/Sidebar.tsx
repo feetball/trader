@@ -3,12 +3,12 @@
 import { useTrading } from '@/hooks/useTrading'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Robot, Trophy, History, Bell, Terminal, HelpCircle, Settings, Menu, X } from 'lucide-react'
+import { BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, Menu, X, Zap } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
   { href: '/', icon: BarChart3, label: 'Overview' },
-  { href: '/bot-status', icon: Robot, label: 'Bot Status' },
+  { href: '/bot-status', icon: Cpu, label: 'Bot Status' },
   { href: '/performance', icon: Trophy, label: 'Performance' },
   { href: '/trades', icon: History, label: 'Trade History' },
   { href: '/activity', icon: Bell, label: 'Activity' },
@@ -24,23 +24,38 @@ export default function Sidebar() {
   return (
     <>
       <button
-        className="md:hidden fixed top-4 left-4 z-50 p-2 bg-primary-700 text-white rounded-lg"
+        className="md:hidden fixed top-4 left-4 z-50 p-3 glass rounded-xl shadow-glow-sm hover:shadow-glow-md transition-all duration-300"
         onClick={() => setOpen(!open)}
       >
-        {open ? <X size={24} /> : <Menu size={24} />}
+        {open ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
       </button>
 
       <aside
-        className={`fixed md:relative z-40 w-64 h-screen bg-surface-light border-r border-gray-700 transform transition-transform md:translate-x-0 ${
+        className={`fixed md:relative z-40 w-72 h-screen glass border-r border-white/10 transform transition-all duration-500 ease-out ${
           open ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        } md:translate-x-0`}
       >
-        <div className="p-4 border-b border-gray-700">
-          <h1 className="text-xl font-bold text-primary-400">Trader</h1>
+        {/* Logo Section */}
+        <div className="p-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-info-500 flex items-center justify-center shadow-glow-sm">
+                <Zap size={22} className="text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-success-500 border-2 border-background animate-pulse"></div>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary-400 via-info-400 to-primary-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-shimmer">
+                Trader
+              </h1>
+              <p className="text-xs text-gray-500">Dashboard</p>
+            </div>
+          </div>
         </div>
 
-        <nav className="p-4 space-y-2">
-          {navItems.map((item) => {
+        {/* Navigation */}
+        <nav className="p-4 space-y-1">
+          {navItems.map((item, idx) => {
             const Icon = item.icon
             const isActive = pathname === item.href
             return (
@@ -48,23 +63,51 @@ export default function Sidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
+                className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                   isActive
-                    ? 'bg-primary-700 text-white'
-                    : 'text-gray-300 hover:bg-gray-700'
+                    ? 'bg-gradient-to-r from-primary-500/20 to-info-500/20 text-white shadow-glow-sm'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
+                style={{ animationDelay: `${idx * 50}ms` }}
               >
-                <Icon size={20} />
-                <span>{item.label}</span>
+                {/* Active indicator */}
+                {isActive && (
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-gradient-to-b from-primary-400 to-info-400 shadow-glow-sm" />
+                )}
+                
+                <div className={`p-2 rounded-lg transition-all duration-300 ${
+                  isActive 
+                    ? 'bg-gradient-to-br from-primary-500/30 to-info-500/30' 
+                    : 'bg-white/5 group-hover:bg-white/10'
+                }`}>
+                  <Icon size={18} className={isActive ? 'text-primary-400' : 'text-gray-400 group-hover:text-white transition-colors'} />
+                </div>
+                
+                <span className="font-medium">{item.label}</span>
+                
+                {/* Hover glow effect */}
+                <div className={`absolute inset-0 rounded-xl bg-gradient-to-r from-primary-500/0 via-primary-500/5 to-info-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${isActive ? 'opacity-100' : ''}`} />
               </Link>
             )
           })}
         </nav>
+
+        {/* Bottom Section */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/5">
+          <div className="glass-light rounded-xl p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse"></div>
+              <span className="text-xs text-gray-400">System Status</span>
+            </div>
+            <p className="text-xs text-gray-500">All systems operational</p>
+          </div>
+        </div>
       </aside>
 
+      {/* Mobile Overlay */}
       {open && (
         <div
-          className="fixed inset-0 bg-black/50 md:hidden z-30"
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm md:hidden z-30 transition-opacity duration-300"
           onClick={() => setOpen(false)}
         />
       )}

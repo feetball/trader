@@ -116,7 +116,7 @@ interface UpdatePrompt {
   newVersion: string | null
 }
 
-interface TradingContextType {
+export interface TradingContextType {
   // State
   loading: boolean
   botLoading: boolean

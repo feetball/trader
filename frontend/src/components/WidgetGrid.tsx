@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect, ReactNode } from 'react'
-import { GripVertical, RotateCcw, Maximize2, Minimize2 } from 'lucide-react'
+import { GripVertical, RotateCcw, Maximize2, Minimize2, Sparkles } from 'lucide-react'
 
 export interface Widget {
   id: string
@@ -10,6 +10,7 @@ export interface Widget {
   minWidth?: 1 | 2 | 3 | 4
   defaultWidth?: 1 | 2 | 3 | 4
   defaultHeight?: 'auto' | 'small' | 'medium' | 'large'
+  gradient?: string
 }
 
 interface WidgetLayout {
@@ -26,6 +27,14 @@ interface WidgetGridProps {
 }
 
 const STORAGE_PREFIX = 'widget-layout-'
+
+const gradients = [
+  'from-primary-500/20 via-transparent to-transparent',
+  'from-info-500/20 via-transparent to-transparent',
+  'from-success-500/20 via-transparent to-transparent',
+  'from-warning-500/20 via-transparent to-transparent',
+  'from-error-500/20 via-transparent to-transparent',
+]
 
 export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutChange }: WidgetGridProps) {
   const [layout, setLayout] = useState<WidgetLayout[]>([])
@@ -159,19 +168,19 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
       <div className="flex items-center justify-end gap-2">
         <button
           onClick={() => setIsEditing(!isEditing)}
-          className={`px-3 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-1 ${
+          className={`group px-4 py-2 text-xs font-medium rounded-xl transition-all duration-300 flex items-center gap-2 ${
             isEditing 
-              ? 'bg-primary-500 text-white' 
-              : 'bg-surface hover:bg-surface-light text-gray-400'
+              ? 'bg-gradient-to-r from-primary-500 to-info-500 text-white shadow-glow-sm' 
+              : 'glass hover:shadow-glow-sm text-gray-300 hover:text-white'
           }`}
         >
-          <GripVertical size={14} />
-          {isEditing ? 'Done' : 'Edit Layout'}
+          <GripVertical size={14} className={isEditing ? 'animate-pulse' : 'group-hover:animate-pulse'} />
+          {isEditing ? 'Done Editing' : 'Edit Layout'}
         </button>
         {isEditing && (
           <button
             onClick={resetLayout}
-            className="px-3 py-1.5 text-xs rounded-lg bg-surface hover:bg-surface-light text-gray-400 transition-colors flex items-center gap-1"
+            className="px-4 py-2 text-xs font-medium rounded-xl glass hover:shadow-glow-sm text-gray-300 hover:text-white transition-all duration-300 flex items-center gap-2"
           >
             <RotateCcw size={14} />
             Reset
@@ -181,19 +190,19 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
 
       {/* Widget Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {layout.map((item) => {
+        {layout.map((item, index) => {
           const widget = widgets.find(w => w.id === item.id)
           if (!widget) return null
 
           const isDragging = draggedId === item.id
           const isDragOver = dragOverId === item.id
+          const gradientClass = widget.gradient || gradients[index % gradients.length]
 
           return (
             <div
               key={item.id}
-              className={`${getWidthClass(item.width)} transition-all duration-200 ${
-                isDragging ? 'opacity-50 scale-95' : ''
-              } ${isDragOver ? 'ring-2 ring-primary-500 ring-offset-2 ring-offset-background' : ''}`}
+              className={`${getWidthClass(item.width)} transition-all duration-300 animate-fade-in`}
+              style={{ animationDelay: `${index * 50}ms` }}
               draggable={isEditing}
               onDragStart={(e) => handleDragStart(e, item.id)}
               onDragOver={(e) => handleDragOver(e, item.id)}
@@ -201,63 +210,83 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
               onDrop={(e) => handleDrop(e, item.id)}
               onDragEnd={handleDragEnd}
             >
-              <div className={`bg-surface-dark rounded-lg border border-gray-800 overflow-hidden h-full ${
-                isEditing ? 'cursor-move' : ''
-              }`}>
-                {/* Widget Header */}
-                <div className={`flex items-center justify-between px-4 py-2 border-b border-gray-800 ${
-                  isEditing ? 'bg-surface-light' : ''
-                }`}>
-                  <div className="flex items-center gap-2">
-                    {isEditing && (
-                      <GripVertical size={16} className="text-gray-500 cursor-grab" />
-                    )}
-                    <h3 className="font-semibold text-sm">{widget.title}</h3>
+              <div className={`
+                relative overflow-hidden rounded-2xl h-full
+                bg-gradient-to-br ${gradientClass}
+                transition-all duration-500 ease-out
+                ${isDragging ? 'opacity-50 scale-95 rotate-2' : ''}
+                ${isDragOver ? 'ring-2 ring-primary-400 ring-offset-2 ring-offset-background scale-[1.02]' : ''}
+                ${isEditing ? 'cursor-move hover:shadow-glow-sm' : 'hover:shadow-lg hover:shadow-primary-500/10'}
+              `}>
+                {/* Glassmorphism card */}
+                <div className="glass rounded-2xl h-full">
+                  {/* Animated border gradient */}
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-500/20 via-info-500/20 to-success-500/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  
+                  {/* Widget Header */}
+                  <div className={`
+                    relative flex items-center justify-between px-4 py-3 
+                    border-b border-white/5
+                    ${isEditing ? 'bg-white/5' : ''}
+                  `}>
+                    <div className="flex items-center gap-3">
+                      {isEditing && (
+                        <GripVertical size={16} className="text-gray-400 cursor-grab active:cursor-grabbing animate-pulse" />
+                      )}
+                      <h3 className="font-semibold text-sm bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                        {widget.title}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {isEditing && (
+                        <>
+                          <button
+                            onClick={() => changeWidth(item.id, -1)}
+                            disabled={item.width <= (widget.minWidth || 1)}
+                            className="p-1.5 hover:bg-white/10 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            title="Decrease width"
+                          >
+                            <Minimize2 size={12} className="text-gray-400" />
+                          </button>
+                          <span className="text-xs text-gray-500 px-2 font-mono">{item.width}/4</span>
+                          <button
+                            onClick={() => changeWidth(item.id, 1)}
+                            disabled={item.width >= 4}
+                            className="p-1.5 hover:bg-white/10 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            title="Increase width"
+                          >
+                            <Maximize2 size={12} className="text-gray-400" />
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => toggleCollapse(item.id)}
+                        className="p-1.5 hover:bg-white/10 rounded-lg transition-all ml-1"
+                        title={item.collapsed ? 'Expand' : 'Collapse'}
+                      >
+                        <span className={`text-gray-400 text-xs transition-transform duration-300 inline-block ${
+                          item.collapsed ? 'rotate-180' : ''
+                        }`}>
+                          ▼
+                        </span>
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {isEditing && (
-                      <>
-                        <button
-                          onClick={() => changeWidth(item.id, -1)}
-                          disabled={item.width <= (widget.minWidth || 1)}
-                          className="p-1 hover:bg-surface rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                          title="Decrease width"
-                        >
-                          <Minimize2 size={14} className="text-gray-400" />
-                        </button>
-                        <span className="text-xs text-gray-500 px-1">{item.width}/4</span>
-                        <button
-                          onClick={() => changeWidth(item.id, 1)}
-                          disabled={item.width >= 4}
-                          className="p-1 hover:bg-surface rounded disabled:opacity-30 disabled:cursor-not-allowed"
-                          title="Increase width"
-                        >
-                          <Maximize2 size={14} className="text-gray-400" />
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => toggleCollapse(item.id)}
-                      className="p-1 hover:bg-surface rounded"
-                      title={item.collapsed ? 'Expand' : 'Collapse'}
-                    >
-                      <span className={`text-gray-400 transition-transform inline-block ${
-                        item.collapsed ? 'rotate-180' : ''
-                      }`}>
-                        ▼
-                      </span>
-                    </button>
+
+                  {/* Widget Content */}
+                  <div className={`
+                    transition-all duration-500 ease-out overflow-hidden
+                    ${item.collapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'}
+                  `}>
+                    <div className="p-4">
+                      {widget.component}
+                    </div>
                   </div>
                 </div>
 
-                {/* Widget Content */}
-                <div className={`transition-all duration-300 overflow-hidden ${
-                  item.collapsed ? 'max-h-0' : 'max-h-[800px]'
-                }`}>
-                  <div className="p-4">
-                    {widget.component}
-                  </div>
-                </div>
+                {/* Shine effect on hover */}
+                <div className="absolute inset-0 bg-gradient-shine opacity-0 hover:opacity-100 transition-opacity duration-700 pointer-events-none" 
+                     style={{ backgroundSize: '200% 100%' }} />
               </div>
             </div>
           )

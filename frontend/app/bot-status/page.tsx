@@ -4,79 +4,158 @@ import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
 import Chip from '@/components/Chip'
 import Button from '@/components/Button'
-import { RefreshCw, Power, Square } from 'lucide-react'
+import { RefreshCw, Power, Square, Cpu, Settings, Target, Clock, Activity, BarChart3, DollarSign, Zap } from 'lucide-react'
 
 export default function BotStatusPage() {
   const { botStatus, botLoading, loading, portfolio, settings, startBot, stopBot, refreshData } = useTrading()
 
   return (
     <div className="p-6 space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardTitle className="flex items-center gap-2">
-            <div className={`w-3 h-3 rounded-full ${botStatus.running ? 'bg-success-500 animate-pulse-slow' : 'bg-gray-500'}`} />
+      {/* Main Status Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card variant="glass" className="lg:col-span-2">
+          <CardTitle icon={<Cpu size={18} className="text-primary-400" />}>
             Bot Status
           </CardTitle>
           <CardContent>
-            <p className="text-2xl font-bold mb-4">{botStatus.message}</p>
-            <div className="space-y-2 text-sm">
-              <p><span className="text-gray-400">State:</span> <span className={botStatus.running ? 'text-success-500' : 'text-gray-400'}>{botStatus.running ? 'Running' : 'Stopped'}</span></p>
-              <p><span className="text-gray-400">Cycles:</span> {botStatus.cycleCount}</p>
-              <p><span className="text-gray-400">API Calls:</span> {botStatus.apiCalls}</p>
+            <div className="flex items-start gap-6">
+              {/* Status Indicator */}
+              <div className="relative">
+                <div className={`w-24 h-24 rounded-2xl flex items-center justify-center ${
+                  botStatus.running 
+                    ? 'bg-gradient-to-br from-success-500/30 to-success-600/10 shadow-glow-success' 
+                    : 'bg-gradient-to-br from-gray-500/30 to-gray-600/10'
+                }`}>
+                  <Cpu size={40} className={botStatus.running ? 'text-success-400 animate-pulse' : 'text-gray-500'} />
+                </div>
+                {botStatus.running && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-success-500 animate-ping"></div>
+                )}
+              </div>
+
+              {/* Status Info */}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-3">
+                  <Chip 
+                    color={botStatus.running ? 'success' : 'grey'} 
+                    variant="glow"
+                    size="medium"
+                  >
+                    {botStatus.running ? '● Running' : '○ Stopped'}
+                  </Chip>
+                </div>
+                <p className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-4">
+                  {botStatus.message || 'Awaiting status...'}
+                </p>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <Activity size={14} className="text-info-400" />
+                    <span className="text-gray-500">Cycles:</span>
+                    <span className="font-mono text-white">{botStatus.cycleCount || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Zap size={14} className="text-warning-400" />
+                    <span className="text-gray-500">API Calls:</span>
+                    <span className="font-mono text-white">{botStatus.apiCalls || 0}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardTitle>Controls</CardTitle>
-          <CardContent className="space-y-3">
+        {/* Controls Card */}
+        <Card variant="glass">
+          <CardTitle icon={<Settings size={18} className="text-info-400" />}>
+            Controls
+          </CardTitle>
+          <CardContent className="space-y-4">
             {!botStatus.running ? (
-              <Button variant="success" onClick={startBot} loading={botLoading} className="w-full">
-                <Power size={18} />
-                Start Bot
-              </Button>
+              <button
+                onClick={startBot}
+                disabled={botLoading}
+                className="group relative w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-glow-success"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-success-600 via-success-500 to-success-600 bg-[length:200%_100%] animate-shimmer"></div>
+                <Power size={20} className="relative z-10" />
+                <span className="relative z-10">Start Bot</span>
+              </button>
             ) : (
-              <Button variant="error" onClick={stopBot} loading={botLoading} className="w-full">
-                <Square size={18} />
-                Stop Bot
-              </Button>
+              <button
+                onClick={stopBot}
+                disabled={botLoading}
+                className="group relative w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-glow-error"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-error-600 via-error-500 to-error-600 bg-[length:200%_100%] animate-shimmer"></div>
+                <Square size={20} className="relative z-10" />
+                <span className="relative z-10">Stop Bot</span>
+              </button>
             )}
-            <Button variant="secondary" onClick={refreshData} loading={loading} className="w-full">
-              <RefreshCw size={18} />
-              Refresh
-            </Button>
+            <button
+              onClick={refreshData}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-gray-300 glass hover:bg-white/10 transition-all duration-300 disabled:opacity-50"
+            >
+              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
+              Refresh Data
+            </button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Open Positions', value: portfolio.openPositions || 0, suffix: `/${settings.MAX_POSITIONS}` },
-          { label: 'Available Cash', value: '$' + (portfolio.cash?.toFixed(0) || '0') },
-          { label: 'Total Trades', value: portfolio.totalTrades || 0 },
-          { label: 'Scan Interval', value: settings.SCAN_INTERVAL + 's' },
+          { label: 'Open Positions', value: portfolio.openPositions || 0, suffix: `/${settings.MAX_POSITIONS}`, icon: Target, color: 'primary' },
+          { label: 'Available Cash', value: '$' + (portfolio.cash?.toFixed(0) || '0'), icon: DollarSign, color: 'success' },
+          { label: 'Total Trades', value: portfolio.totalTrades || 0, icon: BarChart3, color: 'info' },
+          { label: 'Scan Interval', value: settings.SCAN_INTERVAL + 's', icon: Clock, color: 'warning' },
         ].map((stat, i) => (
-          <Card key={i} className="flex flex-col justify-center">
+          <Card key={i} variant="glass" hover className="group">
             <CardContent>
-              <p className="text-xs text-gray-400">{stat.label}</p>
-              <p className="text-2xl font-bold mt-1">{stat.value}{stat.suffix || ''}</p>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`p-1.5 rounded-lg bg-${stat.color}-500/20`}>
+                  <stat.icon size={14} className={`text-${stat.color}-400`} />
+                </div>
+                <p className="text-xs text-gray-500">{stat.label}</p>
+              </div>
+              <p className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                {stat.value}{stat.suffix || ''}
+              </p>
             </CardContent>
           </Card>
         ))}
       </div>
 
       {/* Recent Logs */}
-      <Card>
-        <CardTitle>Recent Logs</CardTitle>
+      <Card variant="glass">
+        <CardTitle icon={<Activity size={18} className="text-warning-400" />}>
+          Recent Logs
+        </CardTitle>
         <CardContent>
-          <div className="space-y-1 max-h-64 overflow-y-auto font-mono text-sm">
-            {botStatus.logs?.slice(-10).map((log, i) => (
-              <p key={i} className="text-gray-400">
-                <span className="text-gray-600">{log.timestamp}</span> {log.message}
-              </p>
+          <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar font-mono text-sm">
+            {botStatus.logs?.slice(-15).map((log, i) => (
+              <div 
+                key={i} 
+                className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <span className="text-gray-600 text-xs whitespace-nowrap">{log.timestamp}</span>
+                <span className={`flex-1 ${
+                  log.message?.toLowerCase().includes('error') ? 'text-error-400' :
+                  log.message?.toLowerCase().includes('success') || log.message?.toLowerCase().includes('sold') ? 'text-success-400' :
+                  log.message?.toLowerCase().includes('buy') || log.message?.toLowerCase().includes('bought') ? 'text-info-400' :
+                  'text-gray-400'
+                }`}>
+                  {log.message}
+                </span>
+              </div>
             ))}
-            {!botStatus.logs?.length && <p className="text-gray-500">No logs yet</p>}
+            {!botStatus.logs?.length && (
+              <div className="text-center py-8">
+                <Activity size={32} className="mx-auto text-gray-600 mb-2" />
+                <p className="text-gray-500">No logs yet. Start the bot to see activity.</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

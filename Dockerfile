@@ -2,12 +2,13 @@
 FROM node:20-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm ci
+RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
 # Production stage
 FROM node:20-alpine
+ARG GIT_BRANCH=master
 WORKDIR /app
 
 # Install git for in-app updates
@@ -35,8 +36,8 @@ RUN cp /app/config.default.js /app/config.js
 # Initialize git repo for in-app updates (clone fresh if .git not available)
 RUN git init && \
     git remote add origin https://github.com/feetball/trader.git && \
-    git fetch origin master --depth=1 && \
-    git reset --soft origin/master
+    git fetch origin ${GIT_BRANCH} --depth=1 && \
+    git reset --soft origin/${GIT_BRANCH}
 
 # Expose port
 EXPOSE 3001

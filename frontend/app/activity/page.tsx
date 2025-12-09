@@ -3,9 +3,10 @@
 import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
 import Chip from '@/components/Chip'
+import { formatHoldTime, formatTimestamp } from '@/lib/utils'
 
 export default function ActivityPage() {
-  const { activities, formatHoldTime, formatTimestamp, openCoinbase } = useTrading()
+  const { activities, openCoinbase } = useTrading()
 
   const today = new Date().toDateString()
   const todayActivities = activities.filter(a => new Date(a.timestamp).toDateString() === today)

@@ -1180,7 +1180,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.8.0 (Next.js Frontend)                      ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.8.2 (Next.js Frontend)                      ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
@@ -1193,7 +1193,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('║                                                                              ║');
   console.log('║   ARCHITECTURE:                                                              ║');
   console.log('║   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐         ║');
-  console.log('║   │  Vue 3 + Vite   │◄──►│  Express API    │◄──►│  Coinbase API   │         ║');
+  console.log('║   │ Next.js + React │◄──►│  Express API    │◄──►│  Coinbase API   │         ║');
   console.log('║   │  (Frontend)     │    │  + WebSocket    │    │  (REST + WS)    │         ║');
   console.log('║   └─────────────────┘    └─────────────────┘    └─────────────────┘         ║');
   console.log('║                                                                              ║');
