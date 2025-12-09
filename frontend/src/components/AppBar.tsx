@@ -10,7 +10,7 @@ export default function AppBar() {
     <header className="glass border-b border-white/10 px-6 py-4 sticky top-0 z-30">
       <div className="flex items-center justify-between">
         {/* Left Side - Title & Version */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 ml-12 md:ml-0">
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
@@ -69,7 +69,7 @@ export default function AppBar() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 relative z-40">
             {!botStatus.running ? (
               <button
                 onClick={startBot}

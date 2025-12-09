@@ -21,13 +21,10 @@ RUN npm ci --only=production
 COPY *.js ./
 COPY config.default.js ./
 
-# Copy frontend dist (built dist) from build stage FIRST
-COPY --from=frontend-build /app/frontend/dist ./frontend/dist
-
-# Copy full frontend source for in-app updates
+# Copy full frontend (source + built dist) for in-app updates
 COPY frontend/ ./frontend/
-# Preserve the built dist that was copied
-COPY --from=frontend-build /app/frontend/dist ./frontend/dist
+COPY --from=frontend-build /app/frontend/dist ./frontend/public
+COPY --from=frontend-build /app/frontend/node_modules ./frontend/node_modules
 
 # Create default paper-trading-data.json (will be overwritten by volume if mounted)
 RUN echo '{"cash":10000,"positions":[],"closedTrades":[]}' > /app/paper-trading-data.json
