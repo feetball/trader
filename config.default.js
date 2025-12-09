@@ -57,6 +57,4 @@ export const defaultConfig = {
   TAX_PERCENT: 0,            // Tax rate on profits (for tracking purposes)
 };
 
-// Export as both defaultConfig and config for compatibility
 export const config = defaultConfig;
-export { defaultConfig };
