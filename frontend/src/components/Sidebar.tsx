@@ -21,12 +21,11 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [checking, setChecking] = useState(false)
-  const { apiClient } = useTrading()
 
   const handleCheckUpdates = async () => {
     setChecking(true)
     try {
-      await apiClient.post('/updates/check')
+      await fetch('/api/updates/check', { method: 'POST' })
     } catch (error) {
       console.error('Failed to check for updates:', error)
     } finally {

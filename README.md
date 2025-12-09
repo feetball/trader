@@ -2,7 +2,7 @@
 
 An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase and executes momentum-based trades using technical indicators. **Includes a beautiful Next.js + React + Tailwind CSS multi-page dashboard!**
 
-**Version:** 0.8.12 (Next.js Migration)
+**Version:** 0.8.13 (Next.js Migration)
 
 ## ✨ Features
 
