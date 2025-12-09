@@ -263,6 +263,27 @@
                   </div>
                 </div>
               </v-col>
+
+              <v-col cols="12" sm="6">
+                <div class="setting-field">
+                  <v-text-field
+                    v-model.number="settings.OPEN_POSITION_SCAN_INTERVAL"
+                    label="Open Position Check (seconds)"
+                    type="number"
+                  ></v-text-field>
+                  <div class="setting-hint">
+                    <v-tooltip location="top" max-width="360">
+                      <template #activator="{ props }">
+                        <v-btn v-bind="props" icon variant="text" size="x-small">
+                          <v-icon icon="mdi-information-outline" size="small"></v-icon>
+                        </v-btn>
+                      </template>
+                      <span><b>Open Position Check</b><br><br>Re-check open positions more frequently than full market scans. Lower values react faster to exits.</span>
+                    </v-tooltip>
+                    <span>Position re-check cadence</span>
+                  </div>
+                </div>
+              </v-col>
             </v-row>
           </v-card-text>
         </v-card>

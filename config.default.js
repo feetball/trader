@@ -22,6 +22,9 @@ export const defaultConfig = {
   // How often to scan markets (seconds)
   SCAN_INTERVAL: 10,
   
+  // How often to re-check open positions between full scans (seconds)
+  OPEN_POSITION_SCAN_INTERVAL: 5,
+  
   // Position size per trade (USD)
   POSITION_SIZE: 500,
   

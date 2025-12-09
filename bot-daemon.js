@@ -130,7 +130,30 @@ class TradingBotDaemon {
         
         const cycleDuration = Date.now() - cycleStartTime;
         console.log(`[STATUS] Cycle #${this.cycleCount} completed in ${(cycleDuration / 1000).toFixed(1)}s. Waiting ${config.SCAN_INTERVAL}s...`);
-        await this.sleep(config.SCAN_INTERVAL * 1000);
+
+        // During the wait, re-check open positions more frequently
+        const checkInterval = Math.max(1, config.OPEN_POSITION_SCAN_INTERVAL || 5);
+        let waited = 0;
+        while (waited < config.SCAN_INTERVAL && this.isRunning) {
+          const sleepFor = Math.min(checkInterval, config.SCAN_INTERVAL - waited);
+          await this.sleep(sleepFor * 1000);
+          waited += sleepFor;
+
+          // Skip re-check if we're done waiting or bot stopped
+          if (!this.isRunning || waited >= config.SCAN_INTERVAL) {
+            break;
+          }
+
+          // Only re-check if we still have open positions
+          if (this.paper.getPositionCount() > 0) {
+            try {
+              await this.strategy.managePositions();
+              console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
+            } catch (err) {
+              this.logError('managePositions (fast check)', err);
+            }
+          }
+        }
 
       } catch (error) {
         this.errorCount++;
