@@ -22,11 +22,11 @@ export default function OverviewPage() {
 
   const topPerformers = useMemo(() => {
     return (coinPerformance || []).filter(c => c.profit > 0).slice(0, 5)
-  }, [])
+  }, [coinPerformance])
 
   const worstPerformers = useMemo(() => {
     return (coinPerformance || []).filter(c => c.profit < 0).sort((a, b) => a.profit - b.profit).slice(0, 5)
-  }, [])
+  }, [coinPerformance])
 
   return (
     <div className="p-6 space-y-6">

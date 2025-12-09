@@ -3,7 +3,6 @@
 import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
 import Button from '@/components/Button'
-import { settings: defaultSettings, appVersion } from '@/hooks/useTrading'
 import { Download, Upload, RotateCcw } from 'lucide-react'
 import { useState, useRef } from 'react'
 
@@ -22,11 +21,18 @@ export default function SettingsPage() {
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [showResetDialog, setShowResetDialog] = useState(false)
   const [snackbar, setSnackbar] = useState('')
+  const [localSettings, setLocalSettings] = useState(settings)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleSettingChange = (key: keyof typeof settings, value: any) => {
+    setLocalSettings(prev => ({ ...prev, [key]: value }))
+  }
 
   const handleSave = async () => {
     setSettingsLoading(true)
     try {
+      // Apply local settings to global settings
+      Object.assign(settings, localSettings)
       await saveSettings()
       setSnackbar('Settings saved successfully!')
       setTimeout(() => setSnackbar(''), 3000)
@@ -40,7 +46,7 @@ export default function SettingsPage() {
 
   const handleExport = () => {
     const payload = {
-      settings,
+      settings: localSettings,
       comment: settingsComment,
       exportedAt: new Date().toISOString(),
     }
@@ -60,12 +66,12 @@ export default function SettingsPage() {
       const text = await file.text()
       const imported = JSON.parse(text)
       const importedSettings = imported.settings || imported
-      const validKeys = Object.keys(settings)
+      const validKeys = Object.keys(localSettings)
       const filtered: any = {}
       for (const key of validKeys) {
         if (key in importedSettings) filtered[key] = importedSettings[key]
       }
-      Object.assign(settings, filtered)
+      setLocalSettings(filtered)
       setSettingsComment(imported.comment || '')
       setSnackbar('Settings imported! Click save to apply.')
       setTimeout(() => setSnackbar(''), 3000)
@@ -95,7 +101,7 @@ export default function SettingsPage() {
 
       {/* Settings Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {Object.entries(settings).map(([key, value]) => (
+        {Object.entries(localSettings).map(([key, value]) => (
           <Card key={key}>
             <CardContent>
               <label className="text-sm text-gray-400 block mb-2">{key}</label>
@@ -103,14 +109,14 @@ export default function SettingsPage() {
                 <input
                   type="checkbox"
                   checked={value}
-                  onChange={(e) => Object.assign(settings, { [key]: e.target.checked })}
+                  onChange={(e) => handleSettingChange(key as keyof typeof localSettings, e.target.checked)}
                   className="w-4 h-4"
                 />
               ) : (
                 <input
                   type="number"
                   value={value}
-                  onChange={(e) => Object.assign(settings, { [key]: isNaN(+e.target.value) ? value : +e.target.value })}
+                  onChange={(e) => handleSettingChange(key as keyof typeof localSettings, isNaN(+e.target.value) ? value : +e.target.value)}
                   className="w-full bg-surface px-2 py-1 rounded text-sm border border-gray-700"
                 />
               )}
