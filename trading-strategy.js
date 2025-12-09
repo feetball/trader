@@ -192,13 +192,9 @@ export class TradingStrategy {
           console.log(`[STATUS] ${position.symbol}: ${progressToTarget.toFixed(0)}% progress to ${config.PROFIT_TARGET}% target`);
         }
 
-        // Optional: Trailing stop or time-based exit
-        if (holdTimeMinutes > 240 && profitPercent > 2) {
-          console.log(`[STATUS] ⏰ ${position.symbol} aged position with profit - selling...`);
-          this.peakPrices.delete(position.productId);
-          await this.paper.sell(position, currentPrice, 'Time-based exit with profit');
-          continue;
-        }
+        // Time-based exit removed: trades will no longer be closed solely
+        // because they've aged with a small profit. This rule was removed
+        // per user request to avoid premature profit-taking on long holds.
 
       } catch (error) {
         console.error(`Error managing position ${position.symbol}:`, error.message);
