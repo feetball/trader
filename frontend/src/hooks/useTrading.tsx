@@ -114,7 +114,7 @@ interface SettingsHistoryEntry {
 interface UpdatePrompt {
   visible: boolean
   newVersion: string | null
-  mode?: 'available' | 'ready'
+  mode?: 'available' | 'ready' | 'applying'
 }
 
 export interface TradingContextType {

@@ -4,7 +4,7 @@ import { TradingProvider } from '@/hooks/useTrading'
 import RootLayout from '@/components/RootLayout'
 
 export const metadata: Metadata = {
-  title: 'Crypto Momentum Trader',
+  title: 'Big DK\'s Crypto Momentum Trader',
   description: 'Automated momentum trading bot for cryptocurrencies',
 }
 

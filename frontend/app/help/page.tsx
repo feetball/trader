@@ -22,7 +22,7 @@ export default function HelpPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-2">Crypto Momentum Trader</h1>
+        <h1 className="text-4xl font-bold mb-2">Big DK's Crypto Momentum Trader</h1>
         <p className="text-xl text-gray-400">v{appVersion}</p>
         <p className="text-gray-300 mt-2">Automated momentum trading bot for sub-$1 cryptocurrencies</p>
       </div>

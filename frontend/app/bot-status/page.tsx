@@ -75,6 +75,7 @@ export default function BotStatusPage() {
                 onClick={startBot}
                 disabled={botLoading}
                 className="group relative w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-glow-success"
+                title="Start the trading bot to begin scanning markets and executing trades"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-success-600 via-success-500 to-success-600 bg-[length:200%_100%] animate-shimmer"></div>
                 <Power size={20} className="relative z-10" />
@@ -85,6 +86,7 @@ export default function BotStatusPage() {
                 onClick={stopBot}
                 disabled={botLoading}
                 className="group relative w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-glow-error"
+                title="Stop the trading bot and halt all trading activities"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-error-600 via-error-500 to-error-600 bg-[length:200%_100%] animate-shimmer"></div>
                 <Square size={20} className="relative z-10" />
@@ -95,6 +97,7 @@ export default function BotStatusPage() {
               onClick={refreshData}
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-gray-300 glass hover:bg-white/10 transition-all duration-300 disabled:opacity-50"
+              title="Refresh portfolio data, positions, and trading statistics from the server"
             >
               <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
               Refresh Data
@@ -111,8 +114,9 @@ export default function BotStatusPage() {
           { label: 'Total Trades', value: portfolio.totalTrades || 0, icon: BarChart3, color: 'info' },
           { label: 'Scan Interval', value: settings.SCAN_INTERVAL + 's', icon: Clock, color: 'warning' },
         ].map((stat, i) => (
-          <Card key={i} variant="glass" hover className="group">
-            <CardContent>
+          <div key={i} title={`${stat.label}: ${stat.value}${stat.suffix || ''} - ${stat.label === 'Open Positions' ? 'Number of active trades currently held' : stat.label === 'Available Cash' ? 'Cash available for new trades' : stat.label === 'Total Trades' ? 'Total number of completed trades' : 'How often the bot scans for opportunities'}`}>
+            <Card variant="glass" hover className="group">
+              <CardContent>
               <div className="flex items-center gap-2 mb-2">
                 <div className={`p-1.5 rounded-lg bg-${stat.color}-500/20`}>
                   <stat.icon size={14} className={`text-${stat.color}-400`} />
@@ -124,6 +128,7 @@ export default function BotStatusPage() {
               </p>
             </CardContent>
           </Card>
+          </div>
         ))}
       </div>
 

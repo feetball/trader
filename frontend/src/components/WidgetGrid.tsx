@@ -242,6 +242,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
               <button
                 onClick={() => setShowAddMenu(!showAddMenu)}
                 className="px-4 py-2 text-xs font-medium rounded-xl glass hover:shadow-glow-sm text-gray-300 hover:text-white transition-all duration-300 flex items-center gap-2"
+                title="Show hidden widgets that can be added back to the dashboard"
               >
                 <Plus size={14} />
                 Add Widget
@@ -280,6 +281,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
             <button
               onClick={saveLayout}
               className="px-4 py-2 text-xs font-medium rounded-xl bg-gradient-to-r from-success-500 to-success-600 text-white shadow-glow-success hover:shadow-glow-md transition-all duration-300 flex items-center gap-2"
+              title="Save current widget layout and sizing to browser storage"
             >
               <Save size={14} />
               Save
@@ -291,6 +293,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
             <button
               onClick={resetLayout}
               className="px-4 py-2 text-xs font-medium rounded-xl glass hover:shadow-glow-sm text-gray-300 hover:text-white transition-all duration-300 flex items-center gap-2"
+              title="Reset all widgets to their default positions, sizes, and visibility"
             >
               <RotateCcw size={14} />
               Reset
@@ -311,6 +314,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                 ? 'bg-gradient-to-r from-primary-500 to-info-500 text-white shadow-glow-sm' 
                 : 'glass hover:shadow-glow-sm text-gray-300 hover:text-white'
             }`}
+            title={isEditing ? 'Save changes and exit customization mode' : 'Enter customization mode to rearrange, resize, and hide widgets'}
           >
             {isEditing ? (
               <>
@@ -372,7 +376,9 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                   `}>
                     <div className="flex items-center gap-3">
                       {isEditing && (
-                        <GripVertical size={16} className="text-gray-400 cursor-grab active:cursor-grabbing" />
+                        <span title="Drag to reorder this widget">
+                          <GripVertical size={16} className="text-gray-400 cursor-grab active:cursor-grabbing" />
+                        </span>
                       )}
                       <h3 className="font-semibold text-sm bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
                         {widget.title}
@@ -404,7 +410,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                           <button
                             onClick={() => hideWidget(item.id)}
                             className="p-1.5 hover:bg-error-500/20 rounded-lg transition-all group"
-                            title="Hide widget"
+                            title="Hide this widget from the dashboard"
                           >
                             <EyeOff size={14} className="text-gray-400 group-hover:text-error-400" />
                           </button>
@@ -413,7 +419,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                         <button
                           onClick={() => toggleCollapse(item.id)}
                           className="p-1.5 hover:bg-white/10 rounded-lg transition-all"
-                          title={item.collapsed ? 'Expand' : 'Collapse'}
+                          title={item.collapsed ? 'Expand widget to show content' : 'Collapse widget to save space'}
                         >
                           {item.collapsed ? (
                             <ChevronDown size={14} className="text-gray-400" />

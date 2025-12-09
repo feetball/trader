@@ -69,6 +69,7 @@ export default function Sidebar() {
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
                 style={{ animationDelay: `${idx * 50}ms` }}
+                title={`${item.label} - ${item.href === '/' ? 'Main dashboard overview' : item.href === '/bot-status' ? 'Control and monitor the trading bot' : item.href === '/performance' ? 'View trading performance analytics' : item.href === '/trades' ? 'Browse complete trade history' : item.href === '/activity' ? 'See recent trading activity' : item.href === '/logs' ? 'View detailed bot logs' : item.href === '/settings' ? 'Configure trading parameters' : 'Get help and documentation'}`}
               >
                 {/* Active indicator */}
                 {isActive && (
