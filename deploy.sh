@@ -130,9 +130,9 @@ status() {
     fi
 }
 
-# Update and restart
+# Update and restart with optimizations
 update() {
-    log_info "Updating $APP_NAME..."
+    log_info "Updating $APP_NAME with performance optimizations..."
     
     # Pull latest code (if using git)
     if [ -d ".git" ]; then
@@ -140,11 +140,19 @@ update() {
         git pull
     fi
     
+    # Clean and optimize frontend build
+    log_info "Optimizing frontend build..."
+    cd frontend
+    npm run clean
+    npm install --frozen-lockfile
+    npm run build:analyze
+    cd ..
+    
     # Rebuild and restart
     build
     restart
     
-    log_info "Update complete!"
+    log_info "Optimized update complete!"
 }
 
 # Show help
