@@ -4,14 +4,14 @@ import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
 import Chip from '@/components/Chip'
 import Link from 'next/link'
-import { BarChart3, Robot, Trophy, History, Bell, Terminal, Settings, HelpCircle } from 'lucide-react'
+import { BarChart3, Cpu, Trophy, History, Bell, Terminal, Settings, HelpCircle } from 'lucide-react'
 
 export default function HelpPage() {
   const { appVersion, settings } = useTrading()
 
   const pages = [
     { href: '/', icon: BarChart3, title: 'Overview', desc: 'Portfolio summary, positions, recent trades' },
-    { href: '/bot-status', icon: Robot, title: 'Bot Status', desc: 'Control panel, live status' },
+    { href: '/bot-status', icon: Cpu, title: 'Bot Status', desc: 'Control panel, live status' },
     { href: '/performance', icon: Trophy, title: 'Performance', desc: 'Profit/loss analytics by coin' },
     { href: '/trades', icon: History, title: 'Trade History', desc: 'Complete trade history' },
     { href: '/activity', icon: Bell, title: 'Activity', desc: 'Timeline of trading events' },
@@ -93,6 +93,57 @@ export default function HelpPage() {
       </Card>
 
       <Card>
+        <CardTitle>Architecture</CardTitle>
+        <CardContent className="space-y-4">
+          {/* ASCII Diagram */}
+          <div className="bg-gradient-to-r from-surface to-surface-light p-4 rounded-lg border border-primary-500/20">
+            <div className="font-mono text-xs text-primary-300 whitespace-pre space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="text-center flex-1">
+                  <div className="text-primary-400 font-bold">Frontend</div>
+                  <div className="text-xs text-gray-400">Next.js + React</div>
+                </div>
+                <div className="px-3 text-primary-300">◄──►</div>
+                <div className="text-center flex-1">
+                  <div className="text-primary-400 font-bold">Backend</div>
+                  <div className="text-xs text-gray-400">Express + WebSocket</div>
+                </div>
+                <div className="px-3 text-primary-300">◄──►</div>
+                <div className="text-center flex-1">
+                  <div className="text-primary-400 font-bold">Exchange</div>
+                  <div className="text-xs text-gray-400">Coinbase API</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tech Stack Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-surface border border-primary-500/10 p-3 rounded-lg hover:border-primary-500/30 transition">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Frontend</p>
+              <p className="text-sm font-semibold text-primary-300">Next.js 14</p>
+              <p className="text-xs text-gray-500 mt-1">React 18 + Tailwind</p>
+            </div>
+            <div className="bg-surface border border-success-500/10 p-3 rounded-lg hover:border-success-500/30 transition">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Backend</p>
+              <p className="text-sm font-semibold text-success-400">Node.js</p>
+              <p className="text-xs text-gray-500 mt-1">Express + WS</p>
+            </div>
+            <div className="bg-surface border border-warning-500/10 p-3 rounded-lg hover:border-warning-500/30 transition">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Trading</p>
+              <p className="text-sm font-semibold text-warning-400">Coinbase</p>
+              <p className="text-xs text-gray-500 mt-1">Advanced Trade API</p>
+            </div>
+            <div className="bg-surface border border-info-500/10 p-3 rounded-lg hover:border-info-500/30 transition">
+              <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Deploy</p>
+              <p className="text-sm font-semibold text-info-400">Docker</p>
+              <p className="text-xs text-gray-500 mt-1">Containerized</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardTitle>How to Use</CardTitle>
         <CardContent className="space-y-3 text-sm">
           <div>
@@ -113,6 +164,25 @@ export default function HelpPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Status Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-700 px-6 py-3">
+        <div className="flex items-center justify-between text-xs text-gray-400">
+          <div className="flex items-center gap-4">
+            <span>Version v{appVersion}</span>
+            <span>•</span>
+            <span>Paper Trading: <span className={settings.PAPER_TRADING ? 'text-success-400' : 'text-error-400'}>{settings.PAPER_TRADING ? 'ON' : 'OFF'}</span></span>
+            <span>•</span>
+            <span>Max Positions: {settings.MAX_POSITIONS}</span>
+          </div>
+          <div className="text-right text-gray-500">
+            Built with Next.js + React + Tailwind CSS
+          </div>
+        </div>
+      </div>
+
+      {/* Add padding to prevent content being hidden by status bar */}
+      <div className="h-12"></div>
     </div>
   )
 }
