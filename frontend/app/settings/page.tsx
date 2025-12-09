@@ -82,9 +82,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-6 space-y-4">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <h1 className="text-3xl font-bold">Bot Settings</h1>
+    <div className="p-4 space-y-3">
+      <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+        <h1 className="text-2xl font-bold">Bot Settings</h1>
         <div className="flex gap-2 flex-wrap">
           <Button size="small" variant="secondary" onClick={() => fileInputRef.current?.click()}>
             <Upload size={16} /> Import
@@ -99,14 +99,14 @@ export default function SettingsPage() {
         <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} hidden />
       </div>
 
-      {/* Settings Groups - Multi-column layout for 2K */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+      {/* Settings Groups - Multi-column layout optimized for 2K */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2k:grid-cols-4 gap-3">
         {/* Trading Mode */}
         <Card variant="glass">
           <CardTitle>Trading Mode</CardTitle>
           <CardContent>
             <div>
-              <label className="text-sm text-gray-400 block mb-2">Paper Trading</label>
+              <label className="text-xs text-gray-400 block mb-1">Paper Trading</label>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -114,8 +114,8 @@ export default function SettingsPage() {
                   onChange={(e) => handleSettingChange('PAPER_TRADING', e.target.checked)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm text-gray-300">
-                  {localSettings.PAPER_TRADING ? 'Simulated trades (safe testing)' : 'Real trades (use real money)'}
+                <span className="text-xs text-gray-300">
+                  {localSettings.PAPER_TRADING ? 'Simulated trades' : 'Real trades'}
                 </span>
               </div>
             </div>
@@ -126,37 +126,37 @@ export default function SettingsPage() {
         <Card variant="glass">
           <CardTitle>Position Sizing</CardTitle>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Max Price ($)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Max Price ($)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={localSettings.MAX_PRICE}
                   onChange={(e) => handleSettingChange('MAX_PRICE', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Only trade coins under this price</p>
+                <p className="text-xs text-gray-500 mt-0.5">Trade under this price</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Position Size ($)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Position Size ($)</label>
                 <input
                   type="number"
                   value={localSettings.POSITION_SIZE}
                   onChange={(e) => handleSettingChange('POSITION_SIZE', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">USD amount per trade</p>
+                <p className="text-xs text-gray-500 mt-0.5">USD per trade</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Max Positions</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Max Positions</label>
                 <input
                   type="number"
                   value={localSettings.MAX_POSITIONS}
                   onChange={(e) => handleSettingChange('MAX_POSITIONS', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Concurrent positions limit</p>
+                <p className="text-xs text-gray-500 mt-0.5">Max concurrent</p>
               </div>
             </div>
           </CardContent>
@@ -166,39 +166,39 @@ export default function SettingsPage() {
         <Card variant="glass">
           <CardTitle>Profit & Stops</CardTitle>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Profit Target (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Profit Target (%)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={localSettings.PROFIT_TARGET}
                   onChange={(e) => handleSettingChange('PROFIT_TARGET', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Sell at profit %</p>
+                <p className="text-xs text-gray-500 mt-0.5">Sell at %</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Stop Loss (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Stop Loss (%)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={localSettings.STOP_LOSS}
                   onChange={(e) => handleSettingChange('STOP_LOSS', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Cut losses at %</p>
+                <p className="text-xs text-gray-500 mt-0.5">Cut losses</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Trailing Profit</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Trailing Profit</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={localSettings.ENABLE_TRAILING_PROFIT}
                     onChange={(e) => handleSettingChange('ENABLE_TRAILING_PROFIT', e.target.checked)}
-                    className="w-4 h-4"
+                    className="w-3 h-3"
                   />
-                  <span className="text-sm text-gray-300">Enabled</span>
+                  <span className="text-xs text-gray-300">On</span>
                 </div>
               </div>
             </div>
@@ -209,37 +209,37 @@ export default function SettingsPage() {
         <Card variant="glass">
           <CardTitle>Momentum & Timing</CardTitle>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Momentum Threshold (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Momentum Threshold (%)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={localSettings.MOMENTUM_THRESHOLD}
                   onChange={(e) => handleSettingChange('MOMENTUM_THRESHOLD', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Min price change</p>
+                <p className="text-xs text-gray-500 mt-0.5">Min change</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Momentum Window (min)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Momentum Window</label>
                 <input
                   type="number"
                   value={localSettings.MOMENTUM_WINDOW}
                   onChange={(e) => handleSettingChange('MOMENTUM_WINDOW', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Time window for calc</p>
+                <p className="text-xs text-gray-500 mt-0.5">Minutes</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Scan Interval (sec)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Scan Interval</label>
                 <input
                   type="number"
                   value={localSettings.SCAN_INTERVAL}
                   onChange={(e) => handleSettingChange('SCAN_INTERVAL', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">How often to scan</p>
+                <p className="text-xs text-gray-500 mt-0.5">Seconds</p>
               </div>
             </div>
           </CardContent>
@@ -249,37 +249,37 @@ export default function SettingsPage() {
         <Card variant="glass">
           <CardTitle>Volume & Filters</CardTitle>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Min Volume ($)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Min Volume ($)</label>
                 <input
                   type="number"
                   value={localSettings.MIN_VOLUME}
                   onChange={(e) => handleSettingChange('MIN_VOLUME', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">24h volume requirement</p>
+                <p className="text-xs text-gray-500 mt-0.5">24h vol</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Volume Surge Filter</label>
-                <div className="flex items-center gap-2 mb-2">
+                <label className="text-xs text-gray-400 block mb-0.5">Volume Surge</label>
+                <div className="flex items-center gap-2 mb-1">
                   <input
                     type="checkbox"
                     checked={localSettings.VOLUME_SURGE_FILTER}
                     onChange={(e) => handleSettingChange('VOLUME_SURGE_FILTER', e.target.checked)}
-                    className="w-4 h-4"
+                    className="w-3 h-3"
                   />
-                  <span className="text-sm text-gray-300">{localSettings.VOLUME_SURGE_FILTER ? 'Enabled' : 'Disabled'}</span>
+                  <span className="text-xs text-gray-300">{localSettings.VOLUME_SURGE_FILTER ? 'On' : 'Off'}</span>
                 </div>
-                <label className="text-sm text-gray-400 block mb-1">Threshold (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Threshold (%)</label>
                 <input
                   type="number"
                   value={localSettings.VOLUME_SURGE_THRESHOLD}
                   onChange={(e) => handleSettingChange('VOLUME_SURGE_THRESHOLD', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.VOLUME_SURGE_FILTER}
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Volume % of average</p>
+                <p className="text-xs text-gray-500 mt-0.5">% of avg</p>
               </div>
             </div>
           </CardContent>
@@ -289,37 +289,37 @@ export default function SettingsPage() {
         <Card variant="glass">
           <CardTitle>RSI Filter</CardTitle>
           <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-2">
                 <input
                   type="checkbox"
                   checked={localSettings.RSI_FILTER}
                   onChange={(e) => handleSettingChange('RSI_FILTER', e.target.checked)}
-                  className="w-4 h-4"
+                  className="w-3 h-3"
                 />
-                <span className="text-sm font-medium text-gray-300">{localSettings.RSI_FILTER ? 'Enabled' : 'Disabled'}</span>
+                <span className="text-xs font-medium text-gray-300">{localSettings.RSI_FILTER ? 'On' : 'Off'}</span>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">RSI Min</label>
+                <label className="text-xs text-gray-400 block mb-0.5">RSI Min</label>
                 <input
                   type="number"
                   value={localSettings.RSI_MIN}
                   onChange={(e) => handleSettingChange('RSI_MIN', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.RSI_FILTER}
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Minimum for entry</p>
+                <p className="text-xs text-gray-500 mt-0.5">Min</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">RSI Max</label>
+                <label className="text-xs text-gray-400 block mb-0.5">RSI Max</label>
                 <input
                   type="number"
                   value={localSettings.RSI_MAX}
                   onChange={(e) => handleSettingChange('RSI_MAX', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.RSI_FILTER}
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Maximum for entry</p>
+                <p className="text-xs text-gray-500 mt-0.5">Max</p>
               </div>
             </div>
           </CardContent>
@@ -329,38 +329,38 @@ export default function SettingsPage() {
         <Card variant="glass">
           <CardTitle>Trailing Stop</CardTitle>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Trailing Stop (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Trailing Stop (%)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={localSettings.TRAILING_STOP_PERCENT}
                   onChange={(e) => handleSettingChange('TRAILING_STOP_PERCENT', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.ENABLE_TRAILING_PROFIT}
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Trail stop distance</p>
+                <p className="text-xs text-gray-500 mt-0.5">Distance %</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Min Momentum (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Min Momentum (%)</label>
                 <input
                   type="number"
                   step="0.1"
                   value={localSettings.MIN_MOMENTUM_TO_RIDE}
                   onChange={(e) => handleSettingChange('MIN_MOMENTUM_TO_RIDE', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.ENABLE_TRAILING_PROFIT}
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Min for trailing</p>
+                <p className="text-xs text-gray-500 mt-0.5">Min thresh</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Position Check (sec)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Pos Check (sec)</label>
                 <input
                   type="number"
                   value={localSettings.OPEN_POSITION_SCAN_INTERVAL}
                   onChange={(e) => handleSettingChange('OPEN_POSITION_SCAN_INTERVAL', parseInt(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Check interval</p>
               </div>
@@ -372,39 +372,39 @@ export default function SettingsPage() {
         <Card variant="glass">
           <CardTitle>Fees & Taxes</CardTitle>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Maker Fee (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Maker Fee (%)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={localSettings.MAKER_FEE_PERCENT}
                   onChange={(e) => handleSettingChange('MAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Fee for limit orders</p>
+                <p className="text-xs text-gray-500 mt-0.5">Limit orders</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Taker Fee (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Taker Fee (%)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={localSettings.TAKER_FEE_PERCENT}
                   onChange={(e) => handleSettingChange('TAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Fee for market orders</p>
+                <p className="text-xs text-gray-500 mt-0.5">Market orders</p>
               </div>
               <div>
-                <label className="text-sm text-gray-400 block mb-1">Tax Rate (%)</label>
+                <label className="text-xs text-gray-400 block mb-0.5">Tax Rate (%)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={localSettings.TAX_PERCENT}
                   onChange={(e) => handleSettingChange('TAX_PERCENT', parseFloat(e.target.value) || 0)}
-                  className="w-full bg-surface px-3 py-2 rounded border border-gray-700 text-sm"
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Tax on profits (tracking)</p>
+                <p className="text-xs text-gray-500 mt-0.5">Profits only</p>
               </div>
             </div>
           </CardContent>
@@ -414,19 +414,19 @@ export default function SettingsPage() {
       {/* Comments & History - Full width */}
       <Card>
         <CardTitle>Comments & History</CardTitle>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-2">
           <textarea
             value={settingsComment}
             onChange={(e) => setSettingsComment(e.target.value)}
-            placeholder="Add a comment about this settings change..."
-            className="w-full bg-surface p-2 rounded border border-gray-700 text-sm"
-            rows={2}
+            placeholder="Add a comment..."
+            className="w-full bg-surface p-1.5 rounded border border-gray-700 text-xs"
+            rows={1}
           />
           <div>
-            <h4 className="font-semibold mb-2 text-sm">Recent Changes</h4>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
-              {settingsHistory.slice(0, 6).map((entry, i) => (
-                <div key={i} className="text-xs bg-surface p-2 rounded">
+            <h4 className="font-semibold mb-1 text-xs">Recent</h4>
+            <div className="space-y-0.5 max-h-24 overflow-y-auto">
+              {settingsHistory.slice(0, 4).map((entry, i) => (
+                <div key={i} className="text-xs bg-surface p-1 rounded">
                   <p className="text-gray-400">{new Date(entry.savedAt).toLocaleString()}</p>
                   <p className="text-gray-500">{entry.comment || 'No comment'}</p>
                 </div>
@@ -438,11 +438,11 @@ export default function SettingsPage() {
 
       {/* Danger Zone */}
       <Card variant="tonal" color="error">
-        <CardTitle>Danger Zone</CardTitle>
+        <CardTitle className="text-sm">Danger Zone</CardTitle>
         <CardContent>
-          <p className="text-sm text-gray-300 mb-4">Reset portfolio to $10,000 and clear all trades</p>
-          <Button variant="error" onClick={() => setShowResetDialog(true)}>
-            <RotateCcw size={16} /> Reset Portfolio
+          <p className="text-xs text-gray-300 mb-2">Reset portfolio to $10,000</p>
+          <Button size="small" variant="error" onClick={() => setShowResetDialog(true)}>
+            <RotateCcw size={14} /> Reset
           </Button>
         </CardContent>
       </Card>

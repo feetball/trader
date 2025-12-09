@@ -351,6 +351,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       setUpdatePrompt({ visible: false, newVersion: null })
       const res = await apiClient.post('/updates/confirm')
       setUpdateLogs(prev => [...prev, res.data?.message || 'Requested server restart'])
+      setUpdatePrompt({ visible: true, mode: 'complete', newVersion: null })
       return res.data
     } catch (err) {
       setUpdateLogs(prev => [...prev, `[UPDATE] Error confirming update: ${err instanceof Error ? err.message : 'Unknown error'}`])
@@ -363,6 +364,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       setUpdatePrompt(prev => ({ ...prev, mode: 'applying' }))
       const res = await apiClient.post('/updates/apply')
       setUpdateLogs(prev => [...prev, res.data?.message || 'Update application started'])
+      setUpdatePrompt(prev => ({ ...prev, mode: 'complete' }))
       return res.data
     } catch (err) {
       setUpdateLogs(prev => [...prev, `[UPDATE] Error applying update: ${err instanceof Error ? err.message : 'Unknown error'}`])
