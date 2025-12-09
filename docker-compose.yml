@@ -1,6 +1,9 @@
 services:
   trader:
-    build: .
+    build:
+      context: .
+      args:
+        GIT_BRANCH: ${GIT_BRANCH:-master}
     container_name: crypto-trader
     restart: unless-stopped
     ports:

@@ -449,6 +449,39 @@ app.post('/api/portfolio/reset', async (req, res) => {
   }
 });
 
+// Confirm update and restart server (called by a client after user clicks OK)
+app.post('/api/updates/confirm', async (req, res) => {
+  try {
+    if (!pendingUpdate) {
+      return res.json({ success: false, message: 'No update pending confirmation' });
+    }
+
+    // Ensure restart flag is written so bot will start after restart
+    fsSync.writeFileSync(path.join(process.cwd(), '.restart-bot'), 'true');
+
+    // Remove the .update-pending marker if present
+    try {
+      const pendingPath = path.join(process.cwd(), '.update-pending');
+      if (fsSync.existsSync(pendingPath)) fsSync.unlinkSync(pendingPath);
+    } catch (e) {
+      // non-fatal
+    }
+
+    broadcast('updateLog', { message: `[UPDATE] User confirmed restart; server will shut down now.` });
+    res.json({ success: true, message: 'Confirmed. Server will restart now.' });
+
+    // clear in-memory pendingUpdate
+    pendingUpdate = null;
+
+    // short delay to let response and broadcasts flow out, then exit
+    setTimeout(() => {
+      process.exit(0);
+    }, 800);
+  } catch (e) {
+    res.json({ success: false, message: e.message });
+  }
+});
+
 // Get current config settings
 app.get('/api/settings', async (req, res) => {
   try {
@@ -766,6 +799,57 @@ app.get('/api/version', async (req, res) => {
 // Update check state
 let lastUpdateCheck = null;
 let cachedUpdateInfo = null;
+let pendingUpdate = null; // { newVersion, timestamp }
+
+// Automatic update checking function
+async function checkForUpdates() {
+  try {
+    const pkg = JSON.parse(await fs.readFile('package.json', 'utf-8'));
+    const currentVersion = pkg.version;
+    
+    // Fetch latest package.json from GitHub (with cache bust)
+    const cacheBust = Date.now();
+    const response = await fetch(`https://raw.githubusercontent.com/feetball/trader/master/package.json?cb=${cacheBust}`);
+    if (!response.ok) {
+      throw new Error(`GitHub fetch failed: ${response.status}`);
+    }
+    
+    const remotePackage = await response.json();
+    const latestVersion = remotePackage.version;
+    console.log(`[AUTO-UPDATE-CHECK] current=${currentVersion} latest=${latestVersion}`);
+    
+    // Compare versions
+    const current = currentVersion.split('.').map(Number);
+    const latest = latestVersion.split('.').map(Number);
+    
+    let updateAvailable = false;
+    for (let i = 0; i < 3; i++) {
+      if (latest[i] > current[i]) {
+        updateAvailable = true;
+        break;
+      } else if (latest[i] < current[i]) {
+        break;
+      }
+    }
+    
+    lastUpdateCheck = Date.now();
+    const wasAvailable = cachedUpdateInfo?.updateAvailable;
+    cachedUpdateInfo = {
+      currentVersion,
+      latestVersion,
+      updateAvailable,
+      lastCheck: lastUpdateCheck,
+    };
+    
+    // If update became available, broadcast to all clients
+    if (updateAvailable && !wasAvailable) {
+      console.log(`[AUTO-UPDATE] New version ${latestVersion} available! Broadcasting to clients.`);
+      broadcast('updateAvailable', { newVersion: latestVersion });
+    }
+  } catch (error) {
+    console.error('Auto update check failed:', error.message);
+  }
+}
 
 // Check for updates from GitHub
 app.get('/api/updates/check', async (req, res) => {
@@ -961,20 +1045,23 @@ ${configLines}
           updateLog('[UPDATE] User settings restored successfully!');
         }
         
-        // Save flag to start bot after server restarts (always start after upgrade)
-        fsSync.writeFileSync(path.join(process.cwd(), '.restart-bot'), 'true');
-        updateLog('[UPDATE] Bot will be started after update.');
-        
-        updateLog('[UPDATE] ✅ Update complete! Restarting server...');
-        
-        // Broadcast reload signal to all clients
-        broadcast('updateComplete', { reload: true, newVersion: cachedUpdateInfo?.latestVersion });
-        
-        // Small delay to let the final message broadcast and clients receive reload signal
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Exit process - Docker/PM2/systemd will restart it
-        process.exit(0);
+        // Mark update as pending and wait for user confirmation before restart
+        pendingUpdate = {
+          newVersion: cachedUpdateInfo?.latestVersion || null,
+          timestamp: Date.now(),
+        };
+
+        // Persist a small flag so external monitors can detect an update is pending
+        try {
+          fsSync.writeFileSync(path.join(process.cwd(), '.update-pending'), JSON.stringify(pendingUpdate));
+        } catch (e) {
+          // Non-fatal
+        }
+
+        updateLog('[UPDATE] ✅ Update complete and awaiting user confirmation to restart the server.');
+
+        // Broadcast update-ready signal to all clients; clients should prompt the user
+        broadcast('updateReady', { newVersion: pendingUpdate.newVersion });
       } catch (error) {
         updateLog(`[UPDATE] ❌ Update failed: ${error.message}`);
       }
@@ -1143,7 +1230,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.7.7                                          ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.6 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
@@ -1156,13 +1243,13 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('║                                                                              ║');
   console.log('║   ARCHITECTURE:                                                              ║');
   console.log('║   ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐         ║');
-  console.log('║   │  Vue 3 + Vite   │◄──►│  Express API    │◄──►│  Coinbase API   │         ║');
+  console.log('║   │ Next.js + React │◄──►│  Express API    │◄──►│  Coinbase API   │         ║');
   console.log('║   │  (Frontend)     │    │  + WebSocket    │    │  (REST + WS)    │         ║');
   console.log('║   └─────────────────┘    └─────────────────┘    └─────────────────┘         ║');
   console.log('║                                                                              ║');
   console.log('║   LANGUAGES & FRAMEWORKS:                                                    ║');
   console.log('║   • Backend:  Node.js, Express, WebSocket (ws)                              ║');
-  console.log('║   • Frontend: Vue 3, Vuetify 3, Vue Router 4, Vite                          ║');
+  console.log('║   • Frontend: Next.js 14, React 18, Tailwind CSS 3, Lucide Icons           ║');
   console.log('║   • Trading:  Coinbase Advanced Trade API, Custom indicators.js            ║');
   console.log('║   • Deploy:   Docker, Docker Compose                                        ║');
   console.log('║                                                                              ║');
@@ -1197,6 +1284,10 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📈 API:        http://localhost:${PORT}/api`);
   console.log(`🔌 WebSocket:  ws://localhost:${PORT}`);
   console.log('');
+  
+  // Start automatic update checking
+  checkForUpdates(); // Check on startup
+  setInterval(checkForUpdates, 3600000); // Check every hour
   
   // Check if bot should be auto-started after update
   const restartFlagPath = path.join(process.cwd(), '.restart-bot');

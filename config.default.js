@@ -56,3 +56,5 @@ export const defaultConfig = {
   TAKER_FEE_PERCENT: 0.50,   // Taker fee (market orders that take liquidity)
   TAX_PERCENT: 0,            // Tax rate on profits (for tracking purposes)
 };
+
+export const config = defaultConfig;

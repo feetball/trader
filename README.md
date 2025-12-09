@@ -1,8 +1,8 @@
 # Crypto Momentum Trading Bot 🤖
 
-An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase and executes momentum-based trades using technical indicators. **Includes a beautiful Vue 3 + Vuetify multi-page dashboard!**
+An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase and executes momentum-based trades using technical indicators. **Includes a beautiful Next.js + React + Tailwind CSS multi-page dashboard!**
 
-**Version:** 0.7.7
+**Version:** 0.8.6 (Next.js Migration)
 
 ## ✨ Features
 
@@ -36,7 +36,7 @@ An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase
 
 ### Languages & Frameworks
 - **Backend**: Node.js, Express, WebSocket (ws)
-- **Frontend**: Vue 3, Vuetify 3, Vue Router 4, Vite
+- **Frontend**: Next.js 14, React 18, Tailwind CSS 3, Lucide Icons
 - **Trading**: Coinbase Advanced Trade API, Custom indicators.js
 - **Deploy**: Docker, Docker Compose
 
