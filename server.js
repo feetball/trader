@@ -801,6 +801,56 @@ let lastUpdateCheck = null;
 let cachedUpdateInfo = null;
 let pendingUpdate = null; // { newVersion, timestamp }
 
+// Automatic update checking function
+async function checkForUpdates() {
+  try {
+    const pkg = JSON.parse(await fs.readFile('package.json', 'utf-8'));
+    const currentVersion = pkg.version;
+    
+    // Fetch latest package.json from GitHub (with cache bust)
+    const cacheBust = Date.now();
+    const response = await fetch(`https://raw.githubusercontent.com/feetball/trader/master/package.json?cb=${cacheBust}`);
+    if (!response.ok) {
+      throw new Error(`GitHub fetch failed: ${response.status}`);
+    }
+    
+    const remotePackage = await response.json();
+    const latestVersion = remotePackage.version;
+    console.log(`[AUTO-UPDATE-CHECK] current=${currentVersion} latest=${latestVersion}`);
+    
+    // Compare versions
+    const current = currentVersion.split('.').map(Number);
+    const latest = latestVersion.split('.').map(Number);
+    
+    let updateAvailable = false;
+    for (let i = 0; i < 3; i++) {
+      if (latest[i] > current[i]) {
+        updateAvailable = true;
+        break;
+      } else if (latest[i] < current[i]) {
+        break;
+      }
+    }
+    
+    lastUpdateCheck = Date.now();
+    const wasAvailable = cachedUpdateInfo?.updateAvailable;
+    cachedUpdateInfo = {
+      currentVersion,
+      latestVersion,
+      updateAvailable,
+      lastCheck: lastUpdateCheck,
+    };
+    
+    // If update became available, broadcast to all clients
+    if (updateAvailable && !wasAvailable) {
+      console.log(`[AUTO-UPDATE] New version ${latestVersion} available! Broadcasting to clients.`);
+      broadcast('updateAvailable', { newVersion: latestVersion });
+    }
+  } catch (error) {
+    console.error('Auto update check failed:', error.message);
+  }
+}
+
 // Check for updates from GitHub
 app.get('/api/updates/check', async (req, res) => {
   try {
@@ -1180,7 +1230,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.8.2 (Next.js Frontend)                      ║');
+  console.log('║   💹  CRYPTO MOMENTUM TRADER v0.8.4 (Next.js Frontend)                      ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
@@ -1234,6 +1284,10 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`📈 API:        http://localhost:${PORT}/api`);
   console.log(`🔌 WebSocket:  ws://localhost:${PORT}`);
   console.log('');
+  
+  // Start automatic update checking
+  checkForUpdates(); // Check on startup
+  setInterval(checkForUpdates, 3600000); // Check every hour
   
   // Check if bot should be auto-started after update
   const restartFlagPath = path.join(process.cwd(), '.restart-bot');

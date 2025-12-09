@@ -114,6 +114,7 @@ interface SettingsHistoryEntry {
 interface UpdatePrompt {
   visible: boolean
   newVersion: string | null
+  mode?: 'available' | 'ready'
 }
 
 export interface TradingContextType {
@@ -146,6 +147,7 @@ export interface TradingContextType {
   loadSettingsHistory: () => Promise<void>
   saveSettings: () => Promise<any>
   confirmUpdate: () => Promise<any>
+  applyUpdate: () => Promise<any>
   refreshBotStatus: () => Promise<void>
   refreshData: () => Promise<void>
   refreshLivePositions: () => Promise<void>
@@ -165,7 +167,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
   const [lastUpdate, setLastUpdate] = useState('')
   const [appVersion, setAppVersion] = useState('...')
   const [updateLogs, setUpdateLogs] = useState<string[]>([])
-  const [updatePrompt, setUpdatePrompt] = useState<UpdatePrompt>({ visible: false, newVersion: null })
+  const [updatePrompt, setUpdatePrompt] = useState<UpdatePrompt>({ visible: false, newVersion: null, mode: undefined })
 
   const [portfolio, setPortfolio] = useState<Portfolio>({})
   const [positions, setPositions] = useState<Position[]>([])
@@ -356,6 +358,19 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const applyUpdate = useCallback(async () => {
+    try {
+      setUpdatePrompt(prev => ({ ...prev, mode: 'applying' }))
+      const res = await apiClient.post('/updates/apply')
+      setUpdateLogs(prev => [...prev, res.data?.message || 'Update application started'])
+      return res.data
+    } catch (err) {
+      setUpdateLogs(prev => [...prev, `[UPDATE] Error applying update: ${err instanceof Error ? err.message : 'Unknown error'}`])
+      setUpdatePrompt({ visible: false, newVersion: null })
+      throw err
+    }
+  }, [])
+
   // WebSocket connection
   const connectWebSocket = useCallback(() => {
     const wsProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -394,8 +409,12 @@ export function TradingProvider({ children }: { children: ReactNode }) {
           updateInProgressRef.current = true
           const versionText = data?.newVersion ? ` (v${data.newVersion})` : ''
           setUpdateLogs(prev => [...prev, `[UPDATE] Update ready${versionText}. Waiting for user confirmation...`])
-          setUpdatePrompt({ visible: true, newVersion: data?.newVersion || null })
+          setUpdatePrompt({ visible: true, newVersion: data?.newVersion || null, mode: 'ready' })
           setUpdateLogs(prev => [...prev, '[UPDATE] Prompting user to confirm restart...'])
+        } else if (type === 'updateAvailable') {
+          const versionText = data?.newVersion ? ` (v${data.newVersion})` : ''
+          setUpdateLogs(prev => [...prev, `[UPDATE] New version available${versionText}!`])
+          setUpdatePrompt({ visible: true, newVersion: data?.newVersion || null, mode: 'available' })
         } else if (type === 'portfolio') {
           if (data.positions) {
             setPositions(data.positions)
@@ -527,6 +546,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       loadSettingsHistory,
       saveSettings,
       confirmUpdate,
+      applyUpdate,
       refreshBotStatus,
       refreshData,
       refreshLivePositions,
