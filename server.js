@@ -316,10 +316,10 @@ app.get('/api/trades', async (req, res) => {
   try {
     const data = await fs.readFile('paper-trading-data.json', 'utf-8');
     const portfolio = JSON.parse(data);
-    
-    // Return most recent trades first
-    const trades = [...portfolio.closedTrades].reverse();
-    
+
+    // Return most recent trades first, capped to reduce payload/render cost
+    const trades = [...portfolio.closedTrades].slice(-200).reverse();
+
     res.json(trades);
   } catch (error) {
     res.json([]);
@@ -1369,7 +1369,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.27 (Next.js Frontend)             ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.28 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

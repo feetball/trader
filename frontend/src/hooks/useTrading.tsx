@@ -320,7 +320,8 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       setPortfolio(portfolioRes.data)
       setPositions(positionsRes.data)
       setLivePositions(livePositionsRes.data)
-      setTrades(tradesRes.data)
+      // Limit trades client-side as well for safety
+      setTrades((tradesRes.data || []).slice(-200))
       setCoinPerformance(performanceRes.data)
       setActivities(activityRes.data)
       setLastUpdate(new Date().toLocaleTimeString())
@@ -346,7 +347,8 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       setLivePositions(liveRes.data)
       setCoinPerformance(perfRes.data)
       setActivities(activityRes.data)
-      setTrades(tradesRes.data)
+      // Limit trades client-side as well for safety
+      setTrades((tradesRes.data || []).slice(-200))
       setLastUpdate(new Date().toLocaleTimeString())
       // If we got data successfully, API is OK
       if (liveRes.data) {
