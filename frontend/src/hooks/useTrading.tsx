@@ -422,6 +422,16 @@ export function TradingProvider({ children }: { children: ReactNode }) {
           if (data.coinbaseApiStatus) {
             setCoinbaseApiStatus(data.coinbaseApiStatus)
           }
+        } else if (type === 'portfolioSummary') {
+          // Server-calculated portfolio summary - use directly
+          setPortfolio(data)
+          setLastUpdate(new Date().toLocaleTimeString())
+        } else if (type === 'positions') {
+          // Live positions update
+          setPositions(data || [])
+        } else if (type === 'trades') {
+          // Recent trades update
+          setTrades(data || [])
         } else if (type === 'coinbaseApiStatus') {
           setCoinbaseApiStatus(data.status || 'unknown')
         } else if (type === 'updateLog') {
@@ -439,41 +449,6 @@ export function TradingProvider({ children }: { children: ReactNode }) {
           const versionText = data?.newVersion ? ` (v${data.newVersion})` : ''
           setUpdateLogs(prev => [...prev, `[UPDATE] New version available${versionText}!`])
           setUpdatePrompt({ visible: true, newVersion: data?.newVersion || null, mode: 'available' })
-        } else if (type === 'portfolio') {
-          // Full portfolio update from WebSocket - update all fields
-          if (data.positions) {
-            setPositions(data.positions)
-          }
-          if (data.closedTrades) {
-            setTrades(data.closedTrades.slice().reverse().slice(0, 50))
-          }
-          // Update full portfolio summary
-          const positionsValue = (data.positions || []).reduce(
-            (sum: number, p: any) => sum + (p.investedAmount || 0), 0
-          )
-          const totalValue = (data.cash || 0) + positionsValue
-          const closedTrades = data.closedTrades || []
-          const totalProfit = closedTrades.reduce((sum: number, t: any) => sum + (t.profit || 0), 0)
-          const totalNetProfit = closedTrades.reduce((sum: number, t: any) => sum + (t.netProfit !== undefined ? t.netProfit : t.profit || 0), 0)
-          const totalFees = closedTrades.reduce((sum: number, t: any) => sum + (t.totalFees || 0), 0)
-          const winningTrades = closedTrades.filter((t: any) => (t.netProfit !== undefined ? t.netProfit : t.profit) > 0).length
-          const totalTradesCount = closedTrades.length
-          
-          setPortfolio({
-            cash: data.cash || 0,
-            positionsValue,
-            totalValue,
-            openPositions: (data.positions || []).length,
-            totalTrades: totalTradesCount,
-            winningTrades,
-            losingTrades: totalTradesCount - winningTrades,
-            winRate: totalTradesCount > 0 ? (winningTrades / totalTradesCount * 100) : 0,
-            totalProfit,
-            totalNetProfit,
-            totalFees,
-            roi: ((totalValue - 10000) / 10000 * 100),
-          })
-          setLastUpdate(new Date().toLocaleTimeString())
         }
       } catch (e) {
         console.error('[WS] Parse error:', e)

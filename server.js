@@ -198,7 +198,39 @@ async function broadcastPortfolio() {
   try {
     const data = await fs.readFile('paper-trading-data.json', 'utf-8');
     const portfolio = JSON.parse(data);
-    broadcast('portfolio', portfolio);
+    
+    // Calculate stats (same logic as /api/portfolio)
+    let totalValue = portfolio.cash;
+    portfolio.positions.forEach(pos => {
+      totalValue += pos.investedAmount;
+    });
+
+    const totalProfit = portfolio.closedTrades.reduce((sum, t) => sum + (t.profit || 0), 0);
+    const totalNetProfit = portfolio.closedTrades.reduce((sum, t) => sum + (t.netProfit !== undefined ? t.netProfit : t.profit || 0), 0);
+    const totalFees = portfolio.closedTrades.reduce((sum, t) => sum + (t.totalFees || 0), 0);
+    const winningTrades = portfolio.closedTrades.filter(t => (t.netProfit !== undefined ? t.netProfit : t.profit) > 0).length;
+    const totalTrades = portfolio.closedTrades.length;
+
+    // Broadcast calculated summary (matches /api/portfolio response)
+    broadcast('portfolioSummary', {
+      cash: portfolio.cash,
+      positionsValue: totalValue - portfolio.cash,
+      totalValue,
+      openPositions: portfolio.positions.length,
+      totalTrades,
+      winningTrades,
+      losingTrades: totalTrades - winningTrades,
+      winRate: totalTrades > 0 ? (winningTrades / totalTrades * 100) : 0,
+      totalProfit,
+      totalNetProfit,
+      totalFees,
+      roi: ((totalValue - 10000) / 10000 * 100),
+      startingCapital: 10000,
+    });
+    
+    // Also broadcast positions and recent trades for live updates
+    broadcast('positions', portfolio.positions);
+    broadcast('trades', portfolio.closedTrades.slice(-50).reverse());
   } catch (e) {
     // Ignore errors
   }
@@ -1288,7 +1320,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.20 (Next.js Frontend)             ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.21 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
