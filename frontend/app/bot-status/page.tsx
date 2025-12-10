@@ -10,9 +10,9 @@ export default function BotStatusPage() {
   const { botStatus, botLoading, loading, portfolio, settings, startBot, stopBot, refreshData } = useTrading()
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 md:p-6 space-y-3 md:space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto">
       {/* Main Status Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
         <Card variant="glass" className="lg:col-span-2">
           <CardTitle icon={<Cpu size={18} className="text-primary-400" />}>
             Bot Status

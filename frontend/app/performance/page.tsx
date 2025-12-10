@@ -30,10 +30,10 @@ export default function PerformancePage() {
   )
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 md:p-6 space-y-3 md:space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto">
       {/* Summary Cards */}
       {coinPerformance.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
           <Card variant="glass" hover glow color="success">
             <CardContent>
               <div className="flex items-center justify-between mb-4">

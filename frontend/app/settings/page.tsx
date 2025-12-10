@@ -3,10 +3,12 @@
 import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
 import Button from '@/components/Button'
-import { Download, Upload, RotateCcw } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Download, Upload, RotateCcw, AlertCircle } from 'lucide-react'
+import { useState, useRef, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const {
     botStatus,
     settings,
@@ -20,9 +22,54 @@ export default function SettingsPage() {
 
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [showResetDialog, setShowResetDialog] = useState(false)
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [snackbar, setSnackbar] = useState('')
   const [localSettings, setLocalSettings] = useState(settings)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Track if settings have been modified (dirty state)
+  const isDirty = useMemo(() => {
+    return JSON.stringify(localSettings) !== JSON.stringify(settings)
+  }, [localSettings, settings])
+
+  // Sync local settings when global settings change (e.g., after load)
+  useEffect(() => {
+    setLocalSettings(settings)
+  }, [settings])
+
+  // Warn user before leaving page with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault()
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'
+      }
+    }
+    
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isDirty])
+
+  // Intercept navigation attempts
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const link = target.closest('a')
+      if (link && isDirty) {
+        const href = link.getAttribute('href')
+        if (href && href.startsWith('/') && href !== '/settings') {
+          e.preventDefault()
+          e.stopPropagation()
+          setPendingNavigation(href)
+          setShowUnsavedDialog(true)
+        }
+      }
+    }
+    
+    document.addEventListener('click', handleClick, true)
+    return () => document.removeEventListener('click', handleClick, true)
+  }, [isDirty])
 
   const handleSettingChange = (key: keyof typeof settings, value: any) => {
     setLocalSettings(prev => ({ ...prev, [key]: value }))
@@ -41,6 +88,24 @@ export default function SettingsPage() {
       setTimeout(() => setSnackbar(''), 3000)
     } finally {
       setSettingsLoading(false)
+    }
+  }
+
+  const handleDiscardAndNavigate = () => {
+    setLocalSettings(settings) // Reset to saved settings
+    setShowUnsavedDialog(false)
+    if (pendingNavigation) {
+      router.push(pendingNavigation)
+      setPendingNavigation(null)
+    }
+  }
+
+  const handleSaveAndNavigate = async () => {
+    await handleSave()
+    setShowUnsavedDialog(false)
+    if (pendingNavigation) {
+      router.push(pendingNavigation)
+      setPendingNavigation(null)
     }
   }
 
@@ -82,9 +147,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-4 space-y-3">
-      <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-        <h1 className="text-2xl font-bold">Bot Settings</h1>
+    <div className="p-2 md:p-4 space-y-2 md:space-y-3 max-h-[calc(100vh-80px)] overflow-y-auto">
+      <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-start md:items-center justify-between">
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl md:text-2xl font-bold">Bot Settings</h1>
+          {isDirty && (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning-500/20 text-warning-400 text-xs font-medium">
+              <AlertCircle size={12} />
+              <span>Unsaved</span>
+            </div>
+          )}
+        </div>
         <div className="flex gap-2 flex-wrap">
           <Button size="small" variant="secondary" onClick={() => fileInputRef.current?.click()}>
             <Upload size={16} /> Import
@@ -92,7 +165,7 @@ export default function SettingsPage() {
           <Button size="small" variant="secondary" onClick={handleExport}>
             <Download size={16} /> Export
           </Button>
-          <Button size="small" variant="primary" loading={settingsLoading} onClick={handleSave}>
+          <Button size="small" variant={isDirty ? 'primary' : 'secondary'} loading={settingsLoading} onClick={handleSave} disabled={!isDirty && !settingsLoading}>
             {botStatus.running ? 'Apply & Restart' : 'Save'}
           </Button>
         </div>
@@ -100,7 +173,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Settings Groups - Multi-column layout optimized for 2K */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2k:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-3">
         {/* Trading Mode */}
         <Card variant="glass">
           <CardTitle>Trading Mode</CardTitle>
@@ -460,6 +533,32 @@ export default function SettingsPage() {
                   await resetPortfolio()
                   setShowResetDialog(false)
                 }} className="flex-1">Reset</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Unsaved Changes Dialog */}
+      {showUnsavedDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="p-6 max-w-md">
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle size={20} className="text-warning-400" />
+              Unsaved Changes
+            </CardTitle>
+            <CardContent className="space-y-4 mt-4">
+              <p className="text-sm text-gray-300">You have unsaved changes. What would you like to do?</p>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => { setShowUnsavedDialog(false); setPendingNavigation(null); }} className="flex-1">
+                  Stay
+                </Button>
+                <Button variant="error" onClick={handleDiscardAndNavigate} className="flex-1">
+                  Discard
+                </Button>
+                <Button variant="primary" onClick={handleSaveAndNavigate} className="flex-1">
+                  Save
+                </Button>
               </div>
             </CardContent>
           </Card>

@@ -137,6 +137,7 @@ export interface TradingContextType {
   settingsHistory: SettingsHistoryEntry[]
   settingsComment: string
   totalUnrealizedPL: number
+  coinbaseApiStatus: 'ok' | 'rate-limited' | 'error' | 'unknown'
   
   // Functions
   setSettingsComment: (comment: string) => void
@@ -214,6 +215,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
 
   const [settingsHistory, setSettingsHistory] = useState<SettingsHistoryEntry[]>([])
   const [settingsComment, setSettingsComment] = useState('')
+  const [coinbaseApiStatus, setCoinbaseApiStatus] = useState<'ok' | 'rate-limited' | 'error' | 'unknown'>('unknown')
 
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -333,16 +335,30 @@ export function TradingProvider({ children }: { children: ReactNode }) {
 
   const refreshLivePositions = useCallback(async () => {
     try {
-      const [liveRes, perfRes, activityRes] = await Promise.all([
+      const [portfolioRes, liveRes, perfRes, activityRes, tradesRes] = await Promise.all([
+        apiClient.get('/portfolio'),
         apiClient.get('/positions/live'),
         apiClient.get('/performance-by-coin'),
         apiClient.get('/activity'),
+        apiClient.get('/trades'),
       ])
+      setPortfolio(portfolioRes.data)
       setLivePositions(liveRes.data)
       setCoinPerformance(perfRes.data)
       setActivities(activityRes.data)
-    } catch (e) {
-      // Ignore errors
+      setTrades(tradesRes.data)
+      setLastUpdate(new Date().toLocaleTimeString())
+      // If we got data successfully, API is OK
+      if (liveRes.data) {
+        setCoinbaseApiStatus('ok')
+      }
+    } catch (e: any) {
+      // Check for rate limiting or API errors
+      if (e?.response?.status === 429) {
+        setCoinbaseApiStatus('rate-limited')
+      } else if (e?.response?.status >= 500) {
+        setCoinbaseApiStatus('error')
+      }
     }
   }, [])
 
@@ -402,6 +418,12 @@ export function TradingProvider({ children }: { children: ReactNode }) {
         if (type === 'botStatus') {
           setBotStatus(data)
           setLastUpdate(new Date().toLocaleTimeString())
+          // Update Coinbase API status from bot status
+          if (data.coinbaseApiStatus) {
+            setCoinbaseApiStatus(data.coinbaseApiStatus)
+          }
+        } else if (type === 'coinbaseApiStatus') {
+          setCoinbaseApiStatus(data.status || 'unknown')
         } else if (type === 'updateLog') {
           setUpdateLogs(prev => [...prev, data.message])
         } else if (type === 'updateFailed') {
@@ -418,21 +440,39 @@ export function TradingProvider({ children }: { children: ReactNode }) {
           setUpdateLogs(prev => [...prev, `[UPDATE] New version available${versionText}!`])
           setUpdatePrompt({ visible: true, newVersion: data?.newVersion || null, mode: 'available' })
         } else if (type === 'portfolio') {
+          // Full portfolio update from WebSocket - update all fields
           if (data.positions) {
             setPositions(data.positions)
           }
-          if (data.trades) {
-            setTrades(data.trades.slice(0, 50))
+          if (data.closedTrades) {
+            setTrades(data.closedTrades.slice().reverse().slice(0, 50))
           }
-          if (data.cash !== undefined) {
-            setPortfolio(prev => ({
-              ...prev,
-              cash: data.cash,
-              totalValue: data.cash + (data.positions || []).reduce(
-                (sum: number, p: any) => sum + p.investedAmount, 0
-              ),
-            }))
-          }
+          // Update full portfolio summary
+          const positionsValue = (data.positions || []).reduce(
+            (sum: number, p: any) => sum + (p.investedAmount || 0), 0
+          )
+          const totalValue = (data.cash || 0) + positionsValue
+          const closedTrades = data.closedTrades || []
+          const totalProfit = closedTrades.reduce((sum: number, t: any) => sum + (t.profit || 0), 0)
+          const totalNetProfit = closedTrades.reduce((sum: number, t: any) => sum + (t.netProfit !== undefined ? t.netProfit : t.profit || 0), 0)
+          const totalFees = closedTrades.reduce((sum: number, t: any) => sum + (t.totalFees || 0), 0)
+          const winningTrades = closedTrades.filter((t: any) => (t.netProfit !== undefined ? t.netProfit : t.profit) > 0).length
+          const totalTradesCount = closedTrades.length
+          
+          setPortfolio({
+            cash: data.cash || 0,
+            positionsValue,
+            totalValue,
+            openPositions: (data.positions || []).length,
+            totalTrades: totalTradesCount,
+            winningTrades,
+            losingTrades: totalTradesCount - winningTrades,
+            winRate: totalTradesCount > 0 ? (winningTrades / totalTradesCount * 100) : 0,
+            totalProfit,
+            totalNetProfit,
+            totalFees,
+            roi: ((totalValue - 10000) / 10000 * 100),
+          })
           setLastUpdate(new Date().toLocaleTimeString())
         }
       } catch (e) {
@@ -470,7 +510,8 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     await loadSettings()
     connectWebSocket()
 
-    refreshIntervalRef.current = setInterval(refreshLivePositions, 10000)
+    // Poll for live position prices every 5 seconds (WebSocket handles portfolio updates every 2s)
+    refreshIntervalRef.current = setInterval(refreshLivePositions, 5000)
   }, [refreshData, loadSettings, connectWebSocket, refreshLivePositions])
 
   // Cleanup function
@@ -540,6 +581,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       settingsHistory,
       settingsComment,
       totalUnrealizedPL,
+      coinbaseApiStatus,
       setSettingsComment,
       startBot,
       stopBot,

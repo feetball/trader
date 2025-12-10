@@ -3,7 +3,7 @@
 import { useTrading } from '@/hooks/useTrading'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, Menu, X, Zap, RefreshCw } from 'lucide-react'
+import { BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, Menu, X, Zap, RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
 import { useState } from 'react'
 
 const navItems = [
@@ -19,6 +19,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { botStatus, coinbaseApiStatus } = useTrading()
   const [open, setOpen] = useState(false)
   const [checking, setChecking] = useState(false)
   const [toast, setToast] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null)
@@ -120,24 +121,56 @@ export default function Sidebar() {
         </nav>
 
         {/* Bottom Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/5 space-y-3">
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-white/5 space-y-2">
+          {/* System Status Widget with API Rate */}
+          <div className="glass-light rounded-xl p-2.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5">
+                <div className={`w-2 h-2 rounded-full ${botStatus.running ? 'bg-success-500 animate-pulse' : 'bg-gray-500'}`}></div>
+                <span className="text-xs text-gray-400">System Status</span>
+              </div>
+              {botStatus.running && (
+                <div className="flex items-center gap-1 text-xs text-gray-500">
+                  <Activity size={10} />
+                  <span className="font-mono">{botStatus.apiRate || 0}/min</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Coinbase API Status */}
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-500">Coinbase API</span>
+              <div className={`flex items-center gap-1 ${
+                coinbaseApiStatus === 'ok' ? 'text-success-400' :
+                coinbaseApiStatus === 'rate-limited' ? 'text-warning-400' :
+                coinbaseApiStatus === 'error' ? 'text-error-400' : 'text-gray-400'
+              }`}>
+                {coinbaseApiStatus === 'ok' && <CheckCircle size={10} />}
+                {coinbaseApiStatus === 'rate-limited' && <AlertTriangle size={10} />}
+                {coinbaseApiStatus === 'error' && <XCircle size={10} />}
+                {coinbaseApiStatus === 'unknown' && <span className="w-2 h-2 rounded-full bg-gray-500" />}
+                <span className="capitalize">{coinbaseApiStatus === 'ok' ? 'OK' : coinbaseApiStatus}</span>
+              </div>
+            </div>
+            
+            {botStatus.running && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-500">Avg Rate</span>
+                <span className="text-gray-400 font-mono">{botStatus.apiRateHourly || 0}/min (1h)</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Check Updates Button */}
           <button
             onClick={handleCheckUpdates}
             disabled={checking}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-primary-600/20 to-info-600/20 border border-primary-500/30 hover:from-primary-600/30 hover:to-info-600/30 text-primary-300 hover:text-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-sm"
+            className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary-600/20 to-info-600/20 border border-primary-500/30 hover:from-primary-600/30 hover:to-info-600/30 text-primary-300 hover:text-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs"
             title="Check for available updates"
           >
-            <RefreshCw size={16} className={checking ? 'animate-spin' : ''} />
+            <RefreshCw size={14} className={checking ? 'animate-spin' : ''} />
             {checking ? 'Checking...' : 'Check Updates'}
           </button>
-          
-          <div className="glass-light rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-2 h-2 rounded-full bg-success-500 animate-pulse"></div>
-              <span className="text-xs text-gray-400">System Status</span>
-            </div>
-            <p className="text-xs text-gray-500">All systems operational</p>
-          </div>
         </div>
       </aside>
 

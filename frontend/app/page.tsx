@@ -388,7 +388,7 @@ export default function OverviewPage() {
   ], [])
 
   return (
-    <div className="p-6">
+    <div className="p-3 md:p-6 max-h-[calc(100vh-80px)] overflow-y-auto">
       <WidgetGrid widgets={widgets} storageKey="overview" />
     </div>
   )
