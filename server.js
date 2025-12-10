@@ -1050,6 +1050,55 @@ app.post('/api/updates/apply', async (req, res) => {
           broadcast('updateFailed', { message: 'Git pull failed' });
           return;
         }
+
+        // Ensure frontend path aliases work even if upstream tsconfig lacks baseUrl
+        try {
+          const tsconfigPath = path.join(process.cwd(), 'frontend', 'tsconfig.json');
+          const tsRaw = fsSync.readFileSync(tsconfigPath, 'utf-8');
+          const tsJson = JSON.parse(tsRaw);
+          tsJson.compilerOptions = tsJson.compilerOptions || {};
+          tsJson.compilerOptions.baseUrl = tsJson.compilerOptions.baseUrl || '.';
+          tsJson.compilerOptions.paths = tsJson.compilerOptions.paths || { '@/*': ['./src/*', './app/*'] };
+          if (!tsJson.compilerOptions.paths['@/*']) {
+            tsJson.compilerOptions.paths['@/*'] = ['./src/*', './app/*'];
+          }
+          fsSync.writeFileSync(tsconfigPath, JSON.stringify(tsJson, null, 2));
+          updateLog('[UPDATE] Patched frontend tsconfig: ensured baseUrl and @/* paths');
+        } catch (e) {
+          updateLog(`[UPDATE] Warning: could not patch tsconfig.json (${e.message})`);
+        }
+
+        // Ensure webpack aliases for @/* so Next.js build resolves modules
+        try {
+          const nextConfigPath = path.join(process.cwd(), 'frontend', 'next.config.js');
+          const nextConfigContent = `const path = require('path')
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'export',
+  trailingSlash: true,
+  images: {
+    unoptimized: true
+  },
+  // Disable server-side features for static export
+  distDir: 'dist',
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      '@': path.resolve(__dirname, 'src'),
+      '@app': path.resolve(__dirname, 'app'),
+    }
+    return config
+  }
+}
+
+module.exports = nextConfig
+`;
+          fsSync.writeFileSync(nextConfigPath, nextConfigContent);
+          updateLog('[UPDATE] Patched frontend next.config.js: ensured webpack aliases');
+        } catch (e) {
+          updateLog(`[UPDATE] Warning: could not patch next.config.js (${e.message})`);
+        }
         
         // Install dependencies
         updateLog('[UPDATE] Installing backend dependencies...');
@@ -1067,7 +1116,7 @@ app.post('/api/updates/apply', async (req, res) => {
         // Install frontend dependencies and build
         updateLog('[UPDATE] Installing frontend dependencies...');
         try {
-          const { stdout: npmFrontOut } = await execAsync('npm install 2>&1', { cwd: path.join(process.cwd(), 'frontend') });
+          const { stdout: npmFrontOut } = await execAsync('npm install --include=dev 2>&1', { cwd: path.join(process.cwd(), 'frontend'), env: { ...process.env, NODE_ENV: 'development' } });
           const lines = npmFrontOut.split('\n').filter(l => l.trim() && !l.includes('npm WARN'));
           lines.forEach(l => updateLog(l));
         } catch (e) {
@@ -1320,7 +1369,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.24 (Next.js Frontend)             ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.25 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
