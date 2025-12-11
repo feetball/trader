@@ -11,10 +11,10 @@ export const defaultConfig = {
   MAX_PRICE: 1.00,
   
   // Profit target percentage
-  PROFIT_TARGET: 1.5,
+  PROFIT_TARGET: 3.0,
   
   // Minimum price change % in the last period to trigger a buy signal
-  MOMENTUM_THRESHOLD: 2.0,
+  MOMENTUM_THRESHOLD: 1.5,
   
   // Time window for momentum calculation in minutes
   MOMENTUM_WINDOW: 10,
@@ -35,11 +35,11 @@ export const defaultConfig = {
   MIN_VOLUME: 50000,
   
   // Stop loss percentage (negative number)
-  STOP_LOSS: -2.0,
+  STOP_LOSS: -5.0,
   
   // Trailing profit settings - let winners ride while climbing
   ENABLE_TRAILING_PROFIT: true,
-  TRAILING_STOP_PERCENT: 0.5,
+  TRAILING_STOP_PERCENT: 1.5,
   MIN_MOMENTUM_TO_RIDE: 0.5,
   
   // Volume surge filter - require volume to be X% of average (e.g., 150 = 1.5x average)
@@ -48,8 +48,8 @@ export const defaultConfig = {
   
   // RSI entry filter - only enter if RSI is within this range (avoid overbought)
   RSI_FILTER: true,
-  RSI_MIN: 50,
-  RSI_MAX: 70,
+  RSI_MIN: 40,
+  RSI_MAX: 80,
   
   // Trading fees and taxes (percentages)
   MAKER_FEE_PERCENT: 0.25,   // Maker fee (limit orders that add liquidity)
