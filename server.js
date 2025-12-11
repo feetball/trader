@@ -1211,6 +1211,140 @@ ${configLines}
   }
 });
 
+// Reset settings to defaults
+app.post('/api/settings/reset', async (req, res) => {
+  const wasRunning = botProcess !== null;
+  
+  try {
+    // Stop bot if running
+    if (botProcess) {
+      addLog('⚙️ Stopping bot to reset settings...');
+      botProcess.kill('SIGTERM');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      botProcess = null;
+    }
+
+    // Delete user-settings.json
+    if (fsSync.existsSync(SETTINGS_FILE)) {
+      await fs.unlink(SETTINGS_FILE);
+    }
+    
+    // Reset in-memory config to defaults
+    // Reload defaults from file to ensure we have the latest
+    let newDefaults = {};
+    try {
+      const defaultContent = await fs.readFile('config.default.js', 'utf-8');
+      // Extract the object content
+      const match = defaultContent.match(/defaultConfig\s*=\s*({[\s\S]*?});/);
+      if (match) {
+        // This is a bit hacky but avoids importing the module dynamically which can be tricky with caching
+        // We'll just rely on the imported defaultConfig at the top of the file, 
+        // but since we just edited it, we might need to restart the server to pick up changes.
+        // However, for now, let's just use the imported defaultConfig and assume the user will restart if they want code changes.
+        // Wait, I just edited config.default.js on disk. The imported `defaultConfig` is stale.
+        // I should probably read the file and parse it, or just restart the server.
+        // But I can't restart the server easily from within the server.
+        // Let's just delete the user settings and let the next load pick up defaults.
+        // But wait, `config` variable is in memory. I need to reset it.
+      }
+    } catch (e) {
+      console.log('[RESET] Error reading defaults:', e);
+    }
+
+    // Re-import defaults? No, ESM modules are cached.
+    // I'll just manually reset the config object to what I know are the defaults, 
+    // OR I can just tell the user to restart.
+    // Actually, I can just read the file and parse it manually if I want to be 100% sure.
+    // Let's try to read the file and eval it (safe enough here since it's our file).
+    
+    const defaultContent = await fs.readFile('config.default.js', 'utf-8');
+    const match = defaultContent.match(/defaultConfig\s*=\s*({[\s\S]*?});/);
+    let freshDefaults = {};
+    if (match) {
+      // Use Function constructor to parse the object literal
+      freshDefaults = new Function(`return ${match[1]}`)();
+    } else {
+      // Fallback
+      freshDefaults = { ...defaultConfig }; 
+    }
+
+    // Update config.js
+    const configLines = Object.entries(freshDefaults).map(([key, value]) => {
+      const formattedValue = typeof value === 'boolean' ? value : 
+                            typeof value === 'string' ? `'${value}'` : value;
+      return `  ${key}: ${formattedValue},`;
+    }).join('\n');
+    
+    const configContent = `// Trading bot configuration (auto-generated from user settings)
+export const config = {
+${configLines}
+};
+`;
+    await fs.writeFile('config.js', configContent);
+    
+    // Reset in-memory config
+    Object.keys(config).forEach(key => delete config[key]);
+    Object.assign(config, freshDefaults);
+
+    addLog('✅ Settings reset to defaults');
+    
+    // Restart bot if it was running
+    if (wasRunning) {
+      addLog('🔄 Restarting bot with default settings...');
+      
+      botStatus.running = true;
+      botStatus.message = 'Restarting with default settings...';
+      botStatus.cycleCount = 0;
+      botStatus.apiCalls = 0;
+      botStartTime = Date.now();
+
+      botProcess = spawn('node', ['bot-daemon.js'], {
+        cwd: process.cwd(),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      
+      // ... (attach listeners - same as in startBot or settings update)
+      // To avoid code duplication, I should probably refactor startBot to take options or just call startBot()
+      // But startBot() checks if botProcess is null.
+      
+      botProcess.stdout.on('data', (data) => {
+        const lines = data.toString().split('\n').filter(l => l.trim());
+        lines.forEach(line => {
+          if (line.includes('[APICALLS]')) {
+            const match = line.match(/\[APICALLS\]\s*(\d+)/);
+            if (match) {
+              botStatus.apiCalls = parseInt(match[1], 10);
+              updateApiRate();
+            }
+          } else if (line.includes('[CYCLE]')) {
+            botStatus.cycleCount++;
+          } else if (line.includes('[STATUS]')) {
+            const msg = line.replace(/.*\[STATUS\]\s*/, '');
+            botStatus.message = msg;
+            addLog(msg);
+          }
+        });
+      });
+
+      botProcess.stderr.on('data', (data) => {
+        const msg = data.toString().trim();
+        if (msg) addLog(`⚠️ ${msg}`);
+      });
+
+      botProcess.on('close', (code) => {
+        botStatus.running = false;
+        botStatus.message = `Bot stopped (exit code: ${code})`;
+        addLog(`🛑 Bot stopped with code ${code}`);
+        botProcess = null;
+      });
+    }
+    
+    res.json({ success: true, message: 'Settings reset to defaults', settings: freshDefaults });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
 // Start bot function (reusable for API and auto-start)
 function startBot() {
   if (botProcess) {
@@ -1369,7 +1503,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.29 (Next.js Frontend)             ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.30 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

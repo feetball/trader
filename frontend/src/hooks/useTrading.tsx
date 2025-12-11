@@ -147,6 +147,7 @@ export interface TradingContextType {
   loadSettings: () => Promise<void>
   loadSettingsHistory: () => Promise<void>
   saveSettings: () => Promise<any>
+  resetSettings: () => Promise<void>
   confirmUpdate: () => Promise<any>
   applyUpdate: () => Promise<any>
   refreshBotStatus: () => Promise<void>
@@ -191,23 +192,23 @@ export function TradingProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>({
     PAPER_TRADING: true,
     MAX_PRICE: 1.0,
-    PROFIT_TARGET: 2.5,
-    MOMENTUM_THRESHOLD: 1.5,
+    PROFIT_TARGET: 1.5,
+    MOMENTUM_THRESHOLD: 2.0,
     MOMENTUM_WINDOW: 10,
     SCAN_INTERVAL: 10,
     OPEN_POSITION_SCAN_INTERVAL: 5,
-    POSITION_SIZE: 500,
-    MAX_POSITIONS: 30,
-    MIN_VOLUME: 25000,
-    STOP_LOSS: -3.0,
+    POSITION_SIZE: 100,
+    MAX_POSITIONS: 10,
+    MIN_VOLUME: 50000,
+    STOP_LOSS: -2.0,
     ENABLE_TRAILING_PROFIT: true,
-    TRAILING_STOP_PERCENT: 1.0,
+    TRAILING_STOP_PERCENT: 0.5,
     MIN_MOMENTUM_TO_RIDE: 0.5,
     VOLUME_SURGE_FILTER: true,
     VOLUME_SURGE_THRESHOLD: 150,
     RSI_FILTER: true,
-    RSI_MIN: 60,
-    RSI_MAX: 80,
+    RSI_MIN: 50,
+    RSI_MAX: 70,
     MAKER_FEE_PERCENT: 0.25,
     TAKER_FEE_PERCENT: 0.5,
     TAX_PERCENT: 0,
@@ -295,6 +296,20 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       throw error
     }
   }, [settings, settingsComment])
+
+  const resetSettings = useCallback(async () => {
+    try {
+      const res = await apiClient.post('/settings/reset')
+      if (res.data.success) {
+        setSettings(res.data.settings)
+        setSettingsComment('')
+        await loadSettingsHistory()
+      }
+    } catch (error) {
+      console.error('Error resetting settings:', error)
+      throw error
+    }
+  }, [])
 
   const refreshBotStatus = useCallback(async () => {
     try {
@@ -566,6 +581,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       loadSettings,
       loadSettingsHistory,
       saveSettings,
+      resetSettings,
       confirmUpdate,
       applyUpdate,
       refreshBotStatus,

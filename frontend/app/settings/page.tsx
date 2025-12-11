@@ -17,11 +17,13 @@ export default function SettingsPage() {
     setSettingsComment,
     loadSettings,
     saveSettings,
+    resetSettings,
     resetPortfolio,
   } = useTrading()
 
   const [settingsLoading, setSettingsLoading] = useState(false)
   const [showResetDialog, setShowResetDialog] = useState(false)
+  const [showResetSettingsDialog, setShowResetSettingsDialog] = useState(false)
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
   const [snackbar, setSnackbar] = useState('')
@@ -512,11 +514,19 @@ export default function SettingsPage() {
       {/* Danger Zone */}
       <Card variant="tonal" color="error">
         <CardTitle className="text-sm">Danger Zone</CardTitle>
-        <CardContent>
-          <p className="text-xs text-gray-300 mb-2">Reset portfolio to $10,000</p>
-          <Button size="small" variant="error" onClick={() => setShowResetDialog(true)}>
-            <RotateCcw size={14} /> Reset
-          </Button>
+        <CardContent className="flex flex-col gap-4">
+          <div>
+            <p className="text-xs text-gray-300 mb-2">Reset portfolio to $10,000 (clears all trades)</p>
+            <Button size="small" variant="error" onClick={() => setShowResetDialog(true)}>
+              <RotateCcw size={14} /> Reset Portfolio
+            </Button>
+          </div>
+          <div className="border-t border-white/10 pt-4">
+            <p className="text-xs text-gray-300 mb-2">Reset all settings to safe defaults</p>
+            <Button size="small" variant="error" onClick={() => setShowResetSettingsDialog(true)}>
+              <RotateCcw size={14} /> Reset Settings
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -532,7 +542,27 @@ export default function SettingsPage() {
                 <Button variant="error" onClick={async () => {
                   await resetPortfolio()
                   setShowResetDialog(false)
-                }} className="flex-1">Reset</Button>
+                }} className="flex-1">Reset Portfolio</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {showResetSettingsDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="p-6 max-w-md">
+            <CardTitle>Reset Settings?</CardTitle>
+            <CardContent className="space-y-4 mt-4">
+              <p className="text-sm text-gray-300">This will revert all settings to their default safe values. Your current configuration will be lost.</p>
+              <div className="flex gap-2">
+                <Button variant="secondary" onClick={() => setShowResetSettingsDialog(false)} className="flex-1">Cancel</Button>
+                <Button variant="error" onClick={async () => {
+                  await resetSettings()
+                  setShowResetSettingsDialog(false)
+                  setSnackbar('Settings reset to defaults')
+                  setTimeout(() => setSnackbar(''), 3000)
+                }} className="flex-1">Reset Settings</Button>
               </div>
             </CardContent>
           </Card>
