@@ -61,7 +61,7 @@ body {
 }
 
 .border-animated {
-  animation: borderGlow 3s ease-in-out infinite;
+  animation: none;
 }
 
 /* Shimmer effect for loading */
@@ -73,7 +73,7 @@ body {
 .shimmer {
   background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
   background-size: 200% 100%;
-  animation: shimmer 2s infinite;
+  animation: none;
 }
 
 /* Pulse animation for live indicators */
@@ -89,7 +89,7 @@ body {
 }
 
 .pulse-live {
-  animation: pulse-glow 2s ease-in-out infinite;
+  animation: none;
 }
 
 /* Number counter animation */
@@ -164,7 +164,7 @@ body {
 }
 
 .progress-animated {
-  animation: progressPulse 2s ease-in-out infinite;
+  animation: none;
 }
 
 /* Floating animation */
@@ -174,7 +174,7 @@ body {
 }
 
 .float {
-  animation: float 3s ease-in-out infinite;
+  animation: none;
 }
 
 /* Fade in animation */
@@ -210,6 +210,15 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #38bdf8, #a855f7);
+}
+
+/* Respect reduced-motion and cap animations to lower CPU when visible */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0ms !important;
+  }
 }
 
 /* Global scrollbar styling */
