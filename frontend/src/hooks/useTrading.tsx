@@ -20,8 +20,10 @@ interface Portfolio {
 
 interface Position {
   id: string
+  productId?: string
   symbol: string
   entryPrice: number
+  quantity?: number
   currentPrice?: number
   currentPL?: number
   currentPLPercent?: number
@@ -31,6 +33,8 @@ interface Position {
 }
 
 interface Trade {
+  id?: string
+  productId?: string
   symbol: string
   entryPrice: number
   exitPrice: number
@@ -130,6 +134,7 @@ export interface TradingContextType {
   positions: Position[]
   livePositions: Position[]
   trades: Trade[]
+  recentTrades: Trade[]
   coinPerformance: CoinPerformance[]
   activities: Activity[]
   botStatus: BotStatus
@@ -175,6 +180,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
   const [positions, setPositions] = useState<Position[]>([])
   const [livePositions, setLivePositions] = useState<Position[]>([])
   const [trades, setTrades] = useState<Trade[]>([])
+  const [recentTrades, setRecentTrades] = useState<Trade[]>([])
   const [coinPerformance, setCoinPerformance] = useState<CoinPerformance[]>([])
   const [activities, setActivities] = useState<Activity[]>([])
 
@@ -335,8 +341,9 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       setPortfolio(portfolioRes.data)
       setPositions(positionsRes.data)
       setLivePositions(livePositionsRes.data)
-      // Limit trades client-side as well for safety
-      setTrades((tradesRes.data || []).slice(-200))
+      const allTrades = Array.isArray(tradesRes.data) ? tradesRes.data : []
+      setTrades(allTrades)
+      setRecentTrades(allTrades.slice(0, 50))
       setCoinPerformance(performanceRes.data)
       setActivities(activityRes.data)
       setLastUpdate(new Date().toLocaleTimeString())
@@ -362,8 +369,9 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       setLivePositions(liveRes.data)
       setCoinPerformance(perfRes.data)
       setActivities(activityRes.data)
-      // Limit trades client-side as well for safety
-      setTrades((tradesRes.data || []).slice(-200))
+      const allTrades = Array.isArray(tradesRes.data) ? tradesRes.data : []
+      setTrades(allTrades)
+      setRecentTrades(allTrades.slice(0, 50))
       setLastUpdate(new Date().toLocaleTimeString())
       // If we got data successfully, API is OK
       if (liveRes.data) {
@@ -448,7 +456,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
           setPositions(data || [])
         } else if (type === 'trades') {
           // Recent trades update
-          setTrades(data || [])
+          setRecentTrades(Array.isArray(data) ? data : [])
         } else if (type === 'coinbaseApiStatus') {
           setCoinbaseApiStatus(data.status || 'unknown')
         } else if (type === 'updateLog') {
@@ -566,6 +574,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       positions,
       livePositions,
       trades,
+      recentTrades,
       coinPerformance,
       activities,
       botStatus,

@@ -160,7 +160,7 @@ function PositionsWidget() {
         )}
       </div>
       <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
-        {livePositions.slice(0, 10).map((pos, idx) => (
+        {livePositions.map((pos, idx) => (
           <div 
             key={pos.id} 
             className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 group"
@@ -171,6 +171,7 @@ function PositionsWidget() {
                 <Chip onClick={() => openCoinbase(pos.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
                   {pos.symbol}
                 </Chip>
+                <span className="text-xs text-gray-500 font-mono">Coins: {(pos.quantity || 0).toFixed(4)}</span>
                 <span className="text-xs text-gray-500 font-mono">Invested: ${(pos.investedAmount || 0).toFixed(2)}</span>
               </div>
               <p className="text-xs text-gray-500 mt-1 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()} @ ${(pos.entryPrice || 0).toFixed(6)}</p>
@@ -272,10 +273,10 @@ function WorstPerformersWidget() {
 }
 
 function RecentTradesWidget() {
-  const { trades, openCoinbase } = useTrading()
+  const { recentTrades, openCoinbase } = useTrading()
   return (
     <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
-      {trades.slice(0, 5).map((trade, idx) => (
+      {recentTrades.slice(0, 5).map((trade, idx) => (
         <div 
           key={idx} 
           className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 hover:scale-[1.01] ${
@@ -284,24 +285,33 @@ function RecentTradesWidget() {
               : 'bg-gradient-to-r from-error-500/5 to-transparent border-error-500/20 hover:border-error-500/40'
           }`}
         >
-          <Chip onClick={() => openCoinbase(trade.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
-            {trade.symbol}
-          </Chip>
-          <div className="flex items-center gap-3">
-            <span className={`font-bold ${trade.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
-              {trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)}
-            </span>
-            <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
-              trade.profit >= 0 
-                ? 'bg-success-500/20 text-success-400' 
-                : 'bg-error-500/20 text-error-400'
-            }`}>
-              {trade.profitPercent >= 0 ? '+' : ''}{trade.profitPercent.toFixed(2)}%
+          <div className="flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <Chip onClick={() => openCoinbase(trade.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
+                {trade.symbol}
+              </Chip>
+              <div className="flex items-center gap-3">
+                <span className={`font-bold ${trade.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
+                  {trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)}
+                </span>
+                <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                  trade.profitPercent >= 0 
+                    ? 'bg-success-500/20 text-success-400' 
+                    : 'bg-error-500/20 text-error-400'
+                }`}>
+                  {trade.profitPercent >= 0 ? '+' : ''}{trade.profitPercent.toFixed(2)}%
+                </div>
+              </div>
+            </div>
+            <div className="mt-1 text-xs text-gray-500 font-mono flex flex-wrap gap-x-3 gap-y-1">
+              <span>Coins: {(trade.quantity || 0).toFixed(4)}</span>
+              <span>Buy: {new Date(trade.entryTime).toLocaleString()} @ ${(trade.entryPrice || 0).toFixed(6)}</span>
+              <span>Sell: {new Date(trade.exitTime).toLocaleString()} @ ${(trade.exitPrice || 0).toFixed(6)}</span>
             </div>
           </div>
         </div>
       ))}
-      {trades.length === 0 && (
+      {recentTrades.length === 0 && (
         <div className="text-center py-8">
           <Zap size={32} className="mx-auto text-gray-600 mb-2" />
           <p className="text-gray-500">No trades yet</p>
