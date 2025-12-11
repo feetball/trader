@@ -66,7 +66,21 @@ export class TradingStrategy {
         opportunity.productId,
         opportunity.symbol,
         opportunity.price,
-        config.POSITION_SIZE
+        config.POSITION_SIZE,
+        {
+          timestamp: Date.now(),
+          price: opportunity.price,
+          momentum: opportunity.momentum,
+          rawMomentum: opportunity.rawMomentum,
+          rsi: opportunity.rsi,
+          volumeSurge: opportunity.volumeSurge || null,
+          priceAction: opportunity.priceAction || null,
+          volume24h: opportunity.volume24h,
+          priceChange24h: opportunity.priceChange24h,
+          grade: tradeScore.grade,
+          score: tradeScore.score,
+          reasons: tradeScore.reasons,
+        }
       );
       return true;
     } else {

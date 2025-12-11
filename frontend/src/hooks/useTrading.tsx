@@ -30,6 +30,12 @@ interface Position {
   investedAmount: number
   entryTime: number
   holdTime?: number
+  audit?: {
+    entry?: any
+    configAtEntry?: Record<string, any>
+    exit?: any
+    configAtExit?: Record<string, any>
+  }
 }
 
 interface Trade {
@@ -49,6 +55,12 @@ interface Trade {
   entryTime: number
   exitTime: number
   reason: string
+  audit?: {
+    entry?: any
+    configAtEntry?: Record<string, any>
+    exit?: any
+    configAtExit?: Record<string, any>
+  }
 }
 
 interface CoinPerformance {
