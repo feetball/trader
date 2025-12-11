@@ -65,3 +65,102 @@ export function getReasonColor(reason: string | undefined): string {
   if (reason.toLowerCase().includes('trail')) return 'bg-info-900'
   return 'bg-gray-700'
 }
+
+// Trade audit data types
+interface TradeAuditEntry {
+  grade?: string
+  score?: number
+  momentum?: number
+  rsi?: number
+  volumeSurge?: {
+    ratio?: number
+  }
+  reasons?: string[]
+}
+
+interface TradeAuditConfig {
+  PROFIT_TARGET?: number
+  STOP_LOSS?: number
+  ENABLE_TRAILING_PROFIT?: boolean
+  TRAILING_STOP_PERCENT?: number
+}
+
+interface TradeAudit {
+  entry?: TradeAuditEntry
+  configAtEntry?: TradeAuditConfig
+  exit?: any
+  configAtExit?: TradeAuditConfig
+}
+
+export interface TradeAuditData {
+  hasAudit: boolean
+  entry?: TradeAuditEntry
+  cfgBuy?: TradeAuditConfig
+  cfgSell?: TradeAuditConfig
+}
+
+export interface TradeAuditTexts {
+  gradeText: string | null
+  momentumText: string | null
+  rsiText: string | null
+  volText: string | null
+  cfgBuyText: string | null
+  cfgSellText: string | null
+}
+
+/**
+ * Extract audit data from a trade object
+ */
+export function extractTradeAuditData(audit?: TradeAudit): TradeAuditData {
+  const entry = audit?.entry
+  const cfgBuy = audit?.configAtEntry
+  const cfgSell = audit?.configAtExit
+  const hasAudit = !!(audit && (audit.entry || audit.configAtEntry || audit.exit || audit.configAtExit))
+  
+  return {
+    hasAudit,
+    entry,
+    cfgBuy,
+    cfgSell
+  }
+}
+
+/**
+ * Format audit data into display text strings
+ */
+export function formatTradeAuditTexts(auditData: TradeAuditData): TradeAuditTexts {
+  const { entry, cfgBuy, cfgSell } = auditData
+  
+  const gradeText = entry?.grade 
+    ? `Grade ${entry.grade}${typeof entry.score === 'number' ? ` (${entry.score})` : ''}` 
+    : null
+    
+  const momentumText = typeof entry?.momentum === 'number' 
+    ? `Mom ${entry.momentum >= 0 ? '+' : ''}${entry.momentum.toFixed(2)}%` 
+    : null
+    
+  const rsiText = typeof entry?.rsi === 'number' 
+    ? `RSI ${entry.rsi.toFixed(0)}` 
+    : null
+    
+  const volText = entry?.volumeSurge && typeof entry.volumeSurge.ratio === 'number'
+    ? `Vol ${(entry.volumeSurge.ratio).toFixed(2)}x`
+    : null
+    
+  const cfgBuyText = cfgBuy 
+    ? `PT ${cfgBuy.PROFIT_TARGET}% SL ${cfgBuy.STOP_LOSS}%${cfgBuy.ENABLE_TRAILING_PROFIT ? ` Trail ${cfgBuy.TRAILING_STOP_PERCENT}%` : ''}` 
+    : null
+    
+  const cfgSellText = cfgSell 
+    ? `PT ${cfgSell.PROFIT_TARGET}% SL ${cfgSell.STOP_LOSS}%${cfgSell.ENABLE_TRAILING_PROFIT ? ` Trail ${cfgSell.TRAILING_STOP_PERCENT}%` : ''}` 
+    : null
+  
+  return {
+    gradeText,
+    momentumText,
+    rsiText,
+    volText,
+    cfgBuyText,
+    cfgSellText
+  }
+}
