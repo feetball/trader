@@ -3,6 +3,7 @@
 import { useTrading } from '@/hooks/useTrading'
 import Chip from '@/components/Chip'
 import WidgetGrid, { Widget } from '@/components/WidgetGrid'
+import { AuditEntryDisplay } from '@/components/AuditEntryDisplay'
 import { TrendingUp, TrendingDown, DollarSign, Wallet, Trophy, Target, Zap, BarChart3, Activity } from 'lucide-react'
 import { useMemo } from 'react'
 
@@ -174,13 +175,7 @@ function PositionsWidget() {
                 <span className="text-xs text-gray-500 font-mono">Coins: {(pos.quantity || 0).toFixed(4)}</span>
                 <span className="text-xs text-gray-500 font-mono">Invested: ${(pos.investedAmount || 0).toFixed(2)}</span>
               </div>
-              {(pos.audit?.entry?.grade || typeof pos.audit?.entry?.momentum === 'number' || typeof pos.audit?.entry?.rsi === 'number') && (
-                <div className="text-xs text-gray-600 font-mono flex flex-wrap gap-x-3 gap-y-1">
-                  {pos.audit?.entry?.grade && <span>Grade {pos.audit.entry.grade}{typeof pos.audit.entry.score === 'number' ? ` (${pos.audit.entry.score})` : ''}</span>}
-                  {typeof pos.audit?.entry?.momentum === 'number' && <span>Mom {pos.audit.entry.momentum >= 0 ? '+' : ''}{pos.audit.entry.momentum.toFixed(2)}%</span>}
-                  {typeof pos.audit?.entry?.rsi === 'number' && <span>RSI {pos.audit.entry.rsi.toFixed(0)}</span>}
-                </div>
-              )}
+              <AuditEntryDisplay entry={pos.audit?.entry} />
               <p className="text-xs text-gray-500 mt-1 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()} @ ${(pos.entryPrice || 0).toFixed(6)}</p>
             </div>
             <div className="text-right">
@@ -318,15 +313,7 @@ function RecentTradesWidget() {
               </div>
             )}
             <div className="mt-1 text-xs text-gray-500 font-mono flex flex-wrap gap-x-3 gap-y-1">
-              {trade.audit?.entry?.grade && (
-                <span>Grade {trade.audit.entry.grade}{typeof trade.audit.entry.score === 'number' ? ` (${trade.audit.entry.score})` : ''}</span>
-              )}
-              {typeof trade.audit?.entry?.momentum === 'number' && (
-                <span>Mom {trade.audit.entry.momentum >= 0 ? '+' : ''}{trade.audit.entry.momentum.toFixed(2)}%</span>
-              )}
-              {typeof trade.audit?.entry?.rsi === 'number' && (
-                <span>RSI {trade.audit.entry.rsi.toFixed(0)}</span>
-              )}
+              <AuditEntryDisplay entry={trade.audit?.entry} className="contents" />
               <span>Coins: {(trade.quantity || 0).toFixed(4)}</span>
               <span>Buy: {new Date(trade.entryTime).toLocaleString()} @ ${(trade.entryPrice || 0).toFixed(6)}</span>
               <span>Sell: {new Date(trade.exitTime).toLocaleString()} @ ${(trade.exitPrice || 0).toFixed(6)}</span>
