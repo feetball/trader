@@ -88,7 +88,7 @@ interface TradeAuditConfig {
 interface TradeAudit {
   entry?: TradeAuditEntry
   configAtEntry?: TradeAuditConfig
-  exit?: any
+  exit?: unknown
   configAtExit?: TradeAuditConfig
 }
 
@@ -126,6 +126,28 @@ export function extractTradeAuditData(audit?: TradeAudit): TradeAuditData {
 }
 
 /**
+ * Format config data into display text string
+ */
+function formatConfigText(config?: TradeAuditConfig): string | null {
+  if (!config) return null
+  
+  const { PROFIT_TARGET, STOP_LOSS, ENABLE_TRAILING_PROFIT, TRAILING_STOP_PERCENT } = config
+  
+  // Ensure required fields are present
+  if (typeof PROFIT_TARGET !== 'number' || typeof STOP_LOSS !== 'number') {
+    return null
+  }
+  
+  let text = `PT ${PROFIT_TARGET}% SL ${STOP_LOSS}%`
+  
+  if (ENABLE_TRAILING_PROFIT && typeof TRAILING_STOP_PERCENT === 'number') {
+    text += ` Trail ${TRAILING_STOP_PERCENT}%`
+  }
+  
+  return text
+}
+
+/**
  * Format audit data into display text strings
  */
 export function formatTradeAuditTexts(auditData: TradeAuditData): TradeAuditTexts {
@@ -147,13 +169,8 @@ export function formatTradeAuditTexts(auditData: TradeAuditData): TradeAuditText
     ? `Vol ${(entry.volumeSurge.ratio).toFixed(2)}x`
     : null
     
-  const cfgBuyText = cfgBuy 
-    ? `PT ${cfgBuy.PROFIT_TARGET}% SL ${cfgBuy.STOP_LOSS}%${cfgBuy.ENABLE_TRAILING_PROFIT ? ` Trail ${cfgBuy.TRAILING_STOP_PERCENT}%` : ''}` 
-    : null
-    
-  const cfgSellText = cfgSell 
-    ? `PT ${cfgSell.PROFIT_TARGET}% SL ${cfgSell.STOP_LOSS}%${cfgSell.ENABLE_TRAILING_PROFIT ? ` Trail ${cfgSell.TRAILING_STOP_PERCENT}%` : ''}` 
-    : null
+  const cfgBuyText = formatConfigText(cfgBuy)
+  const cfgSellText = formatConfigText(cfgSell)
   
   return {
     gradeText,
