@@ -1,38 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { config } from './config.js';
-
-function pickConfigSnapshot() {
-  const keys = [
-    'PAPER_TRADING',
-    'MAX_PRICE',
-    'MIN_VOLUME',
-    'POSITION_SIZE',
-    'MAX_POSITIONS',
-    'PROFIT_TARGET',
-    'STOP_LOSS',
-    'ENABLE_TRAILING_PROFIT',
-    'TRAILING_STOP_PERCENT',
-    'MIN_MOMENTUM_TO_RIDE',
-    'MOMENTUM_THRESHOLD',
-    'MOMENTUM_WINDOW',
-    'RSI_FILTER',
-    'RSI_MIN',
-    'RSI_MAX',
-    'VOLUME_SURGE_FILTER',
-    'VOLUME_SURGE_THRESHOLD',
-    'MAKER_FEE_PERCENT',
-    'TAKER_FEE_PERCENT',
-    'TAX_PERCENT',
-  ];
-
-  return Object.fromEntries(
-    keys
-      .filter((k) => Object.prototype.hasOwnProperty.call(config, k))
-      .map((k) => [k, config[k]])
-  );
-}
-
+import { config, pickConfigSnapshot } from './config.js';
 /**
  * Paper Trading Engine - Simulates trades without real money
  */
