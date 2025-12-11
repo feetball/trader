@@ -15,7 +15,7 @@ interface AuditEntryDisplayProps {
 export default function AuditEntryDisplay({ audit, className = "text-xs text-gray-500 font-mono flex flex-wrap gap-x-3 gap-y-1" }: AuditEntryDisplayProps) {
   if (!audit?.entry) return null
   
-  const hasAnyData = audit.entry.grade || 
+  const hasAnyData = Boolean(audit.entry.grade) || 
     typeof audit.entry.score === 'number' ||
     typeof audit.entry.momentum === 'number' || 
     typeof audit.entry.rsi === 'number'
