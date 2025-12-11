@@ -18,6 +18,27 @@ interface Portfolio {
   openPositions?: number
 }
 
+interface AuditEntry {
+  timestamp: number
+  price: number
+  momentum: number
+  rawMomentum: number
+  rsi: number
+  volumeSurge: number | null
+  priceAction: string | null
+  volume24h: number
+  priceChange24h: number
+  grade: string
+  score: number
+  reasons: string[]
+}
+
+interface AuditExit {
+  reason: string
+  exitPrice: number
+  exitTime: number
+}
+
 interface Position {
   id: string
   productId?: string
@@ -31,9 +52,9 @@ interface Position {
   entryTime: number
   holdTime?: number
   audit?: {
-    entry?: any
+    entry?: AuditEntry | null
     configAtEntry?: Record<string, any>
-    exit?: any
+    exit?: AuditExit | null
     configAtExit?: Record<string, any>
   }
 }
@@ -56,9 +77,9 @@ interface Trade {
   exitTime: number
   reason: string
   audit?: {
-    entry?: any
+    entry?: AuditEntry | null
     configAtEntry?: Record<string, any>
-    exit?: any
+    exit?: AuditExit | null
     configAtExit?: Record<string, any>
   }
 }
