@@ -67,8 +67,12 @@ export function AuditEntryDisplay({
     ? `Vol ${entry.volumeSurge.ratio.toFixed(2)}x`
     : null
 
-  const formatConfig = (cfg: ConfigData) => 
-    `PT ${cfg.PROFIT_TARGET}% SL ${cfg.STOP_LOSS}%${cfg.ENABLE_TRAILING_PROFIT ? ` Trail ${cfg.TRAILING_STOP_PERCENT}%` : ''}`
+  const formatConfig = (cfg: ConfigData) => {
+    if (typeof cfg.PROFIT_TARGET !== 'number' || typeof cfg.STOP_LOSS !== 'number') {
+      return null
+    }
+    return `PT ${cfg.PROFIT_TARGET}% SL ${cfg.STOP_LOSS}%${cfg.ENABLE_TRAILING_PROFIT ? ` Trail ${cfg.TRAILING_STOP_PERCENT}%` : ''}`
+  }
 
   const cfgBuyText = configAtEntry ? formatConfig(configAtEntry) : null
   const cfgSellText = configAtExit ? formatConfig(configAtExit) : null
