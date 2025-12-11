@@ -18,6 +18,44 @@ interface Portfolio {
   openPositions?: number
 }
 
+interface VolumeSurge {
+  isSurge: boolean
+  ratio: number
+}
+
+interface PriceAction {
+  favorable: boolean
+  reason: string
+}
+
+interface EntryAudit {
+  timestamp: number
+  price: number
+  momentum: number
+  rawMomentum: number
+  rsi: number | null
+  volumeSurge: VolumeSurge | null
+  priceAction: PriceAction | null
+  volume24h: number
+  priceChange24h: number
+  grade: string
+  score: number
+  reasons: string[]
+}
+
+interface ExitAudit {
+  reason: string
+  exitPrice: number
+  exitTime: number
+}
+
+interface AuditTrail {
+  entry?: EntryAudit
+  configAtEntry?: Record<string, any>
+  exit?: ExitAudit
+  configAtExit?: Record<string, any>
+}
+
 interface Position {
   id: string
   productId?: string
@@ -30,12 +68,7 @@ interface Position {
   investedAmount: number
   entryTime: number
   holdTime?: number
-  audit?: {
-    entry?: any
-    configAtEntry?: Record<string, any>
-    exit?: any
-    configAtExit?: Record<string, any>
-  }
+  audit?: AuditTrail
 }
 
 interface Trade {
@@ -55,12 +88,7 @@ interface Trade {
   entryTime: number
   exitTime: number
   reason: string
-  audit?: {
-    entry?: any
-    configAtEntry?: Record<string, any>
-    exit?: any
-    configAtExit?: Record<string, any>
-  }
+  audit?: AuditTrail
 }
 
 interface CoinPerformance {

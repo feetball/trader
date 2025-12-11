@@ -12,6 +12,9 @@ out/
 dist/
 build/
 
+# typescript
+*.tsbuildinfo
+
 # misc
 .DS_Store
 *.pem
