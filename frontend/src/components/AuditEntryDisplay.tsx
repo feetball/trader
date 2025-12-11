@@ -16,13 +16,16 @@ export default function AuditEntryDisplay({ audit, className = "text-xs text-gra
   if (!audit?.entry) return null
   
   const hasAnyData = audit.entry.grade || 
+    typeof audit.entry.score === 'number' ||
     typeof audit.entry.momentum === 'number' || 
     typeof audit.entry.rsi === 'number'
   
   if (!hasAnyData) return null
 
-  return (
-    <div className={className}>
+  // When className is 'contents', render children directly without wrapper
+  // This allows the children to be direct flex items of the parent container
+  const children = (
+    <>
       {audit.entry.grade && (
         <span>Grade {audit.entry.grade}{typeof audit.entry.score === 'number' ? ` (${audit.entry.score})` : ''}</span>
       )}
@@ -32,6 +35,16 @@ export default function AuditEntryDisplay({ audit, className = "text-xs text-gra
       {typeof audit.entry.rsi === 'number' && (
         <span>RSI {audit.entry.rsi.toFixed(0)}</span>
       )}
+    </>
+  )
+
+  if (className === 'contents') {
+    return children
+  }
+
+  return (
+    <div className={className}>
+      {children}
     </div>
   )
 }
