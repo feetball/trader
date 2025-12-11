@@ -28,6 +28,37 @@ try {
 }
 export { config };
 
+function pickConfigSnapshot(runtimeConfig) {
+  const keys = [
+    'PAPER_TRADING',
+    'MAX_PRICE',
+    'MIN_VOLUME',
+    'POSITION_SIZE',
+    'MAX_POSITIONS',
+    'PROFIT_TARGET',
+    'STOP_LOSS',
+    'ENABLE_TRAILING_PROFIT',
+    'TRAILING_STOP_PERCENT',
+    'MIN_MOMENTUM_TO_RIDE',
+    'MOMENTUM_THRESHOLD',
+    'MOMENTUM_WINDOW',
+    'RSI_FILTER',
+    'RSI_MIN',
+    'RSI_MAX',
+    'VOLUME_SURGE_FILTER',
+    'VOLUME_SURGE_THRESHOLD',
+    'MAKER_FEE_PERCENT',
+    'TAKER_FEE_PERCENT',
+    'TAX_PERCENT',
+  ];
+
+  return Object.fromEntries(
+    keys
+      .filter((k) => Object.prototype.hasOwnProperty.call(runtimeConfig, k))
+      .map((k) => [k, runtimeConfig[k]])
+  );
+}
+
 // File paths for persisted settings and history
 const SETTINGS_FILE = 'user-settings.json';
 const SETTINGS_HISTORY_FILE = 'settings-history.json';
@@ -749,7 +780,8 @@ app.post('/api/positions/sell', async (req, res) => {
     const netProfit = grossProfit - totalFees;
     const profitPercent = (grossProfit / position.investedAmount) * 100;
     const netProfitPercent = (netProfit / position.investedAmount) * 100;
-    const holdTime = Date.now() - position.entryTime;
+    const exitTimestamp = Date.now();
+    const holdTime = exitTimestamp - position.entryTime;
     
     // Remove position and add cash (net of sell fee)
     portfolio.positions.splice(positionIndex, 1);
@@ -759,7 +791,7 @@ app.post('/api/positions/sell', async (req, res) => {
     const trade = {
       ...position,
       exitPrice: currentPrice,
-      exitTime: Date.now(),
+      exitTime: exitTimestamp,
       profit: grossProfit,
       profitPercent,
       netProfit,
@@ -768,6 +800,15 @@ app.post('/api/positions/sell', async (req, res) => {
       totalFees,
       holdTimeMs: holdTime,
       reason: 'Manual force sell',
+      audit: {
+        ...(position.audit || {}),
+        exit: {
+          reason: 'Manual force sell',
+          exitPrice: currentPrice,
+          exitTime: exitTimestamp,
+        },
+        configAtExit: pickConfigSnapshot(config),
+      },
     };
     portfolio.closedTrades.push(trade);
     
@@ -1503,7 +1544,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.33 (Next.js Frontend)             ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.34 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');

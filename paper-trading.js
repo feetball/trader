@@ -1,7 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { config } from './config.js';
-
+import { config, pickConfigSnapshot } from './config.js';
 /**
  * Paper Trading Engine - Simulates trades without real money
  */
@@ -45,7 +44,7 @@ export class PaperTradingEngine {
   /**
    * Execute a paper buy order
    */
-  async buy(productId, symbol, price, usdAmount) {
+  async buy(productId, symbol, price, usdAmount, entryAudit = null) {
     if (this.portfolio.cash < usdAmount) {
       console.log(`❌ Insufficient cash: $${this.portfolio.cash.toFixed(2)} available, $${usdAmount} needed`);
       return null;
@@ -69,6 +68,10 @@ export class PaperTradingEngine {
       entryTime: timestamp,
       targetPrice: price * (1 + config.PROFIT_TARGET / 100),
       stopLoss: price * (1 + config.STOP_LOSS / 100), // config.STOP_LOSS is negative, e.g., -2 = 2% below entry
+      audit: {
+        entry: entryAudit || null,
+        configAtEntry: pickConfigSnapshot(),
+      },
     };
 
     this.portfolio.positions.push(position);
@@ -86,6 +89,7 @@ export class PaperTradingEngine {
    * Execute a paper sell order
    */
   async sell(position, currentPrice, reason = 'Target reached') {
+    const exitTimestamp = Date.now();
     const grossValue = position.quantity * currentPrice;
     
     // Calculate sell fee (use taker fee for market orders)
@@ -105,7 +109,7 @@ export class PaperTradingEngine {
     
     const profitPercent = (grossProfit / position.investedAmount) * 100;
     const netProfitPercent = (netProfitActual / position.investedAmount) * 100;
-    const holdTime = Date.now() - position.entryTime;
+    const holdTime = exitTimestamp - position.entryTime;
 
     // Remove from positions
     this.portfolio.positions = this.portfolio.positions.filter(p => p.id !== position.id);
@@ -117,7 +121,7 @@ export class PaperTradingEngine {
     const trade = {
       ...position,
       exitPrice: currentPrice,
-      exitTime: Date.now(),
+      exitTime: exitTimestamp,
       profit: grossProfit,
       profitPercent,
       netProfit: netProfitActual,
@@ -126,6 +130,15 @@ export class PaperTradingEngine {
       totalFees,
       holdTimeMs: holdTime,
       reason,
+      audit: {
+        ...(position.audit || {}),
+        exit: {
+          reason,
+          exitPrice: currentPrice,
+          exitTime: exitTimestamp,
+        },
+        configAtExit: pickConfigSnapshot(),
+      },
     };
 
     this.portfolio.closedTrades.push(trade);
