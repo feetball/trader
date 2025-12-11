@@ -86,8 +86,11 @@ export default function TradeHistoryPage() {
               <thead>
                 <tr className="border-b border-white/10">
                   <th className="text-left py-4 px-4 text-gray-400 font-medium">Coin</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Entry</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Exit</th>
+                  <th className="text-left py-4 px-4 text-gray-400 font-medium">Entry Date & Time</th>
+                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Coins</th>
+                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Buy Price</th>
+                  <th className="text-left py-4 px-4 text-gray-400 font-medium">Exit Date & Time</th>
+                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Sell Price</th>
                   <th className="text-right py-4 px-4 text-gray-400 font-medium">P&L</th>
                   <th className="text-right py-4 px-4 text-gray-400 font-medium">%</th>
                   <th className="text-center py-4 px-4 text-gray-400 font-medium">Reason</th>
@@ -116,8 +119,17 @@ export default function TradeHistoryPage() {
                           </Chip>
                         </div>
                       </td>
+                      <td className="text-left py-4 px-4 font-mono text-xs text-gray-400">
+                        {new Date(trade.entryTime).toLocaleString()}
+                      </td>
+                      <td className="text-right py-4 px-4 font-mono text-xs text-gray-400">
+                        {(trade.quantity || 0).toFixed(4)}
+                      </td>
                       <td className="text-right py-4 px-4 font-mono text-xs text-gray-400">
                         ${(trade.entryPrice || 0).toFixed(6)}
+                      </td>
+                      <td className="text-left py-4 px-4 font-mono text-xs text-gray-400">
+                        {new Date(trade.exitTime).toLocaleString()}
                       </td>
                       <td className="text-right py-4 px-4 font-mono text-xs text-gray-400">
                         ${(trade.exitPrice || 0).toFixed(6)}

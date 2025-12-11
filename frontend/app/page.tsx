@@ -166,11 +166,14 @@ function PositionsWidget() {
             className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 group"
             style={{ animationDelay: `${idx * 50}ms` }}
           >
-            <div>
-              <Chip onClick={() => openCoinbase(pos.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
-                {pos.symbol}
-              </Chip>
-              <p className="text-xs text-gray-500 mt-1 font-mono">${(pos.entryPrice || 0).toFixed(6)}</p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <Chip onClick={() => openCoinbase(pos.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
+                  {pos.symbol}
+                </Chip>
+                <span className="text-xs text-gray-500 font-mono">Invested: ${(pos.investedAmount || 0).toFixed(2)}</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()} @ ${(pos.entryPrice || 0).toFixed(6)}</p>
             </div>
             <div className="text-right">
               <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
