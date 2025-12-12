@@ -2,6 +2,7 @@
 
 import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
+import { AuditEntryDisplay } from '@/components/AuditEntryDisplay'
 import Chip from '@/components/Chip'
 import { formatHoldTime, formatTimestamp, extractTradeAuditData, formatTradeAuditTexts } from '@/lib/utils'
 import { TrendingUp, TrendingDown, BarChart3, DollarSign, Target, History, ArrowUpRight, ArrowDownRight } from 'lucide-react'
@@ -128,27 +129,14 @@ export default function TradeHistoryPage() {
                             </span>
                           </div>
                         )}
-                        {(gradeText || momentumText || rsiText || volText || cfgBuyText || cfgSellText || (Array.isArray(entry?.reasons) && entry.reasons.length > 0)) && (
-                          <div className="mt-2 text-xs text-gray-500 font-mono space-y-1">
-                            <div className="flex flex-wrap gap-x-3 gap-y-1">
-                              {gradeText && <span>{gradeText}</span>}
-                              {momentumText && <span>{momentumText}</span>}
-                              {rsiText && <span>{rsiText}</span>}
-                              {volText && <span>{volText}</span>}
-                            </div>
-                            {Array.isArray(entry?.reasons) && entry.reasons.length > 0 && (
-                              <div className="text-gray-600">
-                                Signals: {entry.reasons.slice(0, 4).join(', ')}
-                              </div>
-                            )}
-                            {cfgBuyText && (
-                              <div className="text-gray-600">Cfg@Buy: {cfgBuyText}</div>
-                            )}
-                            {cfgSellText && (
-                              <div className="text-gray-600">Cfg@Sell: {cfgSellText}</div>
-                            )}
-                          </div>
-                        )}
+                        <AuditEntryDisplay 
+                          entry={trade.audit?.entry}
+                          showVolume={true}
+                          showReasons={true}
+                          maxReasons={4}
+                          configAtEntry={trade.audit?.configAtEntry}
+                          configAtExit={trade.audit?.configAtExit}
+                        />
                       </td>
                       <td className="text-left py-4 px-4 font-mono text-xs text-gray-400">
                         {new Date(trade.entryTime).toLocaleString()}
