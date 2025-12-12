@@ -28,7 +28,7 @@ interface PriceAction {
   reason: string
 }
 
-interface EntryAudit {
+interface AuditEntry {
   timestamp: number
   price: number
   momentum: number
@@ -43,17 +43,10 @@ interface EntryAudit {
   reasons: string[]
 }
 
-interface ExitAudit {
+interface AuditExit {
   reason: string
   exitPrice: number
   exitTime: number
-}
-
-interface AuditTrail {
-  entry?: EntryAudit
-  configAtEntry?: Record<string, any>
-  exit?: ExitAudit
-  configAtExit?: Record<string, any>
 }
 
 interface Position {
@@ -68,7 +61,12 @@ interface Position {
   investedAmount: number
   entryTime: number
   holdTime?: number
-  audit?: AuditTrail
+  audit?: {
+    entry?: AuditEntry | null
+    configAtEntry?: Record<string, any>
+    exit?: AuditExit | null
+    configAtExit?: Record<string, any>
+  }
 }
 
 interface Trade {
@@ -88,7 +86,12 @@ interface Trade {
   entryTime: number
   exitTime: number
   reason: string
-  audit?: AuditTrail
+  audit?: {
+    entry?: AuditEntry | null
+    configAtEntry?: Record<string, any>
+    exit?: AuditExit | null
+    configAtExit?: Record<string, any>
+  }
 }
 
 interface CoinPerformance {
