@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { config, pickConfigSnapshot } from './config.js';
+import { config, pickConfigSnapshot } from './config-utils.js';
 /**
  * Paper Trading Engine - Simulates trades without real money
  */
