@@ -1,4 +1,4 @@
-import { config } from './config.js';
+import { config } from './config-utils.js';
 import { calculateDynamicStopLoss, scoreTrade } from './indicators.js';
 
 /**
