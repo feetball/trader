@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.0] - 2025-12-08
 
 ### Changed - MAJOR FRONTEND MIGRATION
-- **Migrated from Vue 3 to Next.js** - Complete frontend rewrite from Vue 3 + Vuetify to Next.js + React + Tailwind CSS
-- **Component library** - Replaced Vuetify Material components with custom Tailwind CSS components
-- **State management** - Converted Vue composables to React Context API with hooks
-- **Routing** - Migrated from Vue Router to Next.js file-based App Router
-- **Build system** - Changed from Vite to Next.js with static export
-- **Styling** - Moved from Vuetify Material Design to Tailwind CSS utility classes
+- **Frontend rewrite** - Next.js + React + Tailwind CSS dashboard
+- **Component library** - Custom Tailwind CSS components
+- **State management** - React Context API with hooks
+- **Routing** - Next.js file-based App Router
+- **Build system** - Next.js static export
+- **Styling** - Tailwind CSS utility classes
 - **Icon library** - Replaced MDI icons with Lucide React icons
 
 ### Added
@@ -21,13 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - React 18 with modern hooks and context API
 - Tailwind CSS 3 with custom dark theme configuration
 - Comprehensive frontend documentation in frontend/README.md
-- Migration guide (MIGRATION.md) documenting Vue → Next.js changes
+- Updated dashboard documentation
 - Index files for cleaner imports from components, hooks, and lib
 
 ### Removed
-- Vue 3, Vue Router, Vuetify dependencies
-- Vite build system
-- Vue-specific plugin configurations
+- Legacy frontend dependencies and build tooling
 
 ### Maintained
 - All trading logic and API integration
@@ -83,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.1.0] - 2025-11-29
 
 ### Added
-- **Multi-page dashboard** - Vue Router with 6 dedicated pages
+- **Multi-page dashboard** - 6 dedicated pages
 - **Navigation drawer** - Collapsible sidebar with page links
 - **Overview page** - Portfolio summary with recent activity
 - **Bot Status page** - Control panel and live status
@@ -95,8 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Local timezone** - Docker container uses host timezone
 
 ### Changed
-- Refactored frontend to use Vue Router
-- Created shared composables for state management
+- Refactored dashboard routing and state management
 - Improved WebSocket real-time updates
 
 ## [1.0.0] - 2025-11-29
@@ -106,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Momentum-based trading strategy
 - Paper trading with $10,000 virtual portfolio
 - Real-time WebSocket price feeds from Coinbase
-- Vue 3 + Vuetify 3 dashboard
+- Web dashboard
 - Docker containerization
 - Position management with profit targets and stop losses
 - Trailing profit feature

@@ -70,7 +70,7 @@ npm run dashboard
 ✅ **Auto-refresh every 5 seconds** - Live updates  
 ✅ **Dark mode** - Easy on the eyes  
 ✅ **Responsive design** - Works on any screen size  
-✅ **Material Design** - Professional UI with Vuetify  
+✅ **Modern UI** - Next.js + React + Tailwind (dark mode)  
 ✅ **Color-coded** - Green profits, red losses  
 ✅ **Sortable tables** - Click headers to sort  
 ✅ **No real money** - 100% paper trading  

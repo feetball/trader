@@ -260,7 +260,7 @@ Columns:
 - Auto-refresh every 5 seconds
 - Minimal API calls (5 endpoints)
 - All data loads in parallel
-- Fast Vue 3 reactivity
+- Fast client-side rendering
 - Optimized table rendering
 
 ---

@@ -113,10 +113,11 @@ trader/
 ├── indicators.js       # Technical indicators
 ├── config.js           # Configuration
 ├── frontend/
+│   ├── app/            # Next.js App Router pages
 │   └── src/
-│       ├── views/      # Page components
-│       ├── composables/ # Shared state
-│       └── router/     # Vue Router
+│       ├── components/ # Reusable UI components
+│       ├── hooks/      # React hooks + TradingProvider
+│       └── lib/        # API client + helpers
 └── docker-compose.yml
 ```
 
@@ -128,14 +129,14 @@ trader/
 - Async/await over raw promises
 - Meaningful variable names
 
-### Vue Components
-- Use Composition API with `<script setup>`
-- Props and emits should be typed
-- Keep components focused and small
+### React / Next.js
+- Prefer Server Components by default; use `'use client'` only when needed
+- Keep page logic in `frontend/app/*`, shared UI in `frontend/src/components/*`
+- Avoid dynamic Tailwind class construction (use mappings)
 
 ### CSS
-- Use Vuetify classes when possible
-- Scoped styles for component-specific CSS
+- Prefer Tailwind utility classes
+- Keep any custom CSS in `frontend/src/styles/*`
 
 ## Questions?
 

@@ -164,11 +164,6 @@ npm start
 - Ensure Tailwind config is properly set up
 - Check for conflicting CSS or missing class names
 
-## Migration Notes
+## Notes
 
-This frontend was converted from **Vue 3 + Vuetify** to **Next.js + React + Tailwind CSS**:
-- All trading logic preserved
-- WebSocket integration unchanged
-- UI completely redesigned with Tailwind
-- Settings history and import/export maintained
-- Responsive design for mobile and desktop
+This dashboard is built with **Next.js + React + Tailwind CSS**.

@@ -27,12 +27,12 @@ An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase
 
 ## Architecture
 
-\`\`\`
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  Vue 3 + Vite   │◄──►│  Express API    │◄──►│  Coinbase API   │
-│  (Frontend)     │    │  + WebSocket    │    │  (REST + WS)    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-\`\`\`
+```
+┌──────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Next.js + React  │◄──►│  Express API    │◄──►│  Coinbase API    │
+│ (Tailwind UI)    │    │  + WebSocket    │    │  (REST + WS)     │
+└──────────────────┘    └─────────────────┘    └─────────────────┘
+```
 
 ### Languages & Frameworks
 - **Backend**: Node.js, Express, WebSocket (ws)
@@ -171,19 +171,12 @@ trader/
 ├── Dockerfile           # Container build
 ├── deploy.sh            # Deployment script
 ├── frontend/
+│   ├── app/                    # Next.js App Router pages
 │   ├── src/
-│   │   ├── App.vue              # Main layout + nav
-│   │   ├── router/index.js      # Vue Router config
-│   │   ├── composables/         # Shared state
-│   │   ├── views/               # Page components
-│   │   │   ├── Overview.vue
-│   │   │   ├── BotStatus.vue
-│   │   │   ├── Performance.vue
-│   │   │   ├── TradeHistory.vue
-│   │   │   ├── Activity.vue
-│   │   │   ├── Logs.vue
-│   │   │   └── Help.vue
-│   │   └── plugins/vuetify.js
+│   │   ├── components/          # Reusable UI components
+│   │   ├── hooks/               # React hooks + TradingProvider
+│   │   └── lib/                 # API client + helpers
+│   ├── tailwind.config.js
 │   └── package.json
 └── paper-trading-data.json  # Portfolio state (auto-generated)
 \`\`\`
