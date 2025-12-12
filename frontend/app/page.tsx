@@ -8,7 +8,7 @@ import { TrendingUp, TrendingDown, DollarSign, Wallet, Trophy, Target, Zap, BarC
 import { useMemo } from 'react'
 
 // Individual widget components with enhanced visuals
-function TotalValueWidgekt() {
+function TotalValueWidget() {
   const { portfolio } = useTrading()
   const roi = portfolio.roi || 0
   return (

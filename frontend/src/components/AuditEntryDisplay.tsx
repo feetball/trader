@@ -48,3 +48,6 @@ export default function AuditEntryDisplay({ audit, className = "text-xs text-gra
     </div>
   )
 }
+
+// Named export for callers that import `{ AuditEntryDisplay }`
+export { AuditEntryDisplay }
