@@ -16,6 +16,9 @@ dist/
 build/
 tsconfig.tsbuildinfo
 
+# typescript
+*.tsbuildinfo
+
 # misc
 .DS_Store
 *.pem

@@ -18,14 +18,24 @@ interface Portfolio {
   openPositions?: number
 }
 
+interface VolumeSurge {
+  isSurge: boolean
+  ratio: number
+}
+
+interface PriceAction {
+  favorable: boolean
+  reason: string
+}
+
 interface AuditEntry {
   timestamp: number
   price: number
   momentum: number
   rawMomentum: number
-  rsi: number
-  volumeSurge: number | null
-  priceAction: string | null
+  rsi: number | null
+  volumeSurge: VolumeSurge | null
+  priceAction: PriceAction | null
   volume24h: number
   priceChange24h: number
   grade: string

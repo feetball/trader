@@ -71,10 +71,10 @@ interface TradeAuditEntry {
   grade?: string
   score?: number
   momentum?: number
-  rsi?: number
+  rsi?: number | null
   volumeSurge?: {
     ratio?: number
-  }
+  } | null
   reasons?: string[]
 }
 
@@ -86,7 +86,7 @@ interface TradeAuditConfig {
 }
 
 interface TradeAudit {
-  entry?: TradeAuditEntry
+  entry?: TradeAuditEntry | null
   configAtEntry?: TradeAuditConfig
   exit?: unknown
   configAtExit?: TradeAuditConfig
@@ -94,7 +94,7 @@ interface TradeAudit {
 
 export interface TradeAuditData {
   hasAudit: boolean
-  entry?: TradeAuditEntry
+  entry?: TradeAuditEntry | null
   cfgBuy?: TradeAuditConfig
   cfgSell?: TradeAuditConfig
 }

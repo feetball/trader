@@ -101,7 +101,9 @@ export default function TradeHistoryPage() {
                 {trades.map((trade, i) => {
                   const profit = trade.netProfit ?? trade.profit
                   const isProfit = profit >= 0
-                  const hasAudit = !!(trade.audit && (trade.audit.entry || trade.audit.configAtEntry || trade.audit.exit || trade.audit.configAtExit))
+                  const auditData = extractTradeAuditData(trade.audit)
+                  const { hasAudit, entry } = auditData
+                  const { gradeText, momentumText, rsiText, volText, cfgBuyText, cfgSellText } = formatTradeAuditTexts(auditData)
                   return (
                     <tr 
                       key={i} 
