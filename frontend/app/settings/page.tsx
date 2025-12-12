@@ -77,6 +77,11 @@ export default function SettingsPage() {
     setLocalSettings(prev => ({ ...prev, [key]: value }))
   }
 
+  // Helper to select all content in numeric inputs on focus for easier mobile editing
+  const handleNumericInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select()
+  }
+
   const handleSave = async () => {
     setSettingsLoading(true)
     try {
@@ -149,29 +154,32 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-2 md:p-4 space-y-2 md:space-y-3 max-h-[calc(100vh-80px)] overflow-y-auto">
-      <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-start md:items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl md:text-2xl font-bold">Bot Settings</h1>
-          {isDirty && (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning-500/20 text-warning-400 text-xs font-medium">
-              <AlertCircle size={12} />
-              <span>Unsaved</span>
-            </div>
-          )}
+    <div className="p-2 md:p-4 space-y-2 md:space-y-3 pb-20 md:pb-4">
+      {/* Sticky header for mobile */}
+      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm -mx-2 md:mx-0 px-2 md:px-0 py-2 md:py-0 md:static border-b md:border-b-0 border-gray-800 md:bg-transparent md:backdrop-blur-none">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-start md:items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-bold">Bot Settings</h1>
+            {isDirty && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning-500/20 text-warning-400 text-xs font-medium">
+                <AlertCircle size={12} />
+                <span>Unsaved</span>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button size="small" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+              <Upload size={16} /> Import
+            </Button>
+            <Button size="small" variant="secondary" onClick={handleExport}>
+              <Download size={16} /> Export
+            </Button>
+            <Button size="small" variant={isDirty ? 'primary' : 'secondary'} loading={settingsLoading} onClick={handleSave} disabled={!isDirty && !settingsLoading}>
+              {botStatus.running ? 'Apply & Restart' : 'Save'}
+            </Button>
+          </div>
+          <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} hidden />
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button size="small" variant="secondary" onClick={() => fileInputRef.current?.click()}>
-            <Upload size={16} /> Import
-          </Button>
-          <Button size="small" variant="secondary" onClick={handleExport}>
-            <Download size={16} /> Export
-          </Button>
-          <Button size="small" variant={isDirty ? 'primary' : 'secondary'} loading={settingsLoading} onClick={handleSave} disabled={!isDirty && !settingsLoading}>
-            {botStatus.running ? 'Apply & Restart' : 'Save'}
-          </Button>
-        </div>
-        <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} hidden />
       </div>
 
       {/* Settings Groups - Multi-column layout optimized for 2K */}
@@ -209,6 +217,7 @@ export default function SettingsPage() {
                   step="0.01"
                   value={localSettings.MAX_PRICE}
                   onChange={(e) => handleSettingChange('MAX_PRICE', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Trade under this price</p>
@@ -219,6 +228,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.POSITION_SIZE}
                   onChange={(e) => handleSettingChange('POSITION_SIZE', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">USD per trade</p>
@@ -229,6 +239,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.MAX_POSITIONS}
                   onChange={(e) => handleSettingChange('MAX_POSITIONS', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Max concurrent</p>
@@ -249,6 +260,7 @@ export default function SettingsPage() {
                   step="0.1"
                   value={localSettings.PROFIT_TARGET}
                   onChange={(e) => handleSettingChange('PROFIT_TARGET', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Sell at %</p>
@@ -260,6 +272,7 @@ export default function SettingsPage() {
                   step="0.1"
                   value={localSettings.STOP_LOSS}
                   onChange={(e) => handleSettingChange('STOP_LOSS', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Cut losses</p>
@@ -292,6 +305,7 @@ export default function SettingsPage() {
                   step="0.1"
                   value={localSettings.MOMENTUM_THRESHOLD}
                   onChange={(e) => handleSettingChange('MOMENTUM_THRESHOLD', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Min change</p>
@@ -302,6 +316,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.MOMENTUM_WINDOW}
                   onChange={(e) => handleSettingChange('MOMENTUM_WINDOW', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Minutes</p>
@@ -312,6 +327,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.SCAN_INTERVAL}
                   onChange={(e) => handleSettingChange('SCAN_INTERVAL', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Seconds</p>
@@ -331,6 +347,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.MIN_VOLUME}
                   onChange={(e) => handleSettingChange('MIN_VOLUME', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">24h vol</p>
@@ -351,6 +368,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.VOLUME_SURGE_THRESHOLD}
                   onChange={(e) => handleSettingChange('VOLUME_SURGE_THRESHOLD', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.VOLUME_SURGE_FILTER}
                 />
@@ -380,6 +398,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.RSI_MIN}
                   onChange={(e) => handleSettingChange('RSI_MIN', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.RSI_FILTER}
                 />
@@ -391,6 +410,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.RSI_MAX}
                   onChange={(e) => handleSettingChange('RSI_MAX', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.RSI_FILTER}
                 />
@@ -412,6 +432,7 @@ export default function SettingsPage() {
                   step="0.1"
                   value={localSettings.TRAILING_STOP_PERCENT}
                   onChange={(e) => handleSettingChange('TRAILING_STOP_PERCENT', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.ENABLE_TRAILING_PROFIT}
                 />
@@ -424,6 +445,7 @@ export default function SettingsPage() {
                   step="0.1"
                   value={localSettings.MIN_MOMENTUM_TO_RIDE}
                   onChange={(e) => handleSettingChange('MIN_MOMENTUM_TO_RIDE', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.ENABLE_TRAILING_PROFIT}
                 />
@@ -435,6 +457,7 @@ export default function SettingsPage() {
                   type="number"
                   value={localSettings.OPEN_POSITION_SCAN_INTERVAL}
                   onChange={(e) => handleSettingChange('OPEN_POSITION_SCAN_INTERVAL', parseInt(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Check interval</p>
@@ -455,6 +478,7 @@ export default function SettingsPage() {
                   step="0.01"
                   value={localSettings.MAKER_FEE_PERCENT}
                   onChange={(e) => handleSettingChange('MAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Limit orders</p>
@@ -466,6 +490,7 @@ export default function SettingsPage() {
                   step="0.01"
                   value={localSettings.TAKER_FEE_PERCENT}
                   onChange={(e) => handleSettingChange('TAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Market orders</p>
@@ -477,6 +502,7 @@ export default function SettingsPage() {
                   step="0.01"
                   value={localSettings.TAX_PERCENT}
                   onChange={(e) => handleSettingChange('TAX_PERCENT', parseFloat(e.target.value) || 0)}
+                  onFocus={handleNumericInputFocus}
                   className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Profits only</p>
