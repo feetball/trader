@@ -4,7 +4,7 @@ import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
 import { AuditEntryDisplay } from '@/components/AuditEntryDisplay'
 import Chip from '@/components/Chip'
-import { formatHoldTime, formatTimestamp } from '@/lib/utils'
+import { formatHoldTime, formatTimestamp, extractTradeAuditData, formatTradeAuditTexts } from '@/lib/utils'
 import { TrendingUp, TrendingDown, BarChart3, DollarSign, Target, History, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
 export default function TradeHistoryPage() {
