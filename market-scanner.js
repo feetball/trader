@@ -1,4 +1,4 @@
-import { config } from './config.js';
+import { config } from './config-utils.js';
 import { CoinbaseWebSocket } from './websocket-feed.js';
 import { calculateRSI, detectVolumeSurge, checkPriceAction, scoreTrade } from './indicators.js';
 

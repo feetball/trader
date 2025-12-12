@@ -2,7 +2,7 @@ import { CoinbaseClient } from './coinbase-client.js';
 import { MarketScanner } from './market-scanner.js';
 import { PaperTradingEngine } from './paper-trading.js';
 import { TradingStrategy } from './trading-strategy.js';
-import { config } from './config.js';
+import { config } from './config-utils.js';
 
 /**
  * Trading Bot Daemon - Controlled by API server

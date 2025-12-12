@@ -2,8 +2,9 @@
 
 import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
+import { AuditEntryDisplay } from '@/components/AuditEntryDisplay'
 import Chip from '@/components/Chip'
-import { formatHoldTime, formatTimestamp } from '@/lib/utils'
+import { formatHoldTime, formatTimestamp, extractTradeAuditData, formatTradeAuditTexts } from '@/lib/utils'
 import { TrendingUp, TrendingDown, BarChart3, DollarSign, Target, History, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 
 export default function TradeHistoryPage() {
@@ -100,18 +101,9 @@ export default function TradeHistoryPage() {
                 {trades.map((trade, i) => {
                   const profit = trade.netProfit ?? trade.profit
                   const isProfit = profit >= 0
-                  const entry = trade.audit?.entry
-                  const cfgBuy = trade.audit?.configAtEntry
-                  const cfgSell = trade.audit?.configAtExit
-                  const hasAudit = !!(trade.audit && (trade.audit.entry || trade.audit.configAtEntry || trade.audit.exit || trade.audit.configAtExit))
-                  const gradeText = entry?.grade ? `Grade ${entry.grade}${typeof entry.score === 'number' ? ` (${entry.score})` : ''}` : null
-                  const momentumText = typeof entry?.momentum === 'number' ? `Mom ${entry.momentum >= 0 ? '+' : ''}${entry.momentum.toFixed(2)}%` : null
-                  const rsiText = typeof entry?.rsi === 'number' ? `RSI ${entry.rsi.toFixed(0)}` : null
-                  const volText = entry?.volumeSurge && typeof entry.volumeSurge.ratio === 'number'
-                    ? `Vol ${(entry.volumeSurge.ratio).toFixed(2)}x`
-                    : null
-                  const cfgBuyText = cfgBuy ? `PT ${cfgBuy.PROFIT_TARGET}% SL ${cfgBuy.STOP_LOSS}%${cfgBuy.ENABLE_TRAILING_PROFIT ? ` Trail ${cfgBuy.TRAILING_STOP_PERCENT}%` : ''}` : null
-                  const cfgSellText = cfgSell ? `PT ${cfgSell.PROFIT_TARGET}% SL ${cfgSell.STOP_LOSS}%${cfgSell.ENABLE_TRAILING_PROFIT ? ` Trail ${cfgSell.TRAILING_STOP_PERCENT}%` : ''}` : null
+                  const auditData = extractTradeAuditData(trade.audit)
+                  const { hasAudit, entry } = auditData
+                  const { gradeText, momentumText, rsiText, volText, cfgBuyText, cfgSellText } = formatTradeAuditTexts(auditData)
                   return (
                     <tr 
                       key={i} 
@@ -137,27 +129,14 @@ export default function TradeHistoryPage() {
                             </span>
                           </div>
                         )}
-                        {(gradeText || momentumText || rsiText || volText || cfgBuyText || cfgSellText || (Array.isArray(entry?.reasons) && entry.reasons.length > 0)) && (
-                          <div className="mt-2 text-xs text-gray-500 font-mono space-y-1">
-                            <div className="flex flex-wrap gap-x-3 gap-y-1">
-                              {gradeText && <span>{gradeText}</span>}
-                              {momentumText && <span>{momentumText}</span>}
-                              {rsiText && <span>{rsiText}</span>}
-                              {volText && <span>{volText}</span>}
-                            </div>
-                            {Array.isArray(entry?.reasons) && entry.reasons.length > 0 && (
-                              <div className="text-gray-600">
-                                Signals: {entry.reasons.slice(0, 4).join(', ')}
-                              </div>
-                            )}
-                            {cfgBuyText && (
-                              <div className="text-gray-600">Cfg@Buy: {cfgBuyText}</div>
-                            )}
-                            {cfgSellText && (
-                              <div className="text-gray-600">Cfg@Sell: {cfgSellText}</div>
-                            )}
-                          </div>
-                        )}
+                        <AuditEntryDisplay 
+                          entry={trade.audit?.entry}
+                          showVolume={true}
+                          showReasons={true}
+                          maxReasons={4}
+                          configAtEntry={trade.audit?.configAtEntry}
+                          configAtExit={trade.audit?.configAtExit}
+                        />
                       </td>
                       <td className="text-left py-4 px-4 font-mono text-xs text-gray-400">
                         {new Date(trade.entryTime).toLocaleString()}
