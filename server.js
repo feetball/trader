@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { WebSocketServer } from 'ws';
 import http from 'http';
 import { config, pickConfigSnapshot } from './config-utils.js';
+import { defaultConfig } from './config.default.js';
 
 // File paths for persisted settings and history
 const SETTINGS_FILE = 'user-settings.json';
