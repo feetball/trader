@@ -85,9 +85,8 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setSettingsLoading(true)
     try {
-      // Apply local settings to global settings
-      Object.assign(settings, localSettings)
-      await saveSettings()
+      // Pass localSettings to saveSettings - it will update context state
+      await saveSettings(localSettings)
       setSnackbar('Settings saved successfully!')
       setTimeout(() => setSnackbar(''), 3000)
     } catch (error) {

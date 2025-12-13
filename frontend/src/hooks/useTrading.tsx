@@ -194,7 +194,7 @@ export interface TradingContextType {
   resetPortfolio: () => Promise<boolean>
   loadSettings: () => Promise<void>
   loadSettingsHistory: () => Promise<void>
-  saveSettings: () => Promise<any>
+  saveSettings: (settingsToSave?: Settings) => Promise<any>
   resetSettings: () => Promise<void>
   confirmUpdate: () => Promise<any>
   applyUpdate: () => Promise<any>
@@ -334,17 +334,23 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const saveSettings = useCallback(async () => {
+  const saveSettings = useCallback(async (settingsToSave?: Settings) => {
     try {
-      const payload = { ...settings, settingsComment }
+      // Use provided settings or fall back to current state
+      const settingsPayload = settingsToSave || settings
+      const payload = { ...settingsPayload, settingsComment }
       const res = await apiClient.post('/settings', payload)
+      // Update context state so UI reflects saved settings
+      if (settingsToSave) {
+        setSettings(settingsToSave)
+      }
       await loadSettingsHistory()
       return res.data
     } catch (error) {
       console.error('Error saving settings:', error)
       throw error
     }
-  }, [settings, settingsComment])
+  }, [settings, settingsComment, loadSettingsHistory])
 
   const resetSettings = useCallback(async () => {
     try {
