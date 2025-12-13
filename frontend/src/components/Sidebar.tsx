@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, Menu, X, Zap, RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
 import { useState } from 'react'
 
-const navItems = [
+const navLinks = [
   { href: '/', icon: BarChart3, label: 'Overview' },
   { href: '/bot-status', icon: Cpu, label: 'Bot Status' },
   { href: '/performance', icon: Trophy, label: 'Performance' },
@@ -82,7 +82,7 @@ export default function Sidebar() {
 
         {/* Navigation */}
         <nav className="p-4 space-y-1">
-          {navItems.map((item, idx) => {
+          {navLinks.map((item, idx) => {
             const Icon = item.icon
             const isActive = pathname === item.href
             return (

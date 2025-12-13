@@ -1,5 +1,5 @@
 # Start Trading Bot Dashboard
-# This script starts both the API server and the Vue dashboard
+# This script starts both the API server and the dashboard
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
