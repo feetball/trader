@@ -147,6 +147,47 @@ update() {
     log_info "Update complete!"
 }
 
+# Run a specific branch locally: checkout (or fetch) branch, build, and start
+run_branch() {
+    BRANCH="$1"
+    if [ -z "$BRANCH" ]; then
+        # Detect current branch
+        if [ -d ".git" ]; then
+            BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+        fi
+    fi
+
+    if [ -z "$BRANCH" ]; then
+        log_error "No branch specified and unable to detect current branch. Specify a branch: ./deploy.sh run-branch <branch>"
+        exit 1
+    fi
+
+    log_info "Running branch: $BRANCH"
+
+    if [ -d ".git" ]; then
+        # If branch exists locally, checkout; otherwise try to fetch from origin
+        if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
+            log_info "Checking out existing local branch $BRANCH"
+            git checkout "$BRANCH"
+        else
+            log_info "Branch $BRANCH not found locally; attempting to fetch from origin"
+            if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+                git fetch origin "$BRANCH":"$BRANCH"
+                git checkout "$BRANCH"
+            else
+                log_error "Branch $BRANCH not found locally or on origin"
+                exit 1
+            fi
+        fi
+    else
+        log_warn "Not a git repository; continuing with current files"
+    fi
+
+    # Build and start using the checked out branch content
+    build
+    start
+}
+
 # Show help
 show_help() {
     echo "Crypto Trader Deployment Script"
@@ -161,11 +202,14 @@ show_help() {
     echo "  status    Check service status"
     echo "  build     Build Docker image (no cache)"
     echo "  update    Pull latest code, rebuild, and restart"
+    echo "  run-branch [branch]    Checkout (or fetch) branch, build, and start (default: current branch)"
+    echo "  current-branch    Shortcut to run the currently checked out branch"
     echo ""
     echo "Examples:"
     echo "  ./deploy.sh start    # Start the bot"
     echo "  ./deploy.sh logs     # Watch live logs"
     echo "  ./deploy.sh stop     # Stop everything"
+    echo "  ./deploy.sh current-branch    # Build & start current branch"
 }
 
 # Main
@@ -193,6 +237,12 @@ case "${1:-help}" in
         ;;
     update)
         update
+        ;;
+    run-branch)
+        run_branch "$2"
+        ;;
+    current-branch)
+        run_branch
         ;;
     help|--help|-h)
         show_help
