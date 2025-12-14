@@ -23,6 +23,9 @@ settings-history.json
 # Bot restart flag
 .restart-bot
 
+# Update tracking (runtime generated)
+.update-pending
+
 # Logs
 *.log
 npm-debug.log*
