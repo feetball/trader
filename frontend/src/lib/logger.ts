@@ -47,6 +47,26 @@ class FrontendLogger {
     if (typeof window === 'undefined') return
 
     window.addEventListener('error', (event) => {
+      // Filter out generic "Script error" messages that provide no useful information
+      // These are typically from CORS issues with third-party scripts or browser extensions
+      if (event.message === 'Script error.' || event.message === 'Script error') {
+        // Silently ignore these unhelpful errors
+        return
+      }
+
+      // Filter out errors from browser extensions (e.g., MetaMask, crypto wallets)
+      // These are not relevant to the application and clutter the logs
+      const message = event.message || ''
+      if (
+        message.includes('ethereum') ||
+        message.includes('metamask') ||
+        message.includes('chrome-extension://') ||
+        message.includes('moz-extension://')
+      ) {
+        // Silently ignore browser extension errors
+        return
+      }
+
       const filename = event.filename || 'unknown'
       const lineno = event.lineno || 0
       const colno = event.colno || 0
