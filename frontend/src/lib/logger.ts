@@ -9,6 +9,13 @@ export interface FrontendLog {
   level: 'info' | 'warn' | 'error' | 'success'
 }
 
+/**
+ * Format error object to string for logging
+ */
+export function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : 'Unknown error'
+}
+
 class FrontendLogger {
   private logs: FrontendLog[] = []
   private maxLogs = 500
@@ -48,7 +55,7 @@ class FrontendLogger {
 
     window.addEventListener('unhandledrejection', (event) => {
       const reason = event.reason instanceof Error 
-        ? `${event.reason.message}\n${event.reason.stack || ''}` 
+        ? `${event.reason.message} ${event.reason.stack ? '| ' + event.reason.stack.split('\n').slice(0, 2).join(' ') : ''}` 
         : String(event.reason)
       this.log('error', `Unhandled Promise Rejection: ${reason}`)
     })

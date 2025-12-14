@@ -8,6 +8,23 @@ import { RefreshCw, Power, Square, Cpu, Settings, Target, Clock, Activity, BarCh
 import { useState, useEffect } from 'react'
 import { frontendLogger, type FrontendLog } from '@/lib/logger'
 
+// Utility to get log color class based on content
+function getBotLogColor(message: string): string {
+  const lowerMsg = message?.toLowerCase()
+  if (lowerMsg.includes('error')) return 'text-error-400'
+  if (lowerMsg.includes('success') || lowerMsg.includes('sold')) return 'text-success-400'
+  if (lowerMsg.includes('buy') || lowerMsg.includes('bought')) return 'text-info-400'
+  return 'text-gray-400'
+}
+
+// Utility to get log color class based on level
+function getFrontendLogColor(level: string): string {
+  if (level === 'error') return 'text-error-400'
+  if (level === 'warn') return 'text-warning-400'
+  if (level === 'success') return 'text-success-400'
+  return 'text-gray-400'
+}
+
 export default function BotStatusPage() {
   const { botStatus, botLoading, loading, portfolio, settings, startBot, stopBot, refreshData } = useTrading()
   const [frontendLogs, setFrontendLogs] = useState<FrontendLog[]>([])
@@ -164,12 +181,7 @@ export default function BotStatusPage() {
                 className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
               >
                 <span className="text-gray-600 text-xs whitespace-nowrap">{log.timestamp}</span>
-                <span className={`flex-1 ${
-                  log.message?.toLowerCase().includes('error') ? 'text-error-400' :
-                  log.message?.toLowerCase().includes('success') || log.message?.toLowerCase().includes('sold') ? 'text-success-400' :
-                  log.message?.toLowerCase().includes('buy') || log.message?.toLowerCase().includes('bought') ? 'text-info-400' :
-                  'text-gray-400'
-                }`}>
+                <span className={`flex-1 ${getBotLogColor(log.message)}`}>
                   {log.message}
                 </span>
               </div>
@@ -197,12 +209,7 @@ export default function BotStatusPage() {
                 className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
               >
                 <span className="text-gray-600 text-xs whitespace-nowrap">{log.timestamp}</span>
-                <span className={`flex-1 ${
-                  log.level === 'error' ? 'text-error-400' :
-                  log.level === 'warn' ? 'text-warning-400' :
-                  log.level === 'success' ? 'text-success-400' :
-                  'text-gray-400'
-                }`}>
+                <span className={`flex-1 ${getFrontendLogColor(log.level)}`}>
                   {log.message}
                 </span>
               </div>

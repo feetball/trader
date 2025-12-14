@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, createContext, useContext, ReactNode } from 'react'
 import apiClient from '@/lib/api'
-import { frontendLogger } from '@/lib/logger'
+import { frontendLogger, formatError } from '@/lib/logger'
 
 interface Portfolio {
   totalValue?: number
@@ -286,7 +286,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       frontendLogger.success('Bot started successfully')
     } catch (error) {
       console.error('Error starting bot:', error)
-      frontendLogger.error(`Failed to start bot: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      frontendLogger.error(`Failed to start bot: ${formatError(error)}`)
     } finally {
       setBotLoading(false)
     }
@@ -301,7 +301,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       frontendLogger.success('Bot stopped successfully')
     } catch (error) {
       console.error('Error stopping bot:', error)
-      frontendLogger.error(`Failed to stop bot: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      frontendLogger.error(`Failed to stop bot: ${formatError(error)}`)
     } finally {
       setBotLoading(false)
     }
@@ -316,7 +316,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       return true
     } catch (error) {
       console.error('Error resetting portfolio:', error)
-      frontendLogger.error(`Failed to reset portfolio: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      frontendLogger.error(`Failed to reset portfolio: ${formatError(error)}`)
       return false
     }
   }, [])
@@ -360,7 +360,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       return res.data
     } catch (error) {
       console.error('Error saving settings:', error)
-      frontendLogger.error(`Failed to save settings: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      frontendLogger.error(`Failed to save settings: ${formatError(error)}`)
       throw error
     }
   }, [settings, settingsComment, loadSettingsHistory])
@@ -415,7 +415,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       frontendLogger.success('Data refreshed successfully')
     } catch (error) {
       console.error('Error fetching data:', error)
-      frontendLogger.error(`Failed to refresh data: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      frontendLogger.error(`Failed to refresh data: ${formatError(error)}`)
     } finally {
       setLoading(false)
     }
@@ -614,7 +614,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       return res.data
     } catch (error) {
       console.error('Error force selling position:', error)
-      return { success: false, message: error instanceof Error ? error.message : 'Unknown error' }
+      return { success: false, message: formatError(error) }
     }
   }, [refreshData])
 
