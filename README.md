@@ -20,7 +20,9 @@ An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase
 - 📜 Complete trade history with filters
 - 🏆 Performance breakdown by coin
 - 🔔 Real-time activity feed
-- 📝 Chronological bot logs
+- 📝 Comprehensive logging system (bot logs + frontend logs)
+- 🔍 All bot logs displayed (up to 500 entries)
+- 💻 Frontend logging captures errors, actions, and WebSocket events
 - ❓ Help & documentation page
 - �� Material Design UI (dark mode)
 - 🔌 WebSocket for instant updates
@@ -90,7 +92,7 @@ npm run dashboard
 | Page | Description |
 |------|-------------|
 | **Overview** | Portfolio summary, positions, recent trades |
-| **Bot Status** | Control panel, live status, scan activity |
+| **Bot Status** | Control panel, live status, all bot logs & frontend logs |
 | **Performance** | Profit/loss analytics by coin |
 | **Trade History** | Complete trade log with filters |
 | **Activity** | Timeline of trading events |
