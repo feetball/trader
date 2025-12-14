@@ -47,10 +47,34 @@ class FrontendLogger {
     if (typeof window === 'undefined') return
 
     window.addEventListener('error', (event) => {
+      const message = event.message || ''
+      
+      // Filter out generic "Script error" messages that provide no useful information
+      // These are typically from CORS issues with third-party scripts or browser extensions
+      // Both variants (with and without period) are checked as browsers may vary
+      if (message === 'Script error.' || message === 'Script error') {
+        // Silently ignore these unhelpful errors
+        return
+      }
+
+      // Filter out errors from browser extensions (e.g., MetaMask, crypto wallets)
+      // These are not relevant to the application and clutter the logs
+      // Note: This app uses Coinbase API, not Ethereum/Web3, so these are always extension-related
+      const messageLower = message.toLowerCase()
+      if (
+        messageLower.includes('window.ethereum') ||
+        messageLower.includes('metamask') ||
+        messageLower.includes('chrome-extension://') ||
+        messageLower.includes('moz-extension://')
+      ) {
+        // Silently ignore browser extension errors
+        return
+      }
+
       const filename = event.filename || 'unknown'
       const lineno = event.lineno || 0
       const colno = event.colno || 0
-      this.log('error', `${event.message} at ${filename}:${lineno}:${colno}`)
+      this.log('error', `${message} at ${filename}:${lineno}:${colno}`)
     })
 
     window.addEventListener('unhandledrejection', (event) => {
