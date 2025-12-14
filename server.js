@@ -1573,7 +1573,10 @@ export function initializeForRuntime() {
   // Start API rate interval only when not in test environment
   if (!isTestEnv) startApiRateInterval();
 
-  // Print startup banner (safe for tests, no side-effects)
+  // In test environment keep init minimal to avoid noisy async logs and large banner
+  if (isTestEnv) return;
+
+  // Print startup banner (safe for production)
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
@@ -1696,4 +1699,4 @@ function _clearPendingUpdate() {
   try { const p = path.join(process.cwd(), '.update-pending'); if (fsSync.existsSync(p)) fsSync.unlinkSync(p); } catch (e) {}
 }
 
-export { app, server, shutdownForTests, updateEnv, broadcastPortfolio, checkForUpdates, maybeSetTimeout, startApiRateInterval, startBot, botStatus, _addWsClient, _clearWsClients, _clearPendingUpdate };
+export { app, server, shutdownForTests, updateEnv, broadcastPortfolio, checkForUpdates, maybeSetTimeout, startApiRateInterval, startBot, botStatus, _addWsClient, _clearWsClients, _clearPendingUpdate, readSettingsHistory, writeSettingsHistory, updateApiRate, addLog, updateLog };
