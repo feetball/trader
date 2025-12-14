@@ -40,11 +40,17 @@ class FrontendLogger {
     if (typeof window === 'undefined') return
 
     window.addEventListener('error', (event) => {
-      this.log('error', `${event.message} at ${event.filename}:${event.lineno}:${event.colno}`)
+      const filename = event.filename || 'unknown'
+      const lineno = event.lineno || 0
+      const colno = event.colno || 0
+      this.log('error', `${event.message} at ${filename}:${lineno}:${colno}`)
     })
 
     window.addEventListener('unhandledrejection', (event) => {
-      this.log('error', `Unhandled Promise Rejection: ${event.reason}`)
+      const reason = event.reason instanceof Error 
+        ? `${event.reason.message}\n${event.reason.stack || ''}` 
+        : String(event.reason)
+      this.log('error', `Unhandled Promise Rejection: ${reason}`)
     })
   }
 
