@@ -1,6 +1,6 @@
 'use client'
 
-import { useTrading } from '@/hooks/useTrading'
+import { useTrading, type Position } from '@/hooks/useTrading'
 import Chip from '@/components/Chip'
 import WidgetGrid, { Widget } from '@/components/WidgetGrid'
 import AuditEntryDisplay from '@/components/AuditEntryDisplay'
@@ -143,7 +143,7 @@ function PositionsWidget() {
   const { livePositions, totalUnrealizedPL, openCoinbase, forceSellPosition } = useTrading()
   const [sellingId, setSellingId] = useState<string | null>(null)
 
-  const handleForceSell = async (pos: any) => {
+  const handleForceSell = async (pos: Position) => {
     if (!confirm(`Force sell ${pos.symbol}?\n\nCurrent P&L: ${(pos.currentPLPercent || 0).toFixed(2)}%\nThis will sell immediately at market price.`)) {
       return
     }
@@ -217,7 +217,7 @@ function PositionsWidget() {
               <button
                 onClick={() => handleForceSell(pos)}
                 disabled={sellingId === pos.id}
-                className="p-2 rounded-lg bg-error-500/20 hover:bg-error-500/30 text-error-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group-hover:scale-100 opacity-0 group-hover:opacity-100"
+                className="p-2 rounded-lg bg-error-500/20 hover:bg-error-500/30 text-error-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed opacity-0 group-hover:opacity-100"
                 title="Force sell this position"
               >
                 {sellingId === pos.id ? (

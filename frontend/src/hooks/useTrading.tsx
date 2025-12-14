@@ -50,7 +50,7 @@ interface AuditExit {
   exitTime: number
 }
 
-interface Position {
+export interface Position {
   id: string
   productId?: string
   symbol: string
