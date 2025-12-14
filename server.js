@@ -208,6 +208,16 @@ function startApiRateInterval() {
       const now = Date.now();
       const oneMinuteAgo = now - 60000;
       const oneHourAgo = now - 3600000;
+
+      // If we have a new API call count, record it (sync with updateApiRate behavior)
+      if (botStatus.apiCalls > lastApiCallCount) {
+        const newCalls = botStatus.apiCalls - lastApiCallCount;
+        for (let i = 0; i < newCalls; i++) {
+          apiCallTimestamps.push(now);
+          apiCallTimestampsHourly.push(now);
+        }
+        lastApiCallCount = botStatus.apiCalls;
+      }
       
       // Remove timestamps older than 1 minute / 1 hour
       apiCallTimestamps = apiCallTimestamps.filter(ts => ts > oneMinuteAgo);
@@ -1531,7 +1541,15 @@ app.post('/api/bot/stop', (req, res) => {
     addLog('🛑 Stopping bot...');
     
     botProcess.kill('SIGTERM');
-    
+
+    // In test mode, treat stop as immediate
+    if (isTestEnv) {
+      try { botProcess.kill('SIGKILL'); } catch (e) {}
+      botProcess = null;
+      botStatus.running = false;
+      botStatus.message = 'Stopped (test)';
+    }
+
     // Force kill after 5 seconds if still running (use maybeSetTimeout so tests don't create timers)
     maybeSetTimeout(() => {
       if (botProcess) {
@@ -1637,6 +1655,15 @@ function shutdownForTests() {
   } catch (e) {}
   try { if (wss) { wss.clients.forEach(c => c.close()); wss.close(); } } catch (e) {}
   try {
+    // Ensure any spawned bot is stopped
+    if (botProcess) {
+      try { botProcess.kill('SIGTERM'); } catch (e) {}
+      botProcess = null;
+      botStatus.running = false;
+      botStatus.message = 'Stopped (test cleanup)';
+    }
+  } catch (e) {}
+  try {
     // Destroy any lingering sockets
     if (typeof serverConnections !== 'undefined') {
       for (const s of serverConnections) {
@@ -1648,4 +1675,12 @@ function shutdownForTests() {
   try { if (server && server.close) server.close(); } catch (e) {}
 }
 
-export { app, server, shutdownForTests };
+// Test helpers for WebSocket clients
+function _addWsClient(client) {
+  wsClients.add(client);
+}
+function _clearWsClients() {
+  wsClients.forEach(c => wsClients.delete(c));
+}
+
+export { app, server, shutdownForTests, updateEnv, broadcastPortfolio, checkForUpdates, maybeSetTimeout, startApiRateInterval, startBot, botStatus, _addWsClient, _clearWsClients };

@@ -46,8 +46,10 @@ const fs = (await import('fs/promises')).default;
 const fsSync = (await import('fs')).default;
 
 describe('API Server', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
+    // Ensure bot is stopped before every test to avoid cross-test state
+    try { await request(app).post('/api/bot/stop'); } catch (e) { /* ignore */ }
   });
 
   afterAll(async () => {
@@ -149,6 +151,42 @@ describe('API Server', () => {
     expect(res.body[0].currentPrice).toBeCloseTo(2.5)
   })
 
+  test('POST /api/positions/sell without id returns error', async () => {
+    const res = await request(app).post('/api/positions/sell').send({})
+    expect(res.statusCode).toBe(200)
+    expect(res.body.success).toBe(false)
+    expect(res.body.message).toMatch(/Position ID required/)
+  })
+
+  test('POST /api/bot/stop when not running returns not running', async () => {
+    const res = await request(app).post('/api/bot/stop')
+    expect(res.statusCode).toBe(200)
+    expect(res.body.success).toBe(false)
+    expect(res.body.message).toMatch(/Bot is not running/)
+  })
+
+  test('POST /api/settings when bot not running returns restarted false', async () => {
+    // Ensure bot is not running
+    await request(app).post('/api/bot/stop')
+    const res = await request(app).post('/api/settings').send({ EXCHANGE: 'COINBASE' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body.restarted).toBe(false)
+  })
+
+  test('GET /api/settings/history returns array', async () => {
+    const res = await request(app).get('/api/settings/history')
+    expect(res.statusCode).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+  })
+
+  test('GET /api/updates/check handles fetch failure gracefully', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('network'))
+    const res = await request(app).get('/api/updates/check')
+    expect(res.statusCode).toBe(200)
+    expect(res.body.updateAvailable).toBe(false)
+    expect(res.body.error).toBeDefined()
+  })
+
   test('POST /api/positions/sell forces a sell and records trade', async () => {
     const portfolio = { cash: 1000, positions: [{ id: 'pos1', productId: 'P1', quantity: 2, entryPrice: 1, entryTime: Date.now(), investedAmount: 2 }], closedTrades: [] }
     fs.readFile.mockResolvedValue(JSON.stringify(portfolio))
@@ -174,6 +212,62 @@ describe('API Server', () => {
     expect(res.body.version).toBe('unknown')
   })
 
+  test('GET /api/positions handles read failures gracefully', async () => {
+    fs.readFile.mockRejectedValueOnce(new Error('no data'))
+    const res = await request(app).get('/api/positions')
+    expect(res.statusCode).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+    expect(res.body.length).toBe(0)
+  })
+
+  test('GET /api/trades handles read failures gracefully', async () => {
+    fs.readFile.mockRejectedValueOnce(new Error('no trades'))
+    const res = await request(app).get('/api/trades')
+    expect(res.statusCode).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+    expect(res.body.length).toBe(0)
+  })
+
+  test('GET /api/performance-by-coin handles read failures gracefully', async () => {
+    fs.readFile.mockRejectedValueOnce(new Error('no data'))
+    const res = await request(app).get('/api/performance-by-coin')
+    expect(res.statusCode).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+    expect(res.body.length).toBe(0)
+  })
+
+  test('GET /api/activity handles read failures gracefully', async () => {
+    fs.readFile.mockRejectedValueOnce(new Error('no activity'))
+    const res = await request(app).get('/api/activity')
+    expect(res.statusCode).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+    expect(res.body.length).toBe(0)
+  })
+
+  test('broadcastPortfolio succeeds with valid data and sends to clients', async () => {
+    const serverMod = await import('../server.js');
+
+    // Mock ws client
+    const client = { readyState: 1, send: jest.fn() };
+    serverMod._addWsClient(client);
+
+    // Valid data path
+    fs.readFile.mockResolvedValueOnce(JSON.stringify({ cash: 1000, positions: [{ id: 'p1' }], closedTrades: [{ id: 't1' }] }));
+    await expect(serverMod.broadcastPortfolio()).resolves.toBeUndefined();
+
+    // It should have sent multiple messages (summary, positions, trades)
+    expect(client.send).toHaveBeenCalled();
+
+    // Cleanup
+    serverMod._clearWsClients();
+  })
+
+  test('broadcastPortfolio handles read errors gracefully', async () => {
+    const serverMod = await import('../server.js');
+    fs.readFile.mockRejectedValueOnce(new Error('not found'));
+    await expect(serverMod.broadcastPortfolio()).resolves.toBeUndefined();
+  })
+
   test('POST /api/settings restarts bot when it was running', async () => {
     // Start bot
     const fakeProc = {
@@ -191,6 +285,27 @@ describe('API Server', () => {
     const res = await request(app).post('/api/settings').send({ EXCHANGE: 'KRAKEN' })
     expect(res.statusCode).toBe(200)
     expect(res.body.restarted).toBe(true)
+  })
+
+  test('POST /api/bot/start returns error when bot is already running', async () => {
+    const fakeProc = {
+      stdout: { on: jest.fn() },
+      stderr: { on: jest.fn() },
+      on: jest.fn((evt, cb) => {}),
+      kill: jest.fn()
+    }
+    const child = await import('child_process')
+    child.spawn.mockReturnValue(fakeProc)
+
+    // Start bot first time
+    const res1 = await request(app).post('/api/bot/start')
+    expect(res1.statusCode).toBe(200)
+    expect(res1.body.success).toBe(true)
+
+    // Start bot second time - should return success: false
+    const res2 = await request(app).post('/api/bot/start')
+    expect(res2.statusCode).toBe(200)
+    expect(res2.body.success).toBe(false)
   })
 
   test('POST /api/settings/reset removes settings and restarts if running', async () => {

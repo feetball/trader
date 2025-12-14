@@ -53,6 +53,7 @@ describe('TradingBotDaemon behavior', () => {
 
   test('start calls loadPortfolio and mainLoop', async () => {
     const bot = new TradingBotDaemon();
+    await bot.paper.loadPortfolio();
     bot.paper = { loadPortfolio: jest.fn().mockResolvedValue(), getPositionCount: jest.fn().mockReturnValue(0), getPortfolioSummary: jest.fn().mockReturnValue({ totalValue: 100, cash: 100, openPositions: 0 }) };
     bot.mainLoop = jest.fn().mockResolvedValue();
 
@@ -63,6 +64,7 @@ describe('TradingBotDaemon behavior', () => {
 
   test('mainLoop processes opportunities and exits when sleep sets isRunning false', async () => {
     const bot = new TradingBotDaemon();
+    await bot.paper.loadPortfolio();
 
     bot.paper = {
       getPositionCount: jest.fn().mockReturnValue(0),
@@ -88,6 +90,7 @@ describe('TradingBotDaemon behavior', () => {
 
   test('mainLoop catches errors and increments error counters', async () => {
     const bot = new TradingBotDaemon();
+    await bot.paper.loadPortfolio();
     bot.paper = { getPositionCount: jest.fn().mockReturnValue(0), getPortfolioSummary: jest.fn().mockReturnValue({ totalValue: 100, cash: 100, openPositions: 0 }) };
     bot.scanner = { scanMarkets: jest.fn().mockRejectedValue(new Error('scan fail')) };
     bot.strategy = { managePositions: jest.fn().mockResolvedValue() };
@@ -97,5 +100,58 @@ describe('TradingBotDaemon behavior', () => {
 
     await bot.mainLoop();
     expect(bot.errorCount).toBeGreaterThan(0);
+  });
+
+  test('computeBackoffWaitTime returns expected wait times', () => {
+    const bot = new TradingBotDaemon();
+    bot.consecutiveErrors = 0;
+    expect(bot.computeBackoffWaitTime()).toBe(10000);
+    bot.consecutiveErrors = 3;
+    expect(bot.computeBackoffWaitTime()).toBe(30000);
+    bot.consecutiveErrors = 5;
+    expect(bot.computeBackoffWaitTime()).toBe(60000);
+  });
+
+  test('stop logs fallback when portfolio summary fails and sleep resolves', async () => {
+    const bot = new TradingBotDaemon();
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    bot.paper.getPortfolioSummary = jest.fn(() => { throw new Error('no data') });
+    bot.cycleCount = 2;
+    bot.errorCount = 1;
+
+    bot.stop('unit test');
+    expect(spy).toHaveBeenCalled();
+
+    // Test sleep resolves using fake timers
+    jest.useFakeTimers();
+    const sleepPromise = bot.sleep(1000);
+    jest.advanceTimersByTime(1000);
+    await sleepPromise;
+    jest.useRealTimers();
+
+    spy.mockRestore();
+  });
+
+  test('mainLoop uses computed backoff wait times on error', async () => {
+    const bot = new TradingBotDaemon();
+    await bot.paper.loadPortfolio();
+    bot.paper = { getPositionCount: jest.fn().mockReturnValue(0), getPortfolioSummary: jest.fn().mockReturnValue({ totalValue: 100, cash: 100, openPositions: 0 }) };
+    bot.scanner = { scanMarkets: jest.fn().mockRejectedValue(new Error('scan fail')) };
+    bot.strategy = { managePositions: jest.fn().mockResolvedValue() };
+
+    // Case: will escalate to 30000 after increment
+    bot.consecutiveErrors = 2; // will become 3 inside catch
+    const sleepSpy = jest.fn(async (ms) => { bot.isRunning = false; });
+    bot.sleep = sleepSpy;
+    bot.isRunning = true;
+    await bot.mainLoop();
+    expect(sleepSpy).toHaveBeenCalledWith(30000);
+
+    // Case: will escalate to 60000
+    bot.consecutiveErrors = 4; // becomes 5
+    bot.sleep = jest.fn(async (ms) => { bot.isRunning = false; });
+    bot.isRunning = true;
+    await bot.mainLoop();
+    expect(bot.sleep).toHaveBeenCalledWith(60000);
   });
 });

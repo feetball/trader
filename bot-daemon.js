@@ -190,16 +190,14 @@ class TradingBotDaemon {
         console.error(`  Uptime: ${this.formatUptime()}`);
         console.error(`  Last successful cycle: ${this.lastSuccessfulCycle ? new Date(this.lastSuccessfulCycle).toISOString() : 'never'}`);
         
-        // If too many consecutive errors, increase wait time
-        let waitTime = 10000;
-        if (this.consecutiveErrors >= 5) {
-          waitTime = 60000;
+        // Compute backoff based on consecutive errors
+        const waitTime = this.computeBackoffWaitTime();
+        if (waitTime === 60000) {
           console.error(`  ⚠️ Multiple consecutive errors - waiting 60s before retry`);
-        } else if (this.consecutiveErrors >= 3) {
-          waitTime = 30000;
+        } else if (waitTime === 30000) {
           console.error(`  ⚠️ Consecutive errors - waiting 30s before retry`);
         }
-        
+
         console.log(`[STATUS] Error occurred, retrying in ${waitTime / 1000}s...`);
         await this.sleep(waitTime);
       }
@@ -228,6 +226,13 @@ class TradingBotDaemon {
 
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Compute wait time (ms) based on consecutive error count — extracted for testability
+  computeBackoffWaitTime() {
+    if (this.consecutiveErrors >= 5) return 60000;
+    if (this.consecutiveErrors >= 3) return 30000;
+    return 10000;
   }
 }
 

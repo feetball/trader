@@ -1,10 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
-  coveragePathIgnorePatterns: [
-    '<rootDir>/server.js',
-    '<rootDir>/websocket-feed.js',
-    '<rootDir>/kraken-websocket.js'
-  ],
+  coveragePathIgnorePatterns: [],
   coverageThreshold: {
     global: {
       statements: 80,

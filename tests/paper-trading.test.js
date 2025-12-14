@@ -17,8 +17,8 @@ describe('PaperTradingEngine', () => {
   beforeEach(async () => {
     jest.clearAllMocks()
     engine = new PaperTradingEngine()
-    // Wait briefly for constructor loadPortfolio to run
-    await Promise.resolve()
+    // Explicitly load portfolio in test environment
+    await engine.loadPortfolio()
   })
 
   test('starts new portfolio when no file present', async () => {

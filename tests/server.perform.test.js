@@ -64,4 +64,68 @@ describe('performUpdateSteps', () => {
     expect(result).toBeUndefined();
     spy.mockRestore();
   });
+
+  test('handles backend npm install failure', async () => {
+    const execAsync = jest.fn(async (cmd) => {
+      if (cmd.includes('npm install') && !cmd.includes('frontend')) throw new Error('npm backend fail');
+      if (cmd.startsWith('git fetch')) return {};
+      if (cmd.startsWith('git reset')) return { stdout: '' };
+      return { stdout: '' };
+    });
+
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await performUpdateSteps(execAsync);
+    expect(result).toBeUndefined();
+    spy.mockRestore();
+  });
+
+  test('handles frontend npm install failure', async () => {
+    const execAsync = jest.fn(async (cmd) => {
+      if (cmd.startsWith('git fetch')) return {};
+      if (cmd.startsWith('git reset')) return { stdout: '' };
+      if (cmd.includes('npm install --include=dev')) throw new Error('frontend npm fail');
+      return { stdout: '' };
+    });
+
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await performUpdateSteps(execAsync);
+    expect(result).toBeUndefined();
+    spy.mockRestore();
+  });
+
+  test('handles frontend build failure', async () => {
+    const execAsync = jest.fn(async (cmd) => {
+      if (cmd.startsWith('git fetch')) return {};
+      if (cmd.startsWith('git reset')) return { stdout: '' };
+      if (cmd.includes('npm run build')) throw new Error('build failed');
+      if (cmd.includes('npm install')) return { stdout: 'npm ok' };
+      return { stdout: '' };
+    });
+
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await performUpdateSteps(execAsync);
+    expect(result).toBeUndefined();
+    spy.mockRestore();
+  });
+
+  test('logs warning when tsconfig patch fails', async () => {
+    const execAsync = jest.fn(async (cmd) => {
+      if (cmd.startsWith('git fetch')) return {};
+      if (cmd.startsWith('git reset')) return { stdout: '' };
+      if (cmd.includes('npm install')) return { stdout: 'npm ok' };
+      if (cmd.includes('npm run build')) return { stdout: 'build ok' };
+      return { stdout: '' };
+    });
+
+    // Simulate tsconfig read throwing
+    jest.spyOn(fsSync, 'readFileSync').mockImplementation((p) => {
+      if (p.endsWith('frontend/tsconfig.json')) throw new Error('tsconfig missing');
+      return '';
+    });
+
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await performUpdateSteps(execAsync);
+    expect(result).toHaveProperty('timestamp');
+    spy.mockRestore();
+  });
 });
