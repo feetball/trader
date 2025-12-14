@@ -59,9 +59,10 @@ class FrontendLogger {
 
       // Filter out errors from browser extensions (e.g., MetaMask, crypto wallets)
       // These are not relevant to the application and clutter the logs
+      // Note: This app uses Coinbase API, not Ethereum/Web3, so these are always extension-related
       const messageLower = message.toLowerCase()
       if (
-        messageLower.includes('ethereum') ||
+        messageLower.includes('window.ethereum') ||
         messageLower.includes('metamask') ||
         messageLower.includes('chrome-extension://') ||
         messageLower.includes('moz-extension://')
