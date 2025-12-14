@@ -6,10 +6,11 @@ beforeEach(() => jest.resetModules());
 describe('Server error branches', () => {
   test('POST /api/settings returns error when fs write fails', async () => {
     // mock fs/promises to throw on writeFile
-    const realFs = await import('fs/promises');
     await jest.unstable_mockModule('fs/promises', () => ({
-      ...realFs,
-      writeFile: async () => { throw new Error('disk full'); }
+      default: {
+        writeFile: async () => { throw new Error('disk full'); },
+        readFile: async () => '{}' // minimal implementation for reads
+      }
     }));
 
     const serverMod = await import('../server.js');
@@ -40,7 +41,18 @@ describe('Server error branches', () => {
 
   test('GET /api/settings/history returns entries when file exists', async () => {
     const history = [{ savedAt: 't1', settings: { A: 1 } }, { savedAt: 't2', settings: { B: 2 } }];
-    try { fsSync.writeFileSync('settings-history.json', JSON.stringify(history, null, 2)); } catch (e) {}
+
+    // Mock fs/promises.readFile and fs.existsSync so server will read our history
+    await jest.unstable_mockModule('fs/promises', () => ({
+      default: {
+        readFile: async () => JSON.stringify(history)
+      }
+    }));
+    await jest.unstable_mockModule('fs', () => ({
+      default: {
+        existsSync: () => true
+      }
+    }));
 
     const serverMod = await import('../server.js');
     const { app } = serverMod;
@@ -50,8 +62,6 @@ describe('Server error branches', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body.length).toBe(history.length);
-
-    try { fsSync.unlinkSync('settings-history.json'); } catch (e) {}
   });
 
   test('POST /api/positions/sell returns error when positionId missing', async () => {

@@ -117,4 +117,35 @@ describe('Server update and api rate behaviors', () => {
     try { if (fsSync.existsSync('config.js')) await fs.unlink('config.js'); } catch (e) {}
     _clearWsClients();
   });
+
+  test('startApiRateInterval computes hourly rate correctly when bot has been running', async () => {
+    jest.useFakeTimers();
+
+    // Mock spawn so startBot doesn't actually spawn a process but sets botStartTime
+    await jest.unstable_mockModule('child_process', () => ({
+      spawn: () => ({ stdout: { on: () => {} }, stderr: { on: () => {} }, kill: () => {} })
+    }));
+
+    const serverMod = await import('../server.js');
+    const { startApiRateInterval, botStatus, startBot, _addWsClient, _clearWsClients } = serverMod;
+
+    const messages = [];
+    const fakeClient = { send: (m) => messages.push(m), readyState: 1 };
+    _addWsClient(fakeClient);
+
+    // start bot to set botStartTime
+    startBot();
+
+    botStatus.running = true;
+    botStatus.apiCalls = 10;
+
+    startApiRateInterval();
+
+    jest.advanceTimersByTime(2100);
+
+    expect(botStatus.apiRateHourly).toBeGreaterThanOrEqual(1);
+
+    _clearWsClients();
+    jest.useRealTimers();
+  });
 });

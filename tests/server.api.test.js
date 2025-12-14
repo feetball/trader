@@ -15,6 +15,7 @@ describe('Server API', () => {
     try { if (fsSync.existsSync(DATA_FILE)) await fs.unlink(DATA_FILE); } catch(e) {}
     try { if (fsSync.existsSync(UPDATE_FLAG)) await fs.unlink(UPDATE_FLAG); } catch(e) {}
     try { if (fsSync.existsSync(ENV_FILE)) await fs.unlink(ENV_FILE); } catch(e) {}
+    try { if (fsSync.existsSync('user-settings.json')) await fs.unlink('user-settings.json'); } catch (e) {}
     _clearWsClients();
     // cleanup any pending state
     shutdownForTests();
