@@ -118,8 +118,12 @@ export class TradingStrategy {
         const currentValue = position.quantity * currentPrice;
         const profit = currentValue - position.investedAmount;
         const holdTimeMinutes = (Date.now() - position.entryTime) / 60000;
+        
+        // Calculate distance to stop loss for better visibility
+        const distanceToStopLoss = ((currentPrice - position.stopLoss) / position.stopLoss) * 100;
 
         console.log(`[STATUS] ${position.symbol}: $${currentPrice.toFixed(4)} | P&L: ${profitPercent >= 0 ? '+' : ''}${profitPercent.toFixed(2)}% ($${profit.toFixed(2)}) | Hold: ${holdTimeMinutes.toFixed(0)}m`);
+        console.log(`[STATUS]    Stop Loss: $${position.stopLoss.toFixed(6)} (${distanceToStopLoss >= 0 ? '+' : ''}${distanceToStopLoss.toFixed(2)}% away) | Target: $${position.targetPrice.toFixed(6)}`);
 
         // Check stop loss first (this is critical!)
         if (currentPrice <= position.stopLoss) {

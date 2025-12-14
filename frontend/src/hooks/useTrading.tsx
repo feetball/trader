@@ -50,7 +50,7 @@ interface AuditExit {
   exitTime: number
 }
 
-interface Position {
+export interface Position {
   id: string
   productId?: string
   symbol: string
@@ -62,6 +62,8 @@ interface Position {
   investedAmount: number
   entryTime: number
   holdTime?: number
+  stopLoss?: number
+  targetPrice?: number
   audit?: {
     entry?: AuditEntry | null
     configAtEntry?: Record<string, any>

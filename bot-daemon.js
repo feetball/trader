@@ -57,7 +57,7 @@ class TradingBotDaemon {
     this.logStatus(`Mode: ${config.PAPER_TRADING ? '📄 PAPER TRADING' : '💰 LIVE TRADING'}`);
     this.logStatus(`Max Price: $${config.MAX_PRICE} | Profit Target: ${config.PROFIT_TARGET}%`);
     this.logStatus(`Position Size: $${config.POSITION_SIZE} | Max Positions: ${config.MAX_POSITIONS}`);
-    this.logStatus(`Trailing Stop: ${config.ENABLE_TRAILING_PROFIT ? `${config.TRAILING_STOP_PERCENT}%` : 'DISABLED'}`);
+    this.logStatus(`Stop Loss: ${config.STOP_LOSS}% | Trailing Stop: ${config.ENABLE_TRAILING_PROFIT ? `${config.TRAILING_STOP_PERCENT}%` : 'DISABLED'}`);
 
     // Reset API call counter on start
     CoinbaseClient.resetApiCallCount();
