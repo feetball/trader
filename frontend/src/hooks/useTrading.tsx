@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef, createContext, useContext, ReactNode } from 'react'
 import apiClient from '@/lib/api'
+import { frontendLogger, formatError } from '@/lib/logger'
 
 interface Portfolio {
   totalValue?: number
@@ -278,11 +279,14 @@ export function TradingProvider({ children }: { children: ReactNode }) {
   // API Functions
   const startBot = useCallback(async () => {
     setBotLoading(true)
+    frontendLogger.info('Starting bot...')
     try {
       await apiClient.post('/bot/start')
       await refreshBotStatus()
+      frontendLogger.success('Bot started successfully')
     } catch (error) {
       console.error('Error starting bot:', error)
+      frontendLogger.error(`Failed to start bot: ${formatError(error)}`)
     } finally {
       setBotLoading(false)
     }
@@ -290,23 +294,29 @@ export function TradingProvider({ children }: { children: ReactNode }) {
 
   const stopBot = useCallback(async () => {
     setBotLoading(true)
+    frontendLogger.info('Stopping bot...')
     try {
       await apiClient.post('/bot/stop')
       await refreshBotStatus()
+      frontendLogger.success('Bot stopped successfully')
     } catch (error) {
       console.error('Error stopping bot:', error)
+      frontendLogger.error(`Failed to stop bot: ${formatError(error)}`)
     } finally {
       setBotLoading(false)
     }
   }, [])
 
   const resetPortfolio = useCallback(async () => {
+    frontendLogger.info('Resetting portfolio...')
     try {
       await apiClient.post('/portfolio/reset')
       await refreshData()
+      frontendLogger.success('Portfolio reset to $10,000')
       return true
     } catch (error) {
       console.error('Error resetting portfolio:', error)
+      frontendLogger.error(`Failed to reset portfolio: ${formatError(error)}`)
       return false
     }
   }, [])
@@ -335,6 +345,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const saveSettings = useCallback(async (settingsToSave?: Settings) => {
+    frontendLogger.info('Saving settings...')
     try {
       // Use provided settings or fall back to current state
       const settingsPayload = settingsToSave || settings
@@ -345,9 +356,11 @@ export function TradingProvider({ children }: { children: ReactNode }) {
         setSettings(settingsToSave)
       }
       await loadSettingsHistory()
+      frontendLogger.success('Settings saved successfully')
       return res.data
     } catch (error) {
       console.error('Error saving settings:', error)
+      frontendLogger.error(`Failed to save settings: ${formatError(error)}`)
       throw error
     }
   }, [settings, settingsComment, loadSettingsHistory])
@@ -377,6 +390,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
 
   const refreshData = useCallback(async () => {
     setLoading(true)
+    frontendLogger.info('Refreshing data...')
     try {
       const [portfolioRes, positionsRes, livePositionsRes, tradesRes, performanceRes, activityRes] = await Promise.all([
         apiClient.get('/portfolio'),
@@ -398,8 +412,10 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       setLastUpdate(new Date().toLocaleTimeString())
 
       await refreshBotStatus()
+      frontendLogger.success('Data refreshed successfully')
     } catch (error) {
       console.error('Error fetching data:', error)
+      frontendLogger.error(`Failed to refresh data: ${formatError(error)}`)
     } finally {
       setLoading(false)
     }
@@ -475,6 +491,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     ws.onopen = () => {
       console.log('[WS] Connected to server')
       setWsConnected(true)
+      frontendLogger.success('WebSocket connected to server')
 
       if (updateInProgressRef.current) {
         console.log('[WS] Server is back after update, reloading page...')
@@ -532,6 +549,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     ws.onclose = () => {
       console.log('[WS] Disconnected, reconnecting in 3s...')
       setWsConnected(false)
+      frontendLogger.warn('WebSocket disconnected, reconnecting...')
       const delay = updateInProgressRef.current ? 1000 : 3000
       reconnectTimeoutRef.current = setTimeout(connectWebSocket, delay)
     }
@@ -548,11 +566,15 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     if (initializedRef.current) return
     initializedRef.current = true
 
+    frontendLogger.info('Initializing trading dashboard...')
+
     try {
       const res = await apiClient.get('/version')
       setAppVersion(res.data.version)
+      frontendLogger.info(`Connected to server v${res.data.version}`)
     } catch (e) {
       setAppVersion('?')
+      frontendLogger.error('Failed to get server version')
     }
 
     await refreshData()
@@ -561,6 +583,8 @@ export function TradingProvider({ children }: { children: ReactNode }) {
 
     // Poll for live position prices every 5 seconds (WebSocket handles portfolio updates every 2s)
     refreshIntervalRef.current = setInterval(refreshLivePositions, 5000)
+    
+    frontendLogger.success('Dashboard initialized successfully')
   }, [refreshData, loadSettings, connectWebSocket, refreshLivePositions])
 
   // Cleanup function
@@ -590,7 +614,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       return res.data
     } catch (error) {
       console.error('Error force selling position:', error)
-      return { success: false, message: error instanceof Error ? error.message : 'Unknown error' }
+      return { success: false, message: formatError(error) }
     }
   }, [refreshData])
 

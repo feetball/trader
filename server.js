@@ -132,7 +132,7 @@ function updateApiRate() {
   broadcast('botStatus', botStatus);
 }
 
-const MAX_LOGS = 50;
+const MAX_LOGS = 500;  // Increased from 50 to 500 to store more logs
 
 function addLog(message) {
   const timestamp = new Date().toLocaleTimeString();
@@ -1495,7 +1495,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log('');
   console.log('╔══════════════════════════════════════════════════════════════════════════════╗');
   console.log('║                                                                              ║');
-  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.40 (Next.js Frontend)             ║');
+  console.log('║   💹  BIG DK\'S CRYPTO MOMENTUM TRADER v0.8.44 (Next.js Frontend)             ║');
   console.log('║                                                                              ║');
   console.log('╠══════════════════════════════════════════════════════════════════════════════╣');
   console.log('║                                                                              ║');
