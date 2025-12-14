@@ -47,16 +47,18 @@ class FrontendLogger {
     if (typeof window === 'undefined') return
 
     window.addEventListener('error', (event) => {
+      const message = event.message || ''
+      
       // Filter out generic "Script error" messages that provide no useful information
       // These are typically from CORS issues with third-party scripts or browser extensions
-      if (event.message === 'Script error.' || event.message === 'Script error') {
+      // Both variants (with and without period) are checked as browsers may vary
+      if (message === 'Script error.' || message === 'Script error') {
         // Silently ignore these unhelpful errors
         return
       }
 
       // Filter out errors from browser extensions (e.g., MetaMask, crypto wallets)
       // These are not relevant to the application and clutter the logs
-      const message = event.message || ''
       const messageLower = message.toLowerCase()
       if (
         messageLower.includes('ethereum') ||
@@ -71,7 +73,7 @@ class FrontendLogger {
       const filename = event.filename || 'unknown'
       const lineno = event.lineno || 0
       const colno = event.colno || 0
-      this.log('error', `${event.message} at ${filename}:${lineno}:${colno}`)
+      this.log('error', `${message} at ${filename}:${lineno}:${colno}`)
     })
 
     window.addEventListener('unhandledrejection', (event) => {
