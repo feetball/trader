@@ -57,7 +57,7 @@ describe('TradingStrategy', () => {
   })
 
   test('managePositions sells on stop loss', async () => {
-    const position = { productId: 'P1', symbol: 'C1', entryPrice: 1, quantity: 10, investedAmount: 10, entryTime: Date.now(), stopLoss: 0.9 }
+    const position = { productId: 'P1', symbol: 'C1', entryPrice: 1, quantity: 10, investedAmount: 10, entryTime: Date.now(), stopLoss: 0.9, targetPrice: 1.05 }
     paper.getPositions.mockReturnValue([position])
     client.getCurrentPrice.mockResolvedValue(0.85)
 
@@ -66,7 +66,7 @@ describe('TradingStrategy', () => {
   })
 
   test('managePositions initiates trailing when profit target hit', async () => {
-    const position = { productId: 'P1', symbol: 'C1', entryPrice: 1, quantity: 10, investedAmount: 10, entryTime: Date.now(), stopLoss: 0.9 }
+    const position = { productId: 'P1', symbol: 'C1', entryPrice: 1, quantity: 10, investedAmount: 10, entryTime: Date.now(), stopLoss: 0.9, targetPrice: 1.05 }
     paper.getPositions.mockReturnValue([position])
     client.getCurrentPrice.mockResolvedValue(1.06) // 6% profit
 
@@ -79,7 +79,7 @@ describe('TradingStrategy', () => {
     // Enable trailing
     config.ENABLE_TRAILING_PROFIT = true
 
-    const position = { productId: 'PX', symbol: 'CX', entryPrice: 1, quantity: 1, investedAmount: 1, entryTime: Date.now(), stopLoss: 0.5 }
+    const position = { productId: 'PX', symbol: 'CX', entryPrice: 1, quantity: 1, investedAmount: 1, entryTime: Date.now(), stopLoss: 0.5, targetPrice: 1.05 }
     paper.getPositions.mockReturnValue([position])
 
     // First call: set peak
@@ -107,7 +107,7 @@ describe('TradingStrategy', () => {
     // Enable trailing
     config.ENABLE_TRAILING_PROFIT = true
 
-    const position = { productId: 'PM', symbol: 'CM', entryPrice: 1, quantity: 1, investedAmount: 1, entryTime: Date.now(), stopLoss: 0.5 }
+    const position = { productId: 'PM', symbol: 'CM', entryPrice: 1, quantity: 1, investedAmount: 1, entryTime: Date.now(), stopLoss: 0.5, targetPrice: 1.05 }
     paper.getPositions.mockReturnValue([position])
 
     // Set a peak
