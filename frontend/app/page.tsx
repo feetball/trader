@@ -4,8 +4,8 @@ import { useTrading } from '@/hooks/useTrading'
 import Chip from '@/components/Chip'
 import WidgetGrid, { Widget } from '@/components/WidgetGrid'
 import AuditEntryDisplay from '@/components/AuditEntryDisplay'
-import { TrendingUp, TrendingDown, DollarSign, Wallet, Trophy, Target, Zap, BarChart3, Activity } from 'lucide-react'
-import { useMemo } from 'react'
+import { TrendingUp, TrendingDown, DollarSign, Wallet, Trophy, Target, Zap, BarChart3, Activity, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
 // Individual widget components with enhanced visuals
 function TotalValueWidget() {
@@ -140,7 +140,29 @@ function WinRateWidget() {
 }
 
 function PositionsWidget() {
-  const { livePositions, totalUnrealizedPL, openCoinbase } = useTrading()
+  const { livePositions, totalUnrealizedPL, openCoinbase, forceSellPosition } = useTrading()
+  const [sellingId, setSellingId] = useState<string | null>(null)
+
+  const handleForceSell = async (pos: any) => {
+    if (!confirm(`Force sell ${pos.symbol}?\n\nCurrent P&L: ${(pos.currentPLPercent || 0).toFixed(2)}%\nThis will sell immediately at market price.`)) {
+      return
+    }
+    
+    setSellingId(pos.id)
+    try {
+      const result = await forceSellPosition(pos.id)
+      if (result.success) {
+        alert(`✅ ${result.message}`)
+      } else {
+        alert(`❌ Error: ${result.message}`)
+      }
+    } catch (err) {
+      alert(`❌ Failed to sell: ${err}`)
+    } finally {
+      setSellingId(null)
+    }
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -176,9 +198,15 @@ function PositionsWidget() {
                 <span className="text-xs text-gray-500 font-mono">Invested: ${(pos.investedAmount || 0).toFixed(2)}</span>
               </div>
               <AuditEntryDisplay audit={pos.audit} className="text-xs text-gray-600 font-mono flex flex-wrap gap-x-3 gap-y-1" />
-              <p className="text-xs text-gray-500 mt-1 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()} @ ${(pos.entryPrice || 0).toFixed(6)}</p>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-mono mt-1">
+                <span className="text-gray-500">Entry: ${(pos.entryPrice || 0).toFixed(6)}</span>
+                {pos.currentPrice && <span className="text-info-400">Now: ${pos.currentPrice.toFixed(6)}</span>}
+                {pos.stopLoss && <span className="text-error-400">Stop: ${pos.stopLoss.toFixed(6)}</span>}
+                {pos.targetPrice && <span className="text-success-400">Target: ${pos.targetPrice.toFixed(6)}</span>}
+              </div>
+              <p className="text-xs text-gray-500 mt-1 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()}</p>
             </div>
-            <div className="text-right">
+            <div className="flex items-center gap-2">
               <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
                 (pos.currentPLPercent || 0) >= 0 
                   ? 'bg-success-500/20 text-success-400' 
@@ -186,6 +214,18 @@ function PositionsWidget() {
               }`}>
                 {(pos.currentPLPercent || 0) >= 0 ? '+' : ''}{(pos.currentPLPercent || 0).toFixed(2)}%
               </div>
+              <button
+                onClick={() => handleForceSell(pos)}
+                disabled={sellingId === pos.id}
+                className="p-2 rounded-lg bg-error-500/20 hover:bg-error-500/30 text-error-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group-hover:scale-100 opacity-0 group-hover:opacity-100"
+                title="Force sell this position"
+              >
+                {sellingId === pos.id ? (
+                  <div className="animate-spin">⏳</div>
+                ) : (
+                  <X size={16} />
+                )}
+              </button>
             </div>
           </div>
         ))}
