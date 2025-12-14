@@ -57,11 +57,12 @@ class FrontendLogger {
       // Filter out errors from browser extensions (e.g., MetaMask, crypto wallets)
       // These are not relevant to the application and clutter the logs
       const message = event.message || ''
+      const messageLower = message.toLowerCase()
       if (
-        message.includes('ethereum') ||
-        message.includes('metamask') ||
-        message.includes('chrome-extension://') ||
-        message.includes('moz-extension://')
+        messageLower.includes('ethereum') ||
+        messageLower.includes('metamask') ||
+        messageLower.includes('chrome-extension://') ||
+        messageLower.includes('moz-extension://')
       ) {
         // Silently ignore browser extension errors
         return
