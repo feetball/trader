@@ -41,6 +41,7 @@ function pickConfigSnapshot(runtimeConfig = config) {
     'MAKER_FEE_PERCENT',
     'TAKER_FEE_PERCENT',
     'TAX_PERCENT',
+    'EXCHANGE',
   ];
 
   return Object.fromEntries(

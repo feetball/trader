@@ -55,6 +55,9 @@ export const defaultConfig = {
   MAKER_FEE_PERCENT: 0.25,   // Maker fee (limit orders that add liquidity)
   TAKER_FEE_PERCENT: 0.50,   // Taker fee (market orders that take liquidity)
   TAX_PERCENT: 0,            // Tax rate on profits (for tracking purposes)
+
+  // Exchange Selection
+  EXCHANGE: 'COINBASE',      // 'COINBASE' or 'KRAKEN'
 };
 
 export const config = defaultConfig;

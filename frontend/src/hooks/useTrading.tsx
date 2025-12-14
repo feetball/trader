@@ -153,6 +153,9 @@ interface Settings {
   MAKER_FEE_PERCENT: number
   TAKER_FEE_PERCENT: number
   TAX_PERCENT: number
+  EXCHANGE: 'COINBASE' | 'KRAKEN'
+  KRAKEN_API_KEY?: string
+  KRAKEN_API_SECRET?: string
 }
 
 interface SettingsHistoryEntry {
@@ -264,6 +267,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     MAKER_FEE_PERCENT: 0.25,
     TAKER_FEE_PERCENT: 0.5,
     TAX_PERCENT: 0,
+    EXCHANGE: 'COINBASE',
   })
 
   const [settingsHistory, setSettingsHistory] = useState<SettingsHistoryEntry[]>([])

@@ -1,5 +1,4 @@
 import { config } from './config-utils.js';
-import { CoinbaseWebSocket } from './websocket-feed.js';
 import { calculateRSI, detectVolumeSurge, checkPriceAction, scoreTrade } from './indicators.js';
 
 /**
@@ -8,9 +7,9 @@ import { calculateRSI, detectVolumeSurge, checkPriceAction, scoreTrade } from '.
  * Only uses REST API for momentum candle data
  */
 export class MarketScanner {
-  constructor(coinbaseClient) {
-    this.client = coinbaseClient;
-    this.ws = new CoinbaseWebSocket();
+  constructor(client, wsClient) {
+    this.client = client;
+    this.ws = wsClient;
     this.wsConnected = false;
     this.cachedProducts = [];
     this.productsCacheTime = 0;

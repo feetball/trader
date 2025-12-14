@@ -183,6 +183,51 @@ export default function SettingsPage() {
 
       {/* Settings Groups - Multi-column layout optimized for 2K */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-3">
+        {/* Exchange Settings */}
+        <Card variant="glass">
+          <CardTitle>Exchange</CardTitle>
+          <CardContent>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-400 block mb-1">Select Exchange</label>
+                <select
+                  value={localSettings.EXCHANGE || 'COINBASE'}
+                  onChange={(e) => handleSettingChange('EXCHANGE', e.target.value)}
+                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                >
+                  <option value="COINBASE">Coinbase</option>
+                  <option value="KRAKEN">Kraken</option>
+                </select>
+              </div>
+              
+              {localSettings.EXCHANGE === 'KRAKEN' && (
+                <>
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-0.5">API Key</label>
+                    <input
+                      type="password"
+                      value={localSettings.KRAKEN_API_KEY || ''}
+                      onChange={(e) => handleSettingChange('KRAKEN_API_KEY', e.target.value)}
+                      placeholder="Enter Kraken API Key"
+                      className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-0.5">API Secret</label>
+                    <input
+                      type="password"
+                      value={localSettings.KRAKEN_API_SECRET || ''}
+                      onChange={(e) => handleSettingChange('KRAKEN_API_SECRET', e.target.value)}
+                      placeholder="Enter Kraken API Secret"
+                      className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Trading Mode */}
         <Card variant="glass">
           <CardTitle>Trading Mode</CardTitle>

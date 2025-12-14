@@ -7,15 +7,17 @@ An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase
 ## ✨ Features
 
 ### Trading Engine
-- 🔍 **Real-time Market Scanning**: WebSocket-powered live price feeds from Coinbase
+- 🔍 **Multi-Exchange Support**: Trade on **Coinbase** or **Kraken**
+- 📡 **Real-time Market Scanning**: WebSocket-powered live price feeds
 - 📈 **Technical Indicators**: RSI, Volume Surge Detection, VWAP, ATR
 - 🎯 **Trade Grading**: A-F quality scores to filter high-probability setups
 - 📊 **Smart Entry**: RSI filter to avoid overbought coins (>75)
 - 💰 **Paper Trading**: Simulated trades with virtual $10,000 portfolio
 - 🛡️ **Risk Management**: Configurable stop-loss and trailing profit
+- 🔒 **Secure Storage**: API keys stored securely in `.env` file
 
 ### Web Dashboard
-- �� Live portfolio statistics and ROI tracking
+- 📊 Live portfolio statistics and ROI tracking
 - 📈 Open positions with real-time P&L
 - 📜 Complete trade history with filters
 - 🏆 Performance breakdown by coin
@@ -30,16 +32,17 @@ An automated paper trading bot that monitors sub-$1 cryptocurrencies on Coinbase
 ## Architecture
 
 ```
-┌──────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Next.js + React  │◄──►│  Express API    │◄──►│  Coinbase API    │
-│ (Tailwind UI)    │    │  + WebSocket    │    │  (REST + WS)     │
-└──────────────────┘    └─────────────────┘    └─────────────────┘
+┌──────────────────┐    ┌─────────────────┐    ┌─────────────────────────┐
+│ Next.js + React  │◄──►│  Express API    │◄──►│  Coinbase / Kraken API  │
+│ (Tailwind UI)    │    │  + WebSocket    │    │  (REST + WS)            │
+└──────────────────┘    └─────────────────┘    └─────────────────────────┘
 ```
 
 ### Languages & Frameworks
 - **Backend**: Node.js, Express, WebSocket (ws)
 - **Frontend**: Next.js 14, React 18, Tailwind CSS 3, Lucide Icons
-- **Trading**: Coinbase Advanced Trade API, Custom indicators.js
+- **Trading**: Coinbase Advanced Trade API, Kraken API, Custom indicators.js
+- **Testing**: Jest, Supertest
 - **Deploy**: Docker, Docker Compose
 
 ## Quick Start (Docker - Recommended)
@@ -77,7 +80,8 @@ open http://localhost:3001
 # Install dependencies
 npm install
 cd frontend && npm install && cd ..
-
+# Run tests
+npm test
 # Start API server (includes bot controls)
 npm run server
 
@@ -96,29 +100,31 @@ npm run dashboard
 | **Performance** | Profit/loss analytics by coin |
 | **Trade History** | Complete trade log with filters |
 | **Activity** | Timeline of trading events |
+| **Settings** | Configure Exchange, API Keys, and Trading Parameters |
 | **Logs** | Full bot output (chronological) |
 | **Help & Info** | Documentation, architecture, usage guide |
 
 ## Configuration
 
-Edit [config.js](config.js) to customize trading parameters:
+Edit [config.js](config.js) or use the **Settings** page in the dashboard.
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| \`PAPER_TRADING\` | \`true\` | Simulated trading mode |
-| \`MAX_PRICE\` | \`$1.00\` | Maximum coin price to trade |
-| \`PROFIT_TARGET\` | \`2%\` | Target profit before exit |
-| \`STOP_LOSS\` | \`-3%\` | Maximum loss before exit |
-| \`MOMENTUM_THRESHOLD\` | \`1.5%\` | Min price change to trigger buy |
-| \`MOMENTUM_WINDOW\` | \`10 min\` | Time window for momentum calc |
-| \`SCAN_INTERVAL\` | \`10s\` | Market scan frequency |
-| \`POSITION_SIZE\` | \`$500\` | Investment per trade |
-| \`MAX_POSITIONS\` | \`30\` | Max concurrent positions |
-| \`MIN_VOLUME\` | \`$25,000\` | Minimum 24h volume |
-| \`ENABLE_TRAILING_PROFIT\` | \`true\` | Let winners ride |
-| \`TRAILING_STOP_PERCENT\` | \`1.5%\` | Trailing stop distance |
+| `EXCHANGE` | `'COINBASE'` | Exchange to use (`COINBASE` or `KRAKEN`) |
+| `PAPER_TRADING` | `true` | Simulated trading mode |
+| `MAX_PRICE` | `$1.00` | Maximum coin price to trade |
+| `PROFIT_TARGET` | `2%` | Target profit before exit |
+| `STOP_LOSS` | `-3%` | Maximum loss before exit |
+| `MOMENTUM_THRESHOLD` | `1.5%` | Min price change to trigger buy |
+| `MOMENTUM_WINDOW` | `10 min` | Time window for momentum calc |
+| `SCAN_INTERVAL` | `10s` | Market scan frequency |
+| `POSITION_SIZE` | `$500` | Investment per trade |
+| `MAX_POSITIONS` | `30` | Max concurrent positions |
+| `MIN_VOLUME` | `$25,000` | Minimum 24h volume |
+| `ENABLE_TRAILING_PROFIT` | `true` | Let winners ride |
+| `TRAILING_STOP_PERCENT` | `1.5%` | Trailing stop distance |
 
-Settings can also be changed via the dashboard Settings (⚙️) menu.
+**Note:** API Keys for Kraken are stored in `.env` and not committed to version control.
 
 ## How It Works
 
@@ -164,11 +170,14 @@ trader/
 ├── bot.js               # Interactive bot runner
 ├── config.js            # Trading configuration
 ├── coinbase-client.js   # Coinbase API wrapper
+├── kraken-client.js     # Kraken API wrapper
+├── kraken-websocket.js  # Kraken WebSocket feed
 ├── market-scanner.js    # Market analysis & scanning
 ├── trading-strategy.js  # Buy/sell decision logic
 ├── paper-trading.js     # Virtual portfolio management
 ├── indicators.js        # Technical analysis functions
 ├── server.js            # Express API + WebSocket server
+├── tests/               # Automated tests
 ├── docker-compose.yml   # Docker configuration
 ├── Dockerfile           # Container build
 ├── deploy.sh            # Deployment script
