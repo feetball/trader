@@ -1683,4 +1683,10 @@ function _clearWsClients() {
   wsClients.forEach(c => wsClients.delete(c));
 }
 
-export { app, server, shutdownForTests, updateEnv, broadcastPortfolio, checkForUpdates, maybeSetTimeout, startApiRateInterval, startBot, botStatus, _addWsClient, _clearWsClients };
+// Test helper: clear any in-memory pending update and remove persisted flag
+function _clearPendingUpdate() {
+  try { pendingUpdate = null; } catch (e) {}
+  try { const p = path.join(process.cwd(), '.update-pending'); if (fsSync.existsSync(p)) fsSync.unlinkSync(p); } catch (e) {}
+}
+
+export { app, server, shutdownForTests, updateEnv, broadcastPortfolio, checkForUpdates, maybeSetTimeout, startApiRateInterval, startBot, botStatus, _addWsClient, _clearWsClients, _clearPendingUpdate };

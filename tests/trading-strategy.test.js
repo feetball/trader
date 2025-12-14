@@ -75,6 +75,63 @@ describe('TradingStrategy', () => {
     expect(strat.peakPrices.has('P1')).toBe(true)
   })
 
+  test('managePositions sells when price drops from peak beyond trailing stop', async () => {
+    // Enable trailing
+    config.ENABLE_TRAILING_PROFIT = true
+
+    const position = { productId: 'PX', symbol: 'CX', entryPrice: 1, quantity: 1, investedAmount: 1, entryTime: Date.now(), stopLoss: 0.5 }
+    paper.getPositions.mockReturnValue([position])
+
+    // First call: set peak
+    client.getCurrentPrice.mockResolvedValueOnce(1.06)
+    await strat.managePositions()
+    expect(strat.peakPrices.has('PX')).toBe(true)
+
+    // Second call: higher price to create new peak
+    client.getCurrentPrice.mockResolvedValueOnce(1.08)
+    await strat.managePositions()
+    expect(strat.peakPrices.get('PX')).toBeCloseTo(1.08)
+
+    // Third call: drop enough from peak to trigger sell
+    client.getCurrentPrice.mockResolvedValueOnce(1.0)
+    client.getCandles.mockResolvedValue([{ close: 1 }, { close: 0.99 }])
+
+    await strat.managePositions()
+    expect(paper.sell).toHaveBeenCalled()
+
+    // cleanup
+    config.ENABLE_TRAILING_PROFIT = false
+  })
+
+  test('managePositions sells on momentum fade during trailing mode', async () => {
+    // Enable trailing
+    config.ENABLE_TRAILING_PROFIT = true
+
+    const position = { productId: 'PM', symbol: 'CM', entryPrice: 1, quantity: 1, investedAmount: 1, entryTime: Date.now(), stopLoss: 0.5 }
+    paper.getPositions.mockReturnValue([position])
+
+    // Set a peak
+    client.getCurrentPrice.mockResolvedValueOnce(1.06)
+    await strat.managePositions()
+    expect(strat.peakPrices.has('PM')).toBe(true)
+
+    // Now simulate a drop smaller than trailing stop but with negative momentum large enough to sell
+    const peak = strat.peakPrices.get('PM')
+    client.getCurrentPrice.mockResolvedValueOnce(1.02) // slight drop
+
+    // candles to cause recentMomentum < -MIN_MOMENTUM_TO_RIDE
+    client.getCandles.mockResolvedValueOnce([
+      { close: 1.00 },
+      { close: 1.05 }
+    ])
+
+    await strat.managePositions()
+    expect(paper.sell).toHaveBeenCalled()
+
+    // cleanup
+    config.ENABLE_TRAILING_PROFIT = false
+  })
+
   test('sellPosition calls paper.sell in paper trading mode', async () => {
     const position = { productId: 'P1' }
     await strat.sellPosition(position, 1.0, 'reason')

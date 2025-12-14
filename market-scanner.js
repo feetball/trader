@@ -316,6 +316,25 @@ export class MarketScanner {
           const momentum = await this.calculateMomentum(product.productId, stats.last);
           
           if (momentum && momentum.score >= config.MOMENTUM_THRESHOLD) {
+            // Apply RSI filter in REST scan as well
+            if (config.RSI_FILTER && momentum.rsi !== null) {
+              const rsiMin = config.RSI_MIN ?? 0;
+              const rsiMax = config.RSI_MAX ?? 100;
+              if (momentum.rsi < rsiMin || momentum.rsi > rsiMax) {
+                console.log(`[STATUS] ⚠️ Skipping ${product.symbol}: RSI ${momentum.rsi.toFixed(0)} (outside ${rsiMin}-${rsiMax} range)`);
+                return null;
+              }
+            }
+
+            // Apply volume surge filter in REST scan
+            if (config.VOLUME_SURGE_FILTER && momentum.volumeSurge) {
+              const threshold = (config.VOLUME_SURGE_THRESHOLD ?? 150) / 100;
+              if (momentum.volumeSurge.ratio < threshold) {
+                console.log(`[STATUS] ⚠️ Skipping ${product.symbol}: Volume ${(momentum.volumeSurge.ratio * 100).toFixed(0)}% (need ${config.VOLUME_SURGE_THRESHOLD}%+)`);
+                return null;
+              }
+            }
+
             return {
               productId: product.productId,
               symbol: product.symbol,

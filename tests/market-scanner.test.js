@@ -155,4 +155,127 @@ describe('MarketScanner', () => {
     expect(ws.disconnect).toHaveBeenCalled()
     expect(scanner.wsConnected).toBe(false)
   })
+
+  test('scanMarkets falls back to REST when websocket not connected', async () => {
+    scanner.wsConnected = false
+    // Avoid calling getProducts/getSubDollarProducts internals
+    scanner.getSubDollarProducts = jest.fn().mockResolvedValue([])
+
+    const spy = jest.spyOn(scanner, 'scanMarketsREST').mockResolvedValue([{ productId: 'P1' }])
+    const res = await scanner.scanMarkets()
+    expect(spy).toHaveBeenCalled()
+    expect(res).toEqual([{ productId: 'P1' }])
+    spy.mockRestore()
+  })
+
+  test('quickScan finds moving coins from websocket', async () => {
+    scanner.initWebSocket = jest.fn().mockResolvedValue()
+    scanner.wsConnected = true
+    scanner.getSubDollarProducts = jest.fn().mockResolvedValue([
+      { productId: 'P1', symbol: 'C1', baseVolume: 500 },
+      { productId: 'P2', symbol: 'C2', baseVolume: 100 }
+    ])
+
+    ws.getPriceData.mockImplementation((pid) => {
+      if (pid === 'P1') return { price: 0.5, recentChange: 1 }
+      return null
+    })
+
+    scanner.calculateMomentum = jest.fn().mockResolvedValue({ score: 2 })
+
+    const opps = await scanner.quickScan()
+    expect(Array.isArray(opps)).toBe(true)
+    expect(opps.length).toBe(1)
+    expect(opps[0].productId).toBe('P1')
+  })
+
+  test('quickScanREST samples products and uses momentum', async () => {
+    // Make getProducts return several items
+    client.getProducts.mockResolvedValue([
+      { product_id: 'P1', base_currency_id: 'C1' },
+      { product_id: 'P2', base_currency_id: 'C2' },
+      { product_id: 'P3', base_currency_id: 'C3' }
+    ])
+
+    // getCachedStats returns a cheap price
+    client.getProductStats.mockResolvedValue({ last: 0.5, volume: 200, priceChangePercent: 1 })
+
+    // stub calculateMomentum to return qualifying momentum
+    const scanner2 = new (await import('../market-scanner.js')).MarketScanner(client, ws)
+    scanner2.calculateMomentum = jest.fn().mockResolvedValue({ score: 2 })
+    scanner2.sleep = jest.fn().mockResolvedValue()
+
+    const res = await scanner2.quickScanREST()
+    expect(Array.isArray(res)).toBe(true)
+  })
+
+  test('scanMarketsREST returns opportunities when momentum meets threshold', async () => {
+    const scanner2 = new (await import('../market-scanner.js')).MarketScanner(client, ws)
+    scanner2.getSubDollarProducts = jest.fn().mockResolvedValue([
+      { productId: 'P1', symbol: 'C1', baseVolume: 200 }
+    ])
+    scanner2.getCachedStats = jest.fn().mockResolvedValue({ last: 0.5, volume: 200, priceChangePercent: 0 })
+    scanner2.calculateMomentum = jest.fn().mockResolvedValue({ score: 2, volatility: 0 })
+    scanner2.sleep = jest.fn().mockResolvedValue()
+
+    const res = await scanner2.scanMarketsREST()
+    expect(Array.isArray(res)).toBe(true)
+    expect(res.length).toBe(1)
+  })
+
+  test('scanMarkets skips coins for RSI filter and volume surge filter', async () => {
+    const scanner2 = new (await import('../market-scanner.js')).MarketScanner(client, ws)
+    scanner2.getSubDollarProducts = jest.fn().mockResolvedValue([
+      { productId: 'P1', symbol: 'C1', baseVolume: 200 }
+    ])
+    scanner2.getCachedStats = jest.fn().mockResolvedValue({ last: 0.5, volume: 200, priceChangePercent: 0 })
+    // momentum with low rsi
+    scanner2.calculateMomentum = jest.fn().mockResolvedValue({ score: 2, rsi: 10, volumeSurge: { ratio: 1.0, isSurge: false } })
+    scanner2.sleep = jest.fn().mockResolvedValue()
+
+    // Enable RSI filter with min > rsi to force skip
+    const mod = await import('../config-utils.js')
+    mod.config.RSI_FILTER = true
+    mod.config.RSI_MIN = 20
+
+    let res = await scanner2.scanMarketsREST()
+    expect(res.length).toBe(0)
+
+    // Now test volume surge filter blocks too-small surges
+    mod.config.RSI_FILTER = false
+    mod.config.VOLUME_SURGE_FILTER = true
+    mod.config.VOLUME_SURGE_THRESHOLD = 200
+
+    scanner2.calculateMomentum = jest.fn().mockResolvedValue({ score: 2, rsi: 50, volumeSurge: { ratio: 1.2, isSurge: true } })
+    res = await scanner2.scanMarketsREST()
+    expect(res.length).toBe(0)
+
+    // Cleanup
+    mod.config.VOLUME_SURGE_FILTER = false
+  })
+
+  test('calculateMomentum applies RSI penalty and volume surge bonus', async () => {
+    // Mock indicators module for this test (ESM-safe)
+    jest.resetModules()
+    await jest.unstable_mockModule('../indicators.js', () => ({
+      calculateRSI: () => 80,
+      detectVolumeSurge: () => ({ isSurge: true, ratio: 2.5 }),
+      checkPriceAction: () => ({ favorable: false }),
+      scoreTrade: () => ({})
+    }))
+
+    // Create candles to allow computation
+    const candles = []
+    for (let i = 0; i < 10; i++) {
+      candles.push({ high: (1 + i*0.01).toString(), low: (0.9 + i*0.01).toString(), close: (0.95 + i*0.01).toString(), volume: (100 + i).toString() })
+    }
+    client.getCandles.mockResolvedValue(candles)
+
+    const scanner2 = new (await import('../market-scanner.js')).MarketScanner(client, ws)
+    const res = await scanner2.calculateMomentum('P1', 1.0)
+    expect(res).toBeTruthy()
+    expect(res.rsi).toBe(80)
+    expect(res.volumeSurge.isSurge).toBe(true)
+    expect(typeof res.score).toBe('number')
+  })
 })
