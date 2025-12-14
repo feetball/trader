@@ -177,7 +177,7 @@ export default function BotStatusPage() {
           <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar font-mono text-sm">
             {botStatus.logs?.map((log, i) => (
               <div 
-                key={i} 
+                key={`bot-${log.timestamp}-${i}`}
                 className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
               >
                 <span className="text-gray-600 text-xs whitespace-nowrap">{log.timestamp}</span>
@@ -205,7 +205,7 @@ export default function BotStatusPage() {
           <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar font-mono text-sm">
             {frontendLogs.map((log, i) => (
               <div 
-                key={i} 
+                key={`frontend-${log.timestamp}-${i}`}
                 className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
               >
                 <span className="text-gray-600 text-xs whitespace-nowrap">{log.timestamp}</span>
