@@ -4,10 +4,29 @@ import { useTrading } from '@/hooks/useTrading'
 import { Card, CardTitle, CardContent } from '@/components/Card'
 import Chip from '@/components/Chip'
 import Button from '@/components/Button'
-import { RefreshCw, Power, Square, Cpu, Settings, Target, Clock, Activity, BarChart3, DollarSign, Zap } from 'lucide-react'
+import { RefreshCw, Power, Square, Cpu, Settings, Target, Clock, Activity, BarChart3, DollarSign, Zap, Monitor } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { frontendLogger, type FrontendLog } from '@/lib/logger'
 
 export default function BotStatusPage() {
   const { botStatus, botLoading, loading, portfolio, settings, startBot, stopBot, refreshData } = useTrading()
+  const [frontendLogs, setFrontendLogs] = useState<FrontendLog[]>([])
+
+  // Subscribe to frontend logs
+  useEffect(() => {
+    // Get initial logs
+    setFrontendLogs(frontendLogger.getLogs())
+    
+    // Subscribe to updates
+    const unsubscribe = frontendLogger.subscribe((logs) => {
+      setFrontendLogs(logs)
+    })
+
+    // Log page load
+    frontendLogger.info('Bot Status page loaded')
+
+    return unsubscribe
+  }, [])
 
   return (
     <div className="p-3 md:p-6 space-y-3 md:space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto">
@@ -132,14 +151,14 @@ export default function BotStatusPage() {
         ))}
       </div>
 
-      {/* Recent Logs */}
+      {/* Bot Logs - Show ALL logs */}
       <Card variant="glass">
         <CardTitle icon={<Activity size={18} className="text-warning-400" />}>
-          Recent Logs
+          Bot Logs
         </CardTitle>
         <CardContent>
-          <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar font-mono text-sm">
-            {botStatus.logs?.slice(-15).map((log, i) => (
+          <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar font-mono text-sm">
+            {botStatus.logs?.map((log, i) => (
               <div 
                 key={i} 
                 className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
@@ -159,6 +178,39 @@ export default function BotStatusPage() {
               <div className="text-center py-8">
                 <Activity size={32} className="mx-auto text-gray-600 mb-2" />
                 <p className="text-gray-500">No logs yet. Start the bot to see activity.</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Frontend Logs */}
+      <Card variant="glass">
+        <CardTitle icon={<Monitor size={18} className="text-info-400" />}>
+          Frontend Logs
+        </CardTitle>
+        <CardContent>
+          <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar font-mono text-sm">
+            {frontendLogs.map((log, i) => (
+              <div 
+                key={i} 
+                className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <span className="text-gray-600 text-xs whitespace-nowrap">{log.timestamp}</span>
+                <span className={`flex-1 ${
+                  log.level === 'error' ? 'text-error-400' :
+                  log.level === 'warn' ? 'text-warning-400' :
+                  log.level === 'success' ? 'text-success-400' :
+                  'text-gray-400'
+                }`}>
+                  {log.message}
+                </span>
+              </div>
+            ))}
+            {!frontendLogs.length && (
+              <div className="text-center py-8">
+                <Monitor size={32} className="mx-auto text-gray-600 mb-2" />
+                <p className="text-gray-500">No frontend logs yet.</p>
               </div>
             )}
           </div>

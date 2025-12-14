@@ -132,7 +132,7 @@ function updateApiRate() {
   broadcast('botStatus', botStatus);
 }
 
-const MAX_LOGS = 50;
+const MAX_LOGS = 500;  // Increased from 50 to 500 to store more logs
 
 function addLog(message) {
   const timestamp = new Date().toLocaleTimeString();
