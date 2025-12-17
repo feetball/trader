@@ -81,7 +81,11 @@ export class KrakenWebSocket extends EventEmitter {
   }
 
   attemptReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) return;
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      console.error('[WS] Max reconnect attempts reached');
+      this.emit('maxReconnectAttempts');
+      return;
+    }
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
     setTimeout(() => this.connect().catch(() => {}), delay);
