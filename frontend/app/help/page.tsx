@@ -111,7 +111,7 @@ export default function HelpPage() {
                 <div className="px-3 text-primary-300">◄──►</div>
                 <div className="text-center flex-1">
                   <div className="text-primary-400 font-bold">Exchange</div>
-                  <div className="text-xs text-gray-400">Coinbase API</div>
+                  <div className="text-xs text-gray-400">Exchange API</div>
                 </div>
               </div>
             </div>
@@ -131,8 +131,8 @@ export default function HelpPage() {
             </div>
             <div className="bg-surface border border-warning-500/10 p-3 rounded-lg hover:border-warning-500/30 transition">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Trading</p>
-              <p className="text-sm font-semibold text-warning-400">Coinbase</p>
-              <p className="text-xs text-gray-500 mt-1">Advanced Trade API</p>
+              <p className="text-sm font-semibold text-warning-400">Exchange</p>
+              <p className="text-xs text-gray-500 mt-1">Configured exchange (Coinbase or Kraken)</p>
             </div>
             <div className="bg-surface border border-info-500/10 p-3 rounded-lg hover:border-info-500/30 transition">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Deploy</p>

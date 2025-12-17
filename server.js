@@ -130,6 +130,7 @@ let botStatus = {
   apiCalls: 0,
   apiRate: 0, // Calls per minute (current)
   apiRateHourly: 0, // Average calls per minute over last hour
+  exchangeApiStatus: 'unknown', // 'ok' | 'rate-limited' | 'error' | 'unknown'
   logs: [],
 };
 
@@ -181,6 +182,15 @@ function addLog(message) {
   botStatus.message = message;
   
   // Broadcast status update to all connected clients
+  broadcast('botStatus', botStatus);
+}
+
+// Update exchange API status and broadcast it (keeps clients in sync)
+function setExchangeApiStatus(status) {
+  if (!status) return;
+  if (botStatus.exchangeApiStatus === status) return; // no-op if unchanged
+  botStatus.exchangeApiStatus = status;
+  broadcast('exchangeApiStatus', { status });
   broadcast('botStatus', botStatus);
 }
 
@@ -730,27 +740,141 @@ app.get('/api/positions/live', async (req, res) => {
     const data = await fs.readFile('paper-trading-data.json', 'utf-8');
     const portfolio = JSON.parse(data);
     
-    // Fetch current prices for all positions in parallel
+    // Fetch current prices for all positions in parallel (supports Coinbase and Kraken)
     const positionsWithPrices = await Promise.all(
       portfolio.positions.map(async (pos) => {
         try {
-          const response = await fetch(`https://api.exchange.coinbase.com/products/${pos.productId}/ticker`);
-          if (!response.ok) return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
-          const ticker = await response.json();
-          const currentPrice = parseFloat(ticker.price);
-          const currentValue = pos.quantity * currentPrice;
-          const currentPL = currentValue - pos.investedAmount;
-          const currentPLPercent = (currentPL / pos.investedAmount) * 100;
-          
-          return {
-            ...pos,
-            currentPrice,
-            currentValue,
-            currentPL,
-            currentPLPercent,
-            holdTime: Date.now() - pos.entryTime,
-          };
+          if (config.EXCHANGE === 'KRAKEN') {
+            // Kraken public ticker: https://api.kraken.com/0/public/Ticker?pair=PAIR
+            try {
+              const { mapProductIdToKrakenPair } = await import('./exchange-utils.js');
+              const krakenPair = mapProductIdToKrakenPair(pos.productId);
+              let response;
+              response = await fetch(`https://api.kraken.com/0/public/Ticker?pair=${encodeURIComponent(krakenPair)}`);
+              if (!response.ok) {
+                if (response.status === 429) {
+                  setExchangeApiStatus('rate-limited');
+                } else {
+                  setExchangeApiStatus('error');
+                }
+                return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
+              }
+              const json = await response.json();
+              const pairKey = Object.keys(json.result || {})[0];
+              const priceStr = pairKey ? (json.result[pairKey].c && json.result[pairKey].c[0]) : null;
+              if (!priceStr) {
+                // If Kraken didn't provide a usable price, attempt Coinbase as fallback
+                try {
+                  const cbResp = await fetch(`https://api.exchange.coinbase.com/products/${pos.productId}/ticker`);
+                  if (cbResp.ok) {
+                    const ticker = await cbResp.json();
+                    const currentPrice = parseFloat(ticker.price);
+                    const currentValue = pos.quantity * currentPrice;
+                    const currentPL = currentValue - pos.investedAmount;
+                    const currentPLPercent = (currentPL / pos.investedAmount) * 100;
+                    setExchangeApiStatus('ok');
+                    return {
+                      ...pos,
+                      currentPrice,
+                      currentValue,
+                      currentPL,
+                      currentPLPercent,
+                      holdTime: Date.now() - pos.entryTime,
+                    };
+                  }
+                } catch (e) {
+                  // ignore and fall through to error
+                }
+                setExchangeApiStatus('error');
+                return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
+              }
+              const currentPrice = parseFloat(priceStr);
+              const currentValue = pos.quantity * currentPrice;
+              const currentPL = currentValue - pos.investedAmount;
+              const currentPLPercent = (currentPL / pos.investedAmount) * 100;
+              setExchangeApiStatus('ok');
+              return {
+                ...pos,
+                currentPrice,
+                currentValue,
+                currentPL,
+                currentPLPercent,
+                holdTime: Date.now() - pos.entryTime,
+              };
+            } catch (e) {
+              setExchangeApiStatus('error');
+              return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
+            }
+            const pairKey = Object.keys(json.result || {})[0];
+            const priceStr = pairKey ? (json.result[pairKey].c && json.result[pairKey].c[0]) : null;
+            if (!priceStr) {
+              // If Kraken didn't provide a usable price, attempt Coinbase as fallback
+              try {
+                const cbResp = await fetch(`https://api.exchange.coinbase.com/products/${pos.productId}/ticker`);
+                if (cbResp.ok) {
+                  const ticker = await cbResp.json();
+                  const currentPrice = parseFloat(ticker.price);
+                  const currentValue = pos.quantity * currentPrice;
+                  const currentPL = currentValue - pos.investedAmount;
+                  const currentPLPercent = (currentPL / pos.investedAmount) * 100;
+                  setExchangeApiStatus('ok');
+                  return {
+                    ...pos,
+                    currentPrice,
+                    currentValue,
+                    currentPL,
+                    currentPLPercent,
+                    holdTime: Date.now() - pos.entryTime,
+                  };
+                }
+              } catch (e) {
+                // ignore and fall through to error
+              }
+              setExchangeApiStatus('error');
+              return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
+            }
+            const currentPrice = parseFloat(priceStr);
+            const currentValue = pos.quantity * currentPrice;
+            const currentPL = currentValue - pos.investedAmount;
+            const currentPLPercent = (currentPL / pos.investedAmount) * 100;
+            setExchangeApiStatus('ok');
+            return {
+              ...pos,
+              currentPrice,
+              currentValue,
+              currentPL,
+              currentPLPercent,
+              holdTime: Date.now() - pos.entryTime,
+            };
+          } else {
+            // Default: Coinbase
+            const response = await fetch(`https://api.exchange.coinbase.com/products/${pos.productId}/ticker`);
+            if (!response.ok) {
+              if (response.status === 429) {
+                setExchangeApiStatus('rate-limited');
+              } else {
+                setExchangeApiStatus('error');
+              }
+              return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
+            }
+            const ticker = await response.json();
+            const currentPrice = parseFloat(ticker.price);
+            const currentValue = pos.quantity * currentPrice;
+            const currentPL = currentValue - pos.investedAmount;
+            const currentPLPercent = (currentPL / pos.investedAmount) * 100;
+            // Successful fetch => API OK
+            setExchangeApiStatus('ok');
+            return {
+              ...pos,
+              currentPrice,
+              currentValue,
+              currentPL,
+              currentPLPercent,
+              holdTime: Date.now() - pos.entryTime,
+            };
+          }
         } catch (error) {
+          setExchangeApiStatus('error');
           return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
         }
       })
@@ -784,10 +908,22 @@ app.post('/api/positions/sell', async (req, res) => {
     // Get current price
     let currentPrice = position.entryPrice;
     try {
-      const response = await fetch(`https://api.exchange.coinbase.com/products/${position.productId}/ticker`);
-      if (response.ok) {
-        const ticker = await response.json();
-        currentPrice = parseFloat(ticker.price);
+      if (config.EXCHANGE === 'KRAKEN') {
+        const response = await fetch(`https://api.kraken.com/0/public/Ticker?pair=${encodeURIComponent(position.productId)}`);
+        if (response.ok) {
+          const json = await response.json();
+          const pairKey = Object.keys(json.result || {})[0];
+          const priceStr = pairKey ? (json.result[pairKey].c && json.result[pairKey].c[0]) : null;
+          if (priceStr) {
+            currentPrice = parseFloat(priceStr);
+          }
+        }
+      } else {
+        const response = await fetch(`https://api.exchange.coinbase.com/products/${position.productId}/ticker`);
+        if (response.ok) {
+          const ticker = await response.json();
+          currentPrice = parseFloat(ticker.price);
+        }
       }
     } catch (e) {
       console.log(`[FORCE SELL] Using entry price, couldn't fetch current price: ${e.message}`);
@@ -1649,6 +1785,53 @@ export function initializeForRuntime() {
     if (!isTestEnv) startBot();
   }
 }
+  // Start the HTTP server so the API and frontend are reachable
+  // In test environments we avoid listening to prevent EADDRINUSE when tests run in-band
+  if (!isTestEnv) {
+    // If port is already in use by another process, log and continue (useful for CI/local envs)
+    server.on('error', (err) => {
+      if (err && err.code === 'EADDRINUSE') {
+        console.warn(`[WARN] Port ${PORT} is already in use; skipping listen to avoid fatal error.`);
+      } else {
+        console.error(err);
+      }
+    });
+
+    // Defer listen to the next tick and probe the port first to avoid unhandled EADDRINUSE errors
+    setImmediate(async () => {
+      try {
+        const net = await import('net');
+        const probe = net.createServer();
+        probe.once('error', (err) => {
+          if (err && err.code === 'EADDRINUSE') {
+            console.warn(`[WARN] Port ${PORT} is already in use; skipping listen to avoid fatal error.`);
+          } else {
+            console.error('[WARN] Port probe error:', err);
+          }
+        });
+        probe.once('listening', () => {
+          probe.close(() => {
+            try {
+              server.listen(PORT, () => {
+                console.log(`[INFO] crypto-trader started! Dashboard available at: http://localhost:${PORT}`);
+              });
+            } catch (e) {
+              if (e && e.code === 'EADDRINUSE') {
+                console.warn(`[WARN] Port ${PORT} is already in use; server.listen failed with EADDRINUSE.`);
+              } else {
+                console.error(e);
+              }
+            }
+          });
+        });
+        probe.listen(PORT);
+      } catch (e) {
+        console.error('[ERROR] Failed to probe port for listening:', e);
+      }
+    });
+  } else {
+    console.log(`[INFO] Test env detected; server not listening on port ${PORT}`);
+  }
 
 // Only start server if run directly
 if (process.argv[1] === import.meta.url.substring(7) || process.argv[1].endsWith('server.js')) {
