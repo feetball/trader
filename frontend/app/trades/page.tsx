@@ -1,23 +1,27 @@
 'use client'
 
 import { useTrading } from '@/hooks/useTrading'
-import { Card, CardTitle, CardContent } from '@/components/Card'
 import { AuditEntryDisplay } from '@/components/AuditEntryDisplay'
-import Chip from '@/components/Chip'
-import { formatHoldTime, formatTimestamp, extractTradeAuditData, formatTradeAuditTexts } from '@/lib/utils'
+import { extractTradeAuditData, formatTradeAuditTexts } from '@/lib/utils'
 import { TrendingUp, TrendingDown, BarChart3, DollarSign, Target, History, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { 
+  Box, Grid, Typography, Card, CardContent, 
+  Chip, Avatar, Table, TableBody, TableCell, 
+  TableContainer, TableHead, TableRow, Paper, useTheme, Divider
+} from '@mui/material'
 
 export default function TradeHistoryPage() {
   const { trades, openCoinbase } = useTrading()
+  const theme = useTheme()
 
   const totalProfit = trades.reduce((sum, t) => sum + (t.netProfit ?? t.profit), 0)
   const winRate = trades.length ? (trades.filter(t => (t.netProfit ?? t.profit) > 0).length / trades.length * 100) : 0
   const avgProfit = trades.length ? totalProfit / trades.length : 0
 
   return (
-    <div className="p-3 md:p-6 space-y-3 md:space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto">
+    <Box sx={{ p: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
       {trades.length > 0 && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+        <Grid container spacing={2}>
           {[
             { 
               label: 'Win Rate', 
@@ -48,146 +52,160 @@ export default function TradeHistoryPage() {
               highlight: true
             },
           ].map((stat, i) => (
-            <Card key={i} variant="glass" hover className="group">
-              <CardContent>
-                <div className="flex items-center justify-between mb-3">
-                  <div className={`p-2 rounded-xl bg-gradient-to-br from-${stat.color}-500/20 to-${stat.color}-600/10`}>
-                    <stat.icon size={18} className={`text-${stat.color}-400`} />
-                  </div>
+            <Grid item xs={6} lg={3} key={i}>
+              <Paper sx={{ 
+                p: 2.5, 
+                borderRadius: 3, 
+                bgcolor: 'background.paper', 
+                backgroundImage: 'none', 
+                border: '1px solid rgba(255,255,255,0.05)',
+                '&:hover': { borderColor: `${stat.color}.main`, transform: 'translateY(-4px)' },
+                transition: 'all 0.3s'
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                  <Avatar sx={{ 
+                    width: 32, 
+                    height: 32, 
+                    bgcolor: `rgba(${stat.color === 'primary' ? '124, 77, 255' : stat.color === 'success' ? '34, 197, 94' : stat.color === 'info' ? '3, 218, 198' : '239, 68, 68'}, 0.1)`, 
+                    color: `${stat.color}.main` 
+                  }}>
+                    <stat.icon size={16} />
+                  </Avatar>
                   {stat.trend && (
-                    <div className={`flex items-center gap-1 text-xs ${stat.trend === 'up' ? 'text-success-400' : 'text-error-400'}`}>
-                      {stat.trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                    </div>
+                    <Box sx={{ color: stat.trend === 'up' ? 'success.main' : 'error.main' }}>
+                      {stat.trend === 'up' ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                    </Box>
                   )}
-                </div>
-                <p className="text-xs text-gray-500 mb-1">{stat.label}</p>
-                <p className={`text-2xl font-bold ${
-                  stat.highlight 
-                    ? (totalProfit >= 0 ? 'gradient-text-profit' : 'gradient-text-loss')
-                    : 'bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent'
-                }`}>
+                </Box>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>{stat.label}</Typography>
+                <Typography variant="h5" fontWeight={800} sx={{ 
+                  color: stat.highlight ? (totalProfit >= 0 ? 'success.main' : 'error.main') : 'text.primary'
+                }}>
                   {stat.value}
-                </p>
+                </Typography>
                 {stat.subtext && (
-                  <p className="text-xs text-gray-500 mt-1">{stat.subtext}</p>
+                  <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5, display: 'block' }}>{stat.subtext}</Typography>
                 )}
-              </CardContent>
-            </Card>
+              </Paper>
+            </Grid>
           ))}
-        </div>
+        </Grid>
       )}
 
-      <Card variant="glass">
-        <CardTitle icon={<History size={18} className="text-info-400" />}>
-          Trade History
-        </CardTitle>
-        <CardContent>
-          <div className="overflow-x-auto custom-scrollbar">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left py-4 px-4 text-gray-400 font-medium">Coin</th>
-                  <th className="text-left py-4 px-4 text-gray-400 font-medium">Entry Date & Time</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Coins</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Buy Price</th>
-                  <th className="text-left py-4 px-4 text-gray-400 font-medium">Exit Date & Time</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">Sell Price</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">P&L</th>
-                  <th className="text-right py-4 px-4 text-gray-400 font-medium">%</th>
-                  <th className="text-center py-4 px-4 text-gray-400 font-medium">Reason</th>
-                </tr>
-              </thead>
-              <tbody>
+      <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
+            <History size={18} />
+          </Avatar>
+          <Typography variant="h6" fontWeight={700}>Trade History</Typography>
+        </Box>
+        <CardContent sx={{ p: 0 }}>
+          <TableContainer>
+            <Table sx={{ minWidth: 1000 }}>
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'rgba(255,255,255,0.02)' }}>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Coin</TableCell>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Entry Date & Time</TableCell>
+                  <TableCell align="right" sx={{ color: 'text.secondary', fontWeight: 600 }}>Coins</TableCell>
+                  <TableCell align="right" sx={{ color: 'text.secondary', fontWeight: 600 }}>Buy Price</TableCell>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 600 }}>Exit Date & Time</TableCell>
+                  <TableCell align="right" sx={{ color: 'text.secondary', fontWeight: 600 }}>Sell Price</TableCell>
+                  <TableCell align="right" sx={{ color: 'text.secondary', fontWeight: 600 }}>P&L</TableCell>
+                  <TableCell align="right" sx={{ color: 'text.secondary', fontWeight: 600 }}>%</TableCell>
+                  <TableCell align="center" sx={{ color: 'text.secondary', fontWeight: 600 }}>Reason</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {trades.map((trade, i) => {
                   const profit = trade.netProfit ?? trade.profit
                   const isProfit = profit >= 0
                   const auditData = extractTradeAuditData(trade.audit)
-                  const { hasAudit, entry } = auditData
-                  const { gradeText, momentumText, rsiText, volText, cfgBuyText, cfgSellText } = formatTradeAuditTexts(auditData)
+                  const { hasAudit } = auditData
                   return (
-                    <tr 
-                      key={i} 
-                      className={`border-b border-white/5 hover:bg-white/5 transition-colors group ${
-                        isProfit ? 'hover:bg-success-500/5' : 'hover:bg-error-500/5'
-                      }`}
+                    <TableRow 
+                      key={i}
+                      sx={{ 
+                        '&:hover': { bgcolor: isProfit ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)' },
+                        transition: 'background-color 0.2s'
+                      }}
                     >
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-1 h-8 rounded-full ${isProfit ? 'bg-success-500' : 'bg-error-500'}`}></div>
-                          <Chip 
-                            size="small" 
-                            onClick={() => openCoinbase(trade.symbol)}
-                            className="cursor-pointer group-hover:scale-105 transition-transform"
-                          >
-                            {trade.symbol}
-                          </Chip>
-                        </div>
-                        {!hasAudit && (
-                          <div className="mt-2">
-                            <span className="text-xs text-gray-600 font-mono px-2 py-1 rounded-lg bg-white/5">
-                              Audit: legacy trade (no signal/config snapshot)
-                            </span>
-                          </div>
-                        )}
-                        <AuditEntryDisplay 
-                          entry={trade.audit?.entry}
-                          showVolume={true}
-                          showReasons={true}
-                          maxReasons={4}
-                          configAtEntry={trade.audit?.configAtEntry}
-                          configAtExit={trade.audit?.configAtExit}
-                        />
-                      </td>
-                      <td className="text-left py-4 px-4 font-mono text-xs text-gray-400">
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Box sx={{ width: 4, height: 32, borderRadius: 1, bgcolor: isProfit ? 'success.main' : 'error.main' }} />
+                          <Box>
+                            <Chip 
+                              label={trade.symbol} 
+                              size="small" 
+                              onClick={() => openCoinbase(trade.symbol)}
+                              sx={{ fontWeight: 700, cursor: 'pointer', '&:hover': { transform: 'scale(1.05)' }, transition: 'transform 0.2s' }}
+                            />
+                            {!hasAudit && (
+                              <Typography variant="caption" sx={{ display: 'block', mt: 0.5, color: 'text.disabled', fontSize: '0.65rem' }}>
+                                Legacy trade
+                              </Typography>
+                            )}
+                            <AuditEntryDisplay 
+                              entry={trade.audit?.entry}
+                              showVolume={true}
+                              showReasons={true}
+                              maxReasons={4}
+                              configAtEntry={trade.audit?.configAtEntry}
+                              configAtExit={trade.audit?.configAtExit}
+                            />
+                          </Box>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
                         {new Date(trade.entryTime).toLocaleString()}
-                      </td>
-                      <td className="text-right py-4 px-4 font-mono text-xs text-gray-400">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
                         {(trade.quantity || 0).toFixed(4)}
-                      </td>
-                      <td className="text-right py-4 px-4 font-mono text-xs text-gray-400">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
                         ${(trade.entryPrice || 0).toFixed(6)}
-                      </td>
-                      <td className="text-left py-4 px-4 font-mono text-xs text-gray-400">
+                      </TableCell>
+                      <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
                         {new Date(trade.exitTime).toLocaleString()}
-                      </td>
-                      <td className="text-right py-4 px-4 font-mono text-xs text-gray-400">
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
                         ${(trade.exitPrice || 0).toFixed(6)}
-                      </td>
-                      <td className={`text-right py-4 px-4 font-bold ${isProfit ? 'text-success-400' : 'text-error-400'}`}>
-                        <div className="flex items-center justify-end gap-1">
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'success.main' : 'error.main' }}>
                           {isProfit ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                          {isProfit ? '+' : ''}${profit.toFixed(2)}
-                        </div>
-                      </td>
-                      <td className="text-right py-4 px-4">
+                          <Typography variant="body2" fontWeight={700}>
+                            {isProfit ? '+' : ''}${profit.toFixed(2)}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right">
                         <Chip 
-                          size="small" 
-                          variant="glow"
+                          label={`${isProfit ? '+' : ''}${(trade.netProfitPercent ?? trade.profitPercent).toFixed(2)}%`}
+                          size="small"
                           color={isProfit ? 'success' : 'error'}
-                        >
-                          {isProfit ? '+' : ''}{(trade.netProfitPercent ?? trade.profitPercent).toFixed(2)}%
-                        </Chip>
-                      </td>
-                      <td className="text-center py-4 px-4">
-                        <span className="text-xs text-gray-500 px-2 py-1 rounded-lg bg-white/5">
+                          sx={{ fontWeight: 700, borderRadius: 1 }}
+                        />
+                      </TableCell>
+                      <TableCell align="center">
+                        <Typography variant="caption" sx={{ px: 1, py: 0.5, borderRadius: 1, bgcolor: 'rgba(255,255,255,0.05)', color: 'text.secondary' }}>
                           {trade.reason || '-'}
-                        </span>
-                      </td>
-                    </tr>
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
-              </tbody>
-            </table>
-            {trades.length === 0 && (
-              <div className="text-center py-12">
-                <History size={48} className="mx-auto text-gray-600 mb-4" />
-                <p className="text-gray-500 text-lg">No trades yet</p>
-                <p className="text-gray-600 text-sm mt-1">Start the bot to begin trading</p>
-              </div>
-            )}
-          </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {trades.length === 0 && (
+            <Box sx={{ textAlign: 'center', py: 12 }}>
+              <History size={48} className="text-gray-600" style={{ marginBottom: 16 }} />
+              <Typography variant="h6" color="text.secondary">No trades yet</Typography>
+              <Typography variant="body2" color="text.disabled">Start the bot to begin trading</Typography>
+            </Box>
+          )}
         </CardContent>
       </Card>
-    </div>
+    </Box>
   )
 }

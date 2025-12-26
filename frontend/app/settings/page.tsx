@@ -1,11 +1,17 @@
 'use client'
 
 import { useTrading } from '@/hooks/useTrading'
-import { Card, CardTitle, CardContent } from '@/components/Card'
-import Button from '@/components/Button'
-import { Download, Upload, RotateCcw, AlertCircle } from 'lucide-react'
+import { Download, Upload, RotateCcw, AlertCircle, Save, Settings, Shield, DollarSign, TrendingUp, Zap, BarChart3, Activity, Percent, Trash2 } from 'lucide-react'
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { 
+  Box, Grid, Typography, Card, CardContent, 
+  Button, Chip, Avatar, Paper, useTheme, TextField, CircularProgress,
+  Select, MenuItem, FormControl, InputLabel, Checkbox, 
+  FormControlLabel, Dialog, DialogTitle, DialogContent, 
+  DialogActions, Snackbar, Alert, IconButton, Tooltip,
+  Divider, Stack
+} from '@mui/material'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -15,7 +21,6 @@ export default function SettingsPage() {
     settingsHistory,
     settingsComment,
     setSettingsComment,
-    loadSettings,
     saveSettings,
     resetSettings,
     resetPortfolio,
@@ -26,9 +31,10 @@ export default function SettingsPage() {
   const [showResetSettingsDialog, setShowResetSettingsDialog] = useState(false)
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
-  const [snackbar, setSnackbar] = useState('')
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' | 'warning' })
   const [localSettings, setLocalSettings] = useState(settings)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const theme = useTheme()
 
   // Track if settings have been modified (dirty state)
   const isDirty = useMemo(() => {
@@ -77,28 +83,20 @@ export default function SettingsPage() {
     setLocalSettings(prev => ({ ...prev, [key]: value }))
   }
 
-  // Helper to select all content in numeric inputs on focus for easier mobile editing
-  const handleNumericInputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.select()
-  }
-
   const handleSave = async () => {
     setSettingsLoading(true)
     try {
-      // Pass localSettings to saveSettings - it will update context state
       await saveSettings(localSettings)
-      setSnackbar('Settings saved successfully!')
-      setTimeout(() => setSnackbar(''), 3000)
+      setSnackbar({ open: true, message: 'Settings saved successfully!', severity: 'success' })
     } catch (error) {
-      setSnackbar('Error saving settings')
-      setTimeout(() => setSnackbar(''), 3000)
+      setSnackbar({ open: true, message: 'Error saving settings', severity: 'error' })
     } finally {
       setSettingsLoading(false)
     }
   }
 
   const handleDiscardAndNavigate = () => {
-    setLocalSettings(settings) // Reset to saved settings
+    setLocalSettings(settings)
     setShowUnsavedDialog(false)
     if (pendingNavigation) {
       router.push(pendingNavigation)
@@ -144,532 +142,564 @@ export default function SettingsPage() {
       }
       setLocalSettings(filtered)
       setSettingsComment(imported.comment || '')
-      setSnackbar('Settings imported! Click save to apply.')
-      setTimeout(() => setSnackbar(''), 3000)
+      setSnackbar({ open: true, message: 'Settings imported! Click save to apply.', severity: 'info' })
     } catch (error) {
-      setSnackbar('Error importing settings')
-      setTimeout(() => setSnackbar(''), 3000)
+      setSnackbar({ open: true, message: 'Error importing settings', severity: 'error' })
     }
   }
 
   return (
-    <div className="p-2 md:p-4 space-y-2 md:space-y-3 pb-20 md:pb-4">
-      {/* Sticky header for mobile */}
-      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm -mx-2 md:mx-0 px-2 md:px-0 py-2 md:py-0 md:static border-b md:border-b-0 border-gray-800 md:bg-transparent md:backdrop-blur-none">
-        <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-start md:items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl font-bold">Bot Settings</h1>
+    <Box sx={{ p: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* Header with Actions */}
+      <Paper sx={{ 
+        p: 2, 
+        borderRadius: 3, 
+        bgcolor: 'background.paper', 
+        backgroundImage: 'none', 
+        border: '1px solid rgba(255,255,255,0.05)',
+        display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' },
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        justifyContent: 'space-between',
+        gap: 2,
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        backdropFilter: 'blur(10px)'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
+            <Settings size={20} />
+          </Avatar>
+          <Box>
+            <Typography variant="h6" fontWeight={700}>Bot Settings</Typography>
             {isDirty && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning-500/20 text-warning-400 text-xs font-medium">
-                <AlertCircle size={12} />
-                <span>Unsaved</span>
-              </div>
+              <Chip 
+                label="Unsaved Changes" 
+                size="small" 
+                color="warning" 
+                icon={<AlertCircle size={12} />}
+                sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
+              />
             )}
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button size="small" variant="secondary" onClick={() => fileInputRef.current?.click()}>
-              <Upload size={16} /> Import
-            </Button>
-            <Button size="small" variant="secondary" onClick={handleExport}>
-              <Download size={16} /> Export
-            </Button>
-            <Button size="small" variant={isDirty ? 'primary' : 'secondary'} loading={settingsLoading} onClick={handleSave} disabled={!isDirty && !settingsLoading}>
-              {botStatus.running ? 'Apply & Restart' : 'Save'}
-            </Button>
-          </div>
-          <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} hidden />
-        </div>
-      </div>
+          </Box>
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <Button 
+            variant="outlined" 
+            size="small" 
+            startIcon={<Upload size={16} />}
+            onClick={() => fileInputRef.current?.click()}
+            sx={{ borderRadius: 2 }}
+          >
+            Import
+          </Button>
+          <Button 
+            variant="outlined" 
+            size="small" 
+            startIcon={<Download size={16} />}
+            onClick={handleExport}
+            sx={{ borderRadius: 2 }}
+          >
+            Export
+          </Button>
+          <Button 
+            variant="contained" 
+            size="small" 
+            startIcon={settingsLoading ? <CircularProgress size={16} color="inherit" /> : <Save size={16} />}
+            onClick={handleSave}
+            disabled={( !isDirty && !settingsLoading ) || settingsLoading}
+            sx={{ borderRadius: 2, fontWeight: 700 }}
+          >
+            {settingsLoading ? 'Saving...' : (botStatus.running ? 'Apply \u0026 Restart' : 'Save Settings')}
+          </Button>
+        </Stack>
+        <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} hidden />
+      </Paper>
 
-      {/* Settings Groups - Multi-column layout optimized for 2K */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 md:gap-3">
+      <Grid container spacing={3}>
         {/* Exchange Settings */}
-        <Card variant="glass">
-          <CardTitle>Exchange</CardTitle>
-          <CardContent>
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Select Exchange</label>
-                <select
+        <Grid item xs={12} md={6} lg={4}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
+                <Shield size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700}>Exchange</Typography>
+            </Box>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Select Exchange</InputLabel>
+                <Select
                   value={localSettings.EXCHANGE || 'COINBASE'}
+                  label="Select Exchange"
                   onChange={(e) => handleSettingChange('EXCHANGE', e.target.value)}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                 >
-                  <option value="COINBASE">Coinbase</option>
-                  <option value="KRAKEN">Kraken</option>
-                </select>
-              </div>
+                  <MenuItem value="COINBASE">Coinbase</MenuItem>
+                  <MenuItem value="KRAKEN">Kraken</MenuItem>
+                </Select>
+              </FormControl>
               
               {localSettings.EXCHANGE === 'KRAKEN' && (
                 <>
-                  <div>
-                    <label className="text-xs text-gray-400 block mb-0.5">API Key</label>
-                    <input
-                      type="password"
-                      value={localSettings.KRAKEN_API_KEY || ''}
-                      onChange={(e) => handleSettingChange('KRAKEN_API_KEY', e.target.value)}
-                      placeholder="Enter Kraken API Key"
-                      className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-gray-400 block mb-0.5">API Secret</label>
-                    <input
-                      type="password"
-                      value={localSettings.KRAKEN_API_SECRET || ''}
-                      onChange={(e) => handleSettingChange('KRAKEN_API_SECRET', e.target.value)}
-                      placeholder="Enter Kraken API Secret"
-                      className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                    />
-                  </div>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="API Key"
+                    type="password"
+                    value={localSettings.KRAKEN_API_KEY || ''}
+                    onChange={(e) => handleSettingChange('KRAKEN_API_KEY', e.target.value)}
+                  />
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="API Secret"
+                    type="password"
+                    value={localSettings.KRAKEN_API_SECRET || ''}
+                    onChange={(e) => handleSettingChange('KRAKEN_API_SECRET', e.target.value)}
+                  />
                 </>
               )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Trading Mode */}
-        <Card variant="glass">
-          <CardTitle>Trading Mode</CardTitle>
-          <CardContent>
-            <div>
-              <label className="text-xs text-gray-400 block mb-1">Paper Trading</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={localSettings.PAPER_TRADING}
-                  onChange={(e) => handleSettingChange('PAPER_TRADING', e.target.checked)}
-                  className="w-4 h-4"
-                />
-                <span className="text-xs text-gray-300">
-                  {localSettings.PAPER_TRADING ? 'Simulated trades' : 'Real trades'}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={localSettings.PAPER_TRADING} 
+                    onChange={(e) => handleSettingChange('PAPER_TRADING', e.target.checked)}
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>Paper Trading</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {localSettings.PAPER_TRADING ? 'Simulated trades (Safe)' : 'Real trades (Live)'}
+                    </Typography>
+                  </Box>
+                }
+              />
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Position Sizing */}
-        <Card variant="glass">
-          <CardTitle>Position Sizing</CardTitle>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Max Price ($)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={localSettings.MAX_PRICE}
-                  onChange={(e) => handleSettingChange('MAX_PRICE', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Trade under this price</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Position Size ($)</label>
-                <input
-                  type="number"
-                  value={localSettings.POSITION_SIZE}
-                  onChange={(e) => handleSettingChange('POSITION_SIZE', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">USD per trade</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Max Positions</label>
-                <input
-                  type="number"
-                  value={localSettings.MAX_POSITIONS}
-                  onChange={(e) => handleSettingChange('MAX_POSITIONS', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Max concurrent</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Grid item xs={12} md={6} lg={4}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(34, 197, 94, 0.1)', color: 'success.main' }}>
+                <DollarSign size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700}>Position Sizing</Typography>
+            </Box>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Max Price ($)"
+                type="number"
+                value={localSettings.MAX_PRICE}
+                onChange={(e) => handleSettingChange('MAX_PRICE', parseFloat(e.target.value) || 0)}
+                helperText="Trade under this price"
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Position Size ($)"
+                type="number"
+                value={localSettings.POSITION_SIZE}
+                onChange={(e) => handleSettingChange('POSITION_SIZE', parseInt(e.target.value) || 0)}
+                helperText="USD per trade"
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Max Positions"
+                type="number"
+                value={localSettings.MAX_POSITIONS}
+                onChange={(e) => handleSettingChange('MAX_POSITIONS', parseInt(e.target.value) || 0)}
+                helperText="Max concurrent trades"
+              />
+            </CardContent>
+          </Card>
+        </Grid>
 
-        {/* Profit Targets */}
-        <Card variant="glass">
-          <CardTitle>Profit & Stops</CardTitle>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Profit Target (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={localSettings.PROFIT_TARGET}
-                  onChange={(e) => handleSettingChange('PROFIT_TARGET', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Sell at %</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Stop Loss (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={localSettings.STOP_LOSS}
-                  onChange={(e) => handleSettingChange('STOP_LOSS', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Cut losses</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Trailing Profit</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={localSettings.ENABLE_TRAILING_PROFIT}
+        {/* Profit & Stops */}
+        <Grid item xs={12} md={6} lg={4}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(239, 68, 68, 0.1)', color: 'error.main' }}>
+                <TrendingUp size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700}>Profit & Stops</Typography>
+            </Box>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Profit Target (%)"
+                type="number"
+                value={localSettings.PROFIT_TARGET}
+                onChange={(e) => handleSettingChange('PROFIT_TARGET', parseFloat(e.target.value) || 0)}
+                helperText="Sell at this profit %"
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Stop Loss (%)"
+                type="number"
+                value={localSettings.STOP_LOSS}
+                onChange={(e) => handleSettingChange('STOP_LOSS', parseFloat(e.target.value) || 0)}
+                helperText="Cut losses at this %"
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={localSettings.ENABLE_TRAILING_PROFIT} 
                     onChange={(e) => handleSettingChange('ENABLE_TRAILING_PROFIT', e.target.checked)}
-                    className="w-3 h-3"
                   />
-                  <span className="text-xs text-gray-300">On</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>Trailing Profit</Typography>
+                    <Typography variant="caption" color="text.secondary">Ride the momentum</Typography>
+                  </Box>
+                }
+              />
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Momentum & Timing */}
-        <Card variant="glass">
-          <CardTitle>Momentum & Timing</CardTitle>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Momentum Threshold (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={localSettings.MOMENTUM_THRESHOLD}
-                  onChange={(e) => handleSettingChange('MOMENTUM_THRESHOLD', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Min change</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Momentum Window</label>
-                <input
-                  type="number"
-                  value={localSettings.MOMENTUM_WINDOW}
-                  onChange={(e) => handleSettingChange('MOMENTUM_WINDOW', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Minutes</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Scan Interval</label>
-                <input
-                  type="number"
-                  value={localSettings.SCAN_INTERVAL}
-                  onChange={(e) => handleSettingChange('SCAN_INTERVAL', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Seconds</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Grid item xs={12} md={6} lg={4}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' }}>
+                <Zap size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700}>Momentum & Timing</Typography>
+            </Box>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Momentum Threshold (%)"
+                type="number"
+                value={localSettings.MOMENTUM_THRESHOLD}
+                onChange={(e) => handleSettingChange('MOMENTUM_THRESHOLD', parseFloat(e.target.value) || 0)}
+                helperText="Min price change to trigger"
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Momentum Window (min)"
+                type="number"
+                value={localSettings.MOMENTUM_WINDOW}
+                onChange={(e) => handleSettingChange('MOMENTUM_WINDOW', parseInt(e.target.value) || 0)}
+                helperText="Timeframe for momentum"
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Scan Interval (sec)"
+                type="number"
+                value={localSettings.SCAN_INTERVAL}
+                onChange={(e) => handleSettingChange('SCAN_INTERVAL', parseInt(e.target.value) || 0)}
+                helperText="How often to scan markets"
+              />
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Volume & Filters */}
-        <Card variant="glass">
-          <CardTitle>Volume & Filters</CardTitle>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Min Volume ($)</label>
-                <input
-                  type="number"
-                  value={localSettings.MIN_VOLUME}
-                  onChange={(e) => handleSettingChange('MIN_VOLUME', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">24h vol</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Volume Surge</label>
-                <div className="flex items-center gap-2 mb-1">
-                  <input
-                    type="checkbox"
-                    checked={localSettings.VOLUME_SURGE_FILTER}
+        <Grid item xs={12} md={6} lg={4}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
+                <BarChart3 size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700}>Volume & Filters</Typography>
+            </Box>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Min 24h Volume ($)"
+                type="number"
+                value={localSettings.MIN_VOLUME}
+                onChange={(e) => handleSettingChange('MIN_VOLUME', parseInt(e.target.value) || 0)}
+              />
+              <Divider />
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={localSettings.VOLUME_SURGE_FILTER} 
                     onChange={(e) => handleSettingChange('VOLUME_SURGE_FILTER', e.target.checked)}
-                    className="w-3 h-3"
                   />
-                  <span className="text-xs text-gray-300">{localSettings.VOLUME_SURGE_FILTER ? 'On' : 'Off'}</span>
-                </div>
-                <label className="text-xs text-gray-400 block mb-0.5">Threshold (%)</label>
-                <input
-                  type="number"
-                  value={localSettings.VOLUME_SURGE_THRESHOLD}
-                  onChange={(e) => handleSettingChange('VOLUME_SURGE_THRESHOLD', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                  disabled={!localSettings.VOLUME_SURGE_FILTER}
-                />
-                <p className="text-xs text-gray-500 mt-0.5">% of avg</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                }
+                label="Volume Surge Filter"
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Surge Threshold (%)"
+                type="number"
+                value={localSettings.VOLUME_SURGE_THRESHOLD}
+                onChange={(e) => handleSettingChange('VOLUME_SURGE_THRESHOLD', parseInt(e.target.value) || 0)}
+                disabled={!localSettings.VOLUME_SURGE_FILTER}
+                helperText="% above average volume"
+              />
+            </CardContent>
+          </Card>
+        </Grid>
 
-        {/* RSI Filter */}
-        <Card variant="glass">
-          <CardTitle>RSI Filter</CardTitle>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 mb-2">
-                <input
-                  type="checkbox"
-                  checked={localSettings.RSI_FILTER}
-                  onChange={(e) => handleSettingChange('RSI_FILTER', e.target.checked)}
-                  className="w-3 h-3"
-                />
-                <span className="text-xs font-medium text-gray-300">{localSettings.RSI_FILTER ? 'On' : 'Off'}</span>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">RSI Min</label>
-                <input
+        {/* RSI & Trailing */}
+        <Grid item xs={12} md={6} lg={4}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
+                <Activity size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700}>RSI & Trailing</Typography>
+            </Box>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={localSettings.RSI_FILTER} 
+                    onChange={(e) => handleSettingChange('RSI_FILTER', e.target.checked)}
+                  />
+                }
+                label="RSI Filter"
+              />
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="RSI Min"
                   type="number"
                   value={localSettings.RSI_MIN}
                   onChange={(e) => handleSettingChange('RSI_MIN', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.RSI_FILTER}
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Min</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">RSI Max</label>
-                <input
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="RSI Max"
                   type="number"
                   value={localSettings.RSI_MAX}
                   onChange={(e) => handleSettingChange('RSI_MAX', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
                   disabled={!localSettings.RSI_FILTER}
                 />
-                <p className="text-xs text-gray-500 mt-0.5">Max</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Trailing Stop */}
-        <Card variant="glass">
-          <CardTitle>Trailing Stop</CardTitle>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Trailing Stop (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={localSettings.TRAILING_STOP_PERCENT}
-                  onChange={(e) => handleSettingChange('TRAILING_STOP_PERCENT', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                  disabled={!localSettings.ENABLE_TRAILING_PROFIT}
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Distance %</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Min Momentum (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={localSettings.MIN_MOMENTUM_TO_RIDE}
-                  onChange={(e) => handleSettingChange('MIN_MOMENTUM_TO_RIDE', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                  disabled={!localSettings.ENABLE_TRAILING_PROFIT}
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Min thresh</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Pos Check (sec)</label>
-                <input
-                  type="number"
-                  value={localSettings.OPEN_POSITION_SCAN_INTERVAL}
-                  onChange={(e) => handleSettingChange('OPEN_POSITION_SCAN_INTERVAL', parseInt(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Check interval</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </Stack>
+              <Divider />
+              <TextField
+                fullWidth
+                size="small"
+                label="Trailing Stop (%)"
+                type="number"
+                value={localSettings.TRAILING_STOP_PERCENT}
+                onChange={(e) => handleSettingChange('TRAILING_STOP_PERCENT', parseFloat(e.target.value) || 0)}
+                disabled={!localSettings.ENABLE_TRAILING_PROFIT}
+                helperText="Distance from peak"
+              />
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Fees & Taxes */}
-        <Card variant="glass">
-          <CardTitle>Fees & Taxes</CardTitle>
-          <CardContent>
-            <div className="space-y-2">
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Maker Fee (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={localSettings.MAKER_FEE_PERCENT}
-                  onChange={(e) => handleSettingChange('MAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Limit orders</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Taker Fee (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={localSettings.TAKER_FEE_PERCENT}
-                  onChange={(e) => handleSettingChange('TAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Market orders</p>
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-0.5">Tax Rate (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={localSettings.TAX_PERCENT}
-                  onChange={(e) => handleSettingChange('TAX_PERCENT', parseFloat(e.target.value) || 0)}
-                  onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
-                />
-                <p className="text-xs text-gray-500 mt-0.5">Profits only</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <Grid item xs={12} md={6} lg={4}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
+                <Percent size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700}>Fees & Taxes</Typography>
+            </Box>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Maker Fee (%)"
+                type="number"
+                value={localSettings.MAKER_FEE_PERCENT}
+                onChange={(e) => handleSettingChange('MAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Taker Fee (%)"
+                type="number"
+                value={localSettings.TAKER_FEE_PERCENT}
+                onChange={(e) => handleSettingChange('TAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Tax Rate (%)"
+                type="number"
+                value={localSettings.TAX_PERCENT}
+                onChange={(e) => handleSettingChange('TAX_PERCENT', parseFloat(e.target.value) || 0)}
+                helperText="Applied to net profits"
+              />
+            </CardContent>
+          </Card>
+        </Grid>
 
-      {/* Comments & History - Full width */}
-      <Card>
-        <CardTitle>Comments & History</CardTitle>
-        <CardContent className="space-y-2">
-          <textarea
-            value={settingsComment}
-            onChange={(e) => setSettingsComment(e.target.value)}
-            placeholder="Add a comment..."
-            className="w-full bg-surface p-1.5 rounded border border-gray-700 text-xs"
-            rows={1}
-          />
-          <div>
-            <h4 className="font-semibold mb-1 text-xs">Recent</h4>
-            <div className="space-y-0.5 max-h-24 overflow-y-auto">
-              {settingsHistory.slice(0, 4).map((entry, i) => (
-                <div key={i} className="text-xs bg-surface p-1 rounded">
-                  <p className="text-gray-400">{new Date(entry.savedAt).toLocaleString()}</p>
-                  <p className="text-gray-500">{entry.comment || 'No comment'}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Comments & History */}
+        <Grid item xs={12} lg={8}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
+                <Activity size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700}>Comments & History</Typography>
+            </Box>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                label="Configuration Comment"
+                placeholder="Describe this setup (e.g., 'Aggressive scalping for BTC')"
+                value={settingsComment}
+                onChange={(e) => setSettingsComment(e.target.value)}
+              />
+              <Box>
+                <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ mb: 1, display: 'block' }}>
+                  RECENT SAVES
+                </Typography>
+                <Stack spacing={1}>
+                  {settingsHistory.slice(0, 5).map((entry, i) => (
+                    <Paper key={i} sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.02)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                        <Typography variant="caption" fontWeight={700} color="primary.main">
+                          {new Date(entry.savedAt).toLocaleString()}
+                        </Typography>
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        {entry.comment || 'No comment provided'}
+                      </Typography>
+                    </Paper>
+                  ))}
+                  {settingsHistory.length === 0 && (
+                    <Typography variant="body2" color="text.disabled" sx={{ fontStyle: 'italic' }}>
+                      No history yet
+                    </Typography>
+                  )}
+                </Stack>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-      {/* Danger Zone */}
-      <Card variant="tonal" color="error">
-        <CardTitle className="text-sm">Danger Zone</CardTitle>
-        <CardContent className="flex flex-col gap-4">
-          <div>
-            <p className="text-xs text-gray-300 mb-2">Reset portfolio to $10,000 (clears all trades)</p>
-            <Button size="small" variant="error" onClick={() => setShowResetDialog(true)}>
-              <RotateCcw size={14} /> Reset Portfolio
-            </Button>
-          </div>
-          <div className="border-t border-white/10 pt-4">
-            <p className="text-xs text-gray-300 mb-2">Reset all settings to safe defaults</p>
-            <Button size="small" variant="error" onClick={() => setShowResetSettingsDialog(true)}>
-              <RotateCcw size={14} /> Reset Settings
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Danger Zone */}
+        <Grid item xs={12}>
+          <Card sx={{ borderRadius: 3, bgcolor: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(239, 68, 68, 0.1)', color: 'error.main' }}>
+                <Trash2 size={16} />
+              </Avatar>
+              <Typography variant="subtitle1" fontWeight={700} color="error.main">Danger Zone</Typography>
+            </Box>
+            <CardContent>
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" fontWeight={600} gutterBottom>Reset Portfolio</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                    Clears all trade history and resets balance to $10,000. This cannot be undone.
+                  </Typography>
+                  <Button 
+                    variant="outlined" 
+                    color="error" 
+                    startIcon={<RotateCcw size={16} />}
+                    onClick={() => setShowResetDialog(true)}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Reset Portfolio
+                  </Button>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="body2" fontWeight={600} gutterBottom>Reset Settings</Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                    Reverts all configuration to safe default values. Current settings will be lost.
+                  </Typography>
+                  <Button 
+                    variant="outlined" 
+                    color="error" 
+                    startIcon={<RotateCcw size={16} />}
+                    onClick={() => setShowResetSettingsDialog(true)}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Reset Settings
+                  </Button>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* Dialogs */}
-      {showResetDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-md">
-            <CardTitle>Reset Portfolio?</CardTitle>
-            <CardContent className="space-y-4 mt-4">
-              <p className="text-sm text-gray-300">This will clear all positions and trade history. This action cannot be undone.</p>
-              <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => setShowResetDialog(false)} className="flex-1">Cancel</Button>
-                <Button variant="error" onClick={async () => {
-                  await resetPortfolio()
-                  setShowResetDialog(false)
-                }} className="flex-1">Reset Portfolio</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={showResetDialog} onClose={() => setShowResetDialog(false)} PaperProps={{ sx: { borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none' } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Reset Portfolio?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            This will clear all positions and trade history. This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => setShowResetDialog(false)} color="inherit">Cancel</Button>
+          <Button variant="contained" color="error" onClick={async () => {
+            await resetPortfolio()
+            setShowResetDialog(false)
+            setSnackbar({ open: true, message: 'Portfolio reset successfully', severity: 'success' })
+          }}>Reset Everything</Button>
+        </DialogActions>
+      </Dialog>
 
-      {showResetSettingsDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-md">
-            <CardTitle>Reset Settings?</CardTitle>
-            <CardContent className="space-y-4 mt-4">
-              <p className="text-sm text-gray-300">This will revert all settings to their default safe values. Your current configuration will be lost.</p>
-              <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => setShowResetSettingsDialog(false)} className="flex-1">Cancel</Button>
-                <Button variant="error" onClick={async () => {
-                  await resetSettings()
-                  setShowResetSettingsDialog(false)
-                  setSnackbar('Settings reset to defaults')
-                  setTimeout(() => setSnackbar(''), 3000)
-                }} className="flex-1">Reset Settings</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={showResetSettingsDialog} onClose={() => setShowResetSettingsDialog(false)} PaperProps={{ sx: { borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none' } }}>
+        <DialogTitle sx={{ fontWeight: 700 }}>Reset Settings?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            This will revert all settings to their default safe values. Your current configuration will be lost.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => setShowResetSettingsDialog(false)} color="inherit">Cancel</Button>
+          <Button variant="contained" color="error" onClick={async () => {
+            await resetSettings()
+            setShowResetSettingsDialog(false)
+            setSnackbar({ open: true, message: 'Settings reset to defaults', severity: 'info' })
+          }}>Reset to Defaults</Button>
+        </DialogActions>
+      </Dialog>
 
-      {/* Unsaved Changes Dialog */}
-      {showUnsavedDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-md">
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle size={20} className="text-warning-400" />
-              Unsaved Changes
-            </CardTitle>
-            <CardContent className="space-y-4 mt-4">
-              <p className="text-sm text-gray-300">You have unsaved changes. What would you like to do?</p>
-              <div className="flex gap-2">
-                <Button variant="secondary" onClick={() => { setShowUnsavedDialog(false); setPendingNavigation(null); }} className="flex-1">
-                  Stay
-                </Button>
-                <Button variant="error" onClick={handleDiscardAndNavigate} className="flex-1">
-                  Discard
-                </Button>
-                <Button variant="primary" onClick={handleSaveAndNavigate} className="flex-1">
-                  Save
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={showUnsavedDialog} onClose={() => setShowUnsavedDialog(false)} PaperProps={{ sx: { borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none' } }}>
+        <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <AlertCircle color={theme.palette.warning.main} />
+          Unsaved Changes
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            You have unsaved changes. What would you like to do?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={() => { setShowUnsavedDialog(false); setPendingNavigation(null); }} color="inherit">Stay</Button>
+          <Button variant="outlined" color="error" onClick={handleDiscardAndNavigate}>Discard</Button>
+          <Button variant="contained" color="primary" onClick={handleSaveAndNavigate}>Save & Continue</Button>
+        </DialogActions>
+      </Dialog>
 
-      {snackbar && (
-        <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-2 rounded-lg">
-          {snackbar}
-        </div>
-      )}
-    </div>
+      <Snackbar 
+        open={snackbar.open} 
+        autoHideDuration={4000} 
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2, fontWeight: 600 }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   )
 }

@@ -116,9 +116,14 @@ async function writeSettingsHistory(historyEntries) {
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend files in production
+// Serve static frontend files in production (if a static export exists).
 const frontendPath = path.join(__dirname, 'frontend', 'dist');
-app.use(express.static(frontendPath));
+const frontendIsStatic = fsSync.existsSync(frontendPath);
+if (frontendIsStatic) {
+  app.use(express.static(frontendPath));
+} else {
+  console.warn('[WARN] Frontend static build not found at frontend/dist; falling back to Next dev on http://localhost:3000 (run `npm run dashboard` in development)');
+} 
 
 // Bot process and status management
 let botProcess = null;
@@ -1772,7 +1777,14 @@ app.post('/api/bot/stop', (req, res) => {
 
 // Serve frontend for all other routes (SPA support)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(frontendPath, 'index.html'));
+  if (frontendIsStatic) {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  } else {
+    // If the static build doesn't exist, redirect to Next dev server
+    const target = `http://localhost:3000${req.originalUrl}`;
+    console.warn(`[WARN] Static frontend not found; redirecting to ${target}`);
+    res.redirect(target);
+  }
 });
 
 // Helper to initialize the server runtime (extracted for testing)

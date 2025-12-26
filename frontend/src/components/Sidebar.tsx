@@ -3,30 +3,54 @@
 import { useTrading } from '@/hooks/useTrading'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, Menu, X, Zap, RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
+import { 
+  BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, 
+  Menu, X, Zap, RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle 
+} from 'lucide-react'
 import { useState } from 'react'
+import { 
+  Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, 
+  Box, Typography, Divider, IconButton, useMediaQuery, useTheme, 
+  Chip, Tooltip, Button, Snackbar, Alert, CircularProgress
+} from '@mui/material'
 
 const navLinks = [
-  { href: '/', icon: BarChart3, label: 'Overview' },
-  { href: '/bot-status', icon: Cpu, label: 'Bot Status' },
-  { href: '/performance', icon: Trophy, label: 'Performance' },
-  { href: '/trades', icon: History, label: 'Trade History' },
-  { href: '/activity', icon: Bell, label: 'Activity' },
-  { href: '/logs', icon: Terminal, label: 'Logs' },
-  { href: '/settings', icon: Settings, label: 'Settings' },
-  { href: '/help', icon: HelpCircle, label: 'Help' },
+  { href: '/', icon: BarChart3, label: 'Overview', tooltip: 'Main dashboard overview' },
+  { href: '/bot-status', icon: Cpu, label: 'Bot Status', tooltip: 'Control and monitor the trading bot' },
+  { href: '/performance', icon: Trophy, label: 'Performance', tooltip: 'View trading performance analytics' },
+  { href: '/trades', icon: History, label: 'Trade History', tooltip: 'Browse complete trade history' },
+  { href: '/activity', icon: Bell, label: 'Activity', tooltip: 'See recent trading activity' },
+  { href: '/logs', icon: Terminal, label: 'Logs', tooltip: 'View detailed bot logs' },
+  { href: '/settings', icon: Settings, label: 'Settings', tooltip: 'Configure trading parameters' },
+  { href: '/help', icon: HelpCircle, label: 'Help', tooltip: 'Get help and documentation' },
 ]
+
+const DRAWER_WIDTH = 280
 
 export default function Sidebar() {
   const pathname = usePathname()
   const { botStatus, exchangeApiStatus, settings } = useTrading()
-  const [open, setOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [checking, setChecking] = useState(false)
-  const [toast, setToast] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null)
+  const [snackbar, setSnackbar] = useState<{ open: boolean; type: 'info' | 'success' | 'error'; message: string }>({
+    open: false,
+    type: 'info',
+    message: ''
+  })
 
-  const showToast = (type: 'info' | 'success' | 'error', message: string) => {
-    setToast({ type, message })
-    setTimeout(() => setToast(null), 4000)
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen)
+  }
+
+  const showSnackbar = (type: 'info' | 'success' | 'error', message: string) => {
+    setSnackbar({ open: true, type, message })
+  }
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false })
   }
 
   const handleCheckUpdates = async () => {
@@ -36,167 +60,259 @@ export default function Sidebar() {
       const data = await response.json()
       
       if (data.updateAvailable) {
-        showToast('info', `Update available: v${data.newVersion}. Check the update dialog to proceed.`)
+        showSnackbar('info', `Update available: v${data.newVersion}. Check the update dialog to proceed.`)
       } else {
-        showToast('success', 'You are running the latest version!')
+        showSnackbar('success', 'You are running the latest version!')
       }
     } catch (error) {
       console.error('Failed to check for updates:', error)
-      showToast('error', 'Failed to check for updates')
+      showSnackbar('error', 'Failed to check for updates')
     } finally {
       setChecking(false)
     }
   }
 
+  const drawerContent = (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Logo Section */}
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ 
+          position: 'relative',
+          width: 40,
+          height: 40,
+          borderRadius: 2,
+          bgcolor: 'primary.main',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 0 15px rgba(124, 77, 255, 0.4)'
+        }}>
+          <Zap size={22} color="white" />
+          <Box sx={{ 
+            position: 'absolute',
+            top: -2,
+            right: -2,
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            bgcolor: 'success.main',
+            border: '2px solid',
+            borderColor: 'background.paper',
+            animation: 'pulse 2s infinite'
+          }} />
+        </Box>
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+            Trader
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Dashboard
+          </Typography>
+        </Box>
+      </Box>
+
+      <Divider sx={{ opacity: 0.1 }} />
+
+      {/* Navigation */}
+      <List sx={{ flexGrow: 1, px: 2, py: 2 }}>
+        {navLinks.map((item) => {
+          const Icon = item.icon
+          const isActive = pathname === item.href
+          return (
+            <ListItem key={item.href} disablePadding sx={{ mb: 0.5 }}>
+              <Tooltip title={item.tooltip} placement="right" arrow>
+                <ListItemButton
+                  component={Link}
+                  href={item.href}
+                  onClick={() => isMobile && setMobileOpen(false)}
+                  selected={isActive}
+                  sx={{
+                    borderRadius: 2,
+                    py: 1.5,
+                    '&.Mui-selected': {
+                      bgcolor: 'rgba(124, 77, 255, 0.12)',
+                      color: 'primary.main',
+                      '&:hover': {
+                        bgcolor: 'rgba(124, 77, 255, 0.18)',
+                      },
+                      '& .MuiListItemIcon-root': {
+                        color: 'primary.main',
+                      }
+                    },
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.05)',
+                    }
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40 }}>
+                    <Icon size={20} />
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={item.label} 
+                    primaryTypographyProps={{ 
+                      variant: 'body2', 
+                      fontWeight: isActive ? 600 : 500 
+                    }} 
+                  />
+                </ListItemButton>
+              </Tooltip>
+            </ListItem>
+          )
+        })}
+      </List>
+
+      {/* Bottom Section */}
+      <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <Box sx={{ 
+          bgcolor: 'rgba(255,255,255,0.03)', 
+          borderRadius: 2, 
+          p: 2, 
+          mb: 2,
+          border: '1px solid rgba(255,255,255,0.05)'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ 
+                width: 8, 
+                height: 8, 
+                borderRadius: '50%', 
+                bgcolor: botStatus.running ? 'success.main' : 'text.disabled',
+                animation: botStatus.running ? 'pulse 2s infinite' : 'none'
+              }} />
+              <Typography variant="caption" fontWeight={600}>System Status</Typography>
+            </Box>
+            {botStatus.running && (
+              <Chip 
+                size="small" 
+                icon={<Activity size={12} />} 
+                label={`${botStatus.apiRate || 0}/min`}
+                variant="outlined"
+                sx={{ height: 20, fontSize: '0.65rem', borderColor: 'rgba(255,255,255,0.1)' }}
+              />
+            )}
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+            <Typography variant="caption" color="text.secondary">
+              {settings.EXCHANGE === 'KRAKEN' ? 'Kraken API' : 'Coinbase API'}
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {exchangeApiStatus === 'ok' && <CheckCircle size={12} className="text-success-500" />}
+              {exchangeApiStatus === 'rate-limited' && <AlertTriangle size={12} className="text-warning-500" />}
+              {exchangeApiStatus === 'error' && <XCircle size={12} className="text-error-500" />}
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  textTransform: 'capitalize',
+                  color: exchangeApiStatus === 'ok' ? 'success.main' : 
+                         exchangeApiStatus === 'rate-limited' ? 'warning.main' : 
+                         exchangeApiStatus === 'error' ? 'error.main' : 'text.secondary'
+                }}
+              >
+                {exchangeApiStatus === 'ok' ? 'OK' : exchangeApiStatus}
+              </Typography>
+            </Box>
+          </Box>
+
+          {botStatus.running && (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant="caption" color="text.secondary">Avg Rate (1h)</Typography>
+              <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                {botStatus.apiRateHourly || 0}/min
+              </Typography>
+            </Box>
+          )}
+        </Box>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          size="small"
+          startIcon={checking ? <CircularProgress size={14} color="inherit" /> : <RefreshCw size={14} />}
+          onClick={handleCheckUpdates}
+          disabled={checking}
+          sx={{ 
+            borderRadius: 2,
+            textTransform: 'none',
+            borderColor: 'rgba(124, 77, 255, 0.3)',
+            color: 'primary.light',
+            '&:hover': {
+              borderColor: 'primary.main',
+              bgcolor: 'rgba(124, 77, 255, 0.05)'
+            }
+          }}
+        >
+          {checking ? 'Checking...' : 'Check Updates'}
+        </Button>
+      </Box>
+    </Box>
+  )
+
   return (
     <>
-      <button
-        className="md:hidden fixed top-4 left-4 z-50 p-3 glass rounded-xl shadow-glow-sm hover:shadow-glow-md transition-all duration-300"
-        onClick={() => setOpen(!open)}
-        aria-label={open ? 'Close menu' : 'Open menu'}
-      >
-        {open ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
-      </button>
-
-      <aside
-        className={`fixed md:relative z-40 w-72 h-screen glass border-r border-white/10 transform transition-all duration-500 ease-out ${
-          open ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0`}
-      >
-        {/* Logo Section */}
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-info-500 flex items-center justify-center shadow-glow-sm">
-                <Zap size={22} className="text-white" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-success-500 border-2 border-background animate-pulse"></div>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary-400 via-info-400 to-primary-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-shimmer">
-                Trader
-              </h1>
-              <p className="text-xs text-gray-500">Dashboard</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <nav className="p-4 space-y-1">
-          {navLinks.map((item, idx) => {
-            const Icon = item.icon
-            const isActive = pathname === item.href
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                  isActive
-                    ? 'bg-gradient-to-r from-primary-500/20 to-info-500/20 text-white shadow-glow-sm'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-                style={{ animationDelay: `${idx * 50}ms` }}
-                title={`${item.label} - ${item.href === '/' ? 'Main dashboard overview' : item.href === '/bot-status' ? 'Control and monitor the trading bot' : item.href === '/performance' ? 'View trading performance analytics' : item.href === '/trades' ? 'Browse complete trade history' : item.href === '/activity' ? 'See recent trading activity' : item.href === '/logs' ? 'View detailed bot logs' : item.href === '/settings' ? 'Configure trading parameters' : 'Get help and documentation'}`}
-              >
-                {/* Active indicator */}
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-gradient-to-b from-primary-400 to-info-400 shadow-glow-sm" />
-                )}
-                
-                <div className={`p-2 rounded-lg transition-all duration-300 ${
-                  isActive 
-                    ? 'bg-gradient-to-br from-primary-500/30 to-info-500/30' 
-                    : 'bg-white/5 group-hover:bg-white/10'
-                }`}>
-                  <Icon size={18} className={isActive ? 'text-primary-400' : 'text-gray-400 group-hover:text-white transition-colors'} />
-                </div>
-                
-                <span className="font-medium">{item.label}</span>
-                
-                {/* Hover glow effect */}
-                <div className={`absolute inset-0 rounded-xl bg-gradient-to-r from-primary-500/0 via-primary-500/5 to-info-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none ${isActive ? 'opacity-100' : ''}`} />
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Bottom Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-white/5 space-y-2">
-          {/* System Status Widget with API Rate */}
-          <div className="glass-light rounded-xl p-2.5 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${botStatus.running ? 'bg-success-500 animate-pulse' : 'bg-gray-500'}`}></div>
-                <span className="text-xs text-gray-400">System Status</span>
-              </div>
-              {botStatus.running && (
-                <div className="flex items-center gap-1 text-xs text-gray-500">
-                  <Activity size={10} />
-                  <span className="font-mono">{botStatus.apiRate || 0}/min</span>
-                </div>
-              )}
-            </div>
-            
-            {/* Exchange API Status */}
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">{settings.EXCHANGE === 'KRAKEN' ? 'Kraken API' : 'Coinbase API'}</span>
-              <div className={`flex items-center gap-1 ${
-                exchangeApiStatus === 'ok' ? 'text-success-400' :
-                exchangeApiStatus === 'rate-limited' ? 'text-warning-400' :
-                exchangeApiStatus === 'error' ? 'text-error-400' : 'text-gray-400'
-              }`}>
-                {exchangeApiStatus === 'ok' && <CheckCircle size={10} />}
-                {exchangeApiStatus === 'rate-limited' && <AlertTriangle size={10} />}
-                {exchangeApiStatus === 'error' && <XCircle size={10} />}
-                {exchangeApiStatus === 'unknown' && <span className="w-2 h-2 rounded-full bg-gray-500" />}
-                <span className="capitalize">{exchangeApiStatus === 'ok' ? 'OK' : exchangeApiStatus}</span>
-              </div>
-            </div>
-            
-            {botStatus.running && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">Avg Rate</span>
-                <span className="text-gray-400 font-mono">{botStatus.apiRateHourly || 0}/min (1h)</span>
-              </div>
-            )}
-          </div>
-          
-          {/* Check Updates Button */}
-          <button
-            onClick={handleCheckUpdates}
-            disabled={checking}
-            className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-primary-600/20 to-info-600/20 border border-primary-500/30 hover:from-primary-600/30 hover:to-info-600/30 text-primary-300 hover:text-primary-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 font-medium text-xs"
-            title="Check for available updates"
-          >
-            <RefreshCw size={14} className={checking ? 'animate-spin' : ''} />
-            {checking ? 'Checking...' : 'Check Updates'}
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Overlay */}
-      {open && (
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm md:hidden z-30 transition-opacity duration-300"
-          onClick={() => setOpen(false)}
-        />
+      {/* Mobile Menu Button */}
+      {isMobile && (
+        <IconButton
+          onClick={handleDrawerToggle}
+          sx={{
+            position: 'fixed',
+            top: 16,
+            left: 16,
+            zIndex: 1200,
+            bgcolor: 'rgba(15, 23, 36, 0.8)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            '&:hover': { bgcolor: 'rgba(15, 23, 36, 0.9)' }
+          }}
+        >
+          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+        </IconButton>
       )}
 
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed bottom-6 left-6 right-6 md:left-auto md:right-6 md:max-w-sm z-50 animate-in slide-in-from-bottom-4">
-          <div className={`p-4 rounded-lg border backdrop-blur-sm ${
-            toast.type === 'success' 
-              ? 'bg-success-500/20 border-success-500/50 text-success-300'
-              : toast.type === 'error'
-              ? 'bg-danger-500/20 border-danger-500/50 text-danger-300'
-              : 'bg-info-500/20 border-info-500/50 text-info-300'
-          }`}>
-            <p className="text-sm font-medium">{toast.message}</p>
-          </div>
-        </div>
-      )}
+      {/* Desktop Drawer */}
+      <Drawer
+        variant={isMobile ? 'temporary' : 'permanent'}
+        open={isMobile ? mobileOpen : true}
+        onClose={handleDrawerToggle}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          '& .MuiDrawer-paper': {
+            width: DRAWER_WIDTH,
+            boxSizing: 'border-box',
+            bgcolor: 'background.paper',
+            backgroundImage: 'none',
+            borderRight: '1px solid rgba(255,255,255,0.05)',
+            boxShadow: 'none'
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.type === 'info' ? 'info' : snackbar.type === 'success' ? 'success' : 'error'}
+          variant="filled"
+          sx={{ width: '100%', borderRadius: 2 }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      <style jsx global>{`
+        @keyframes pulse {
+          0% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.1); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </>
   )
 }

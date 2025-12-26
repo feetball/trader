@@ -1,16 +1,20 @@
 'use client'
 
 import { useTrading } from '@/hooks/useTrading'
-import { Card, CardTitle, CardContent } from '@/components/Card'
-import Chip from '@/components/Chip'
 import { useState, useEffect, useRef } from 'react'
-import { Search } from 'lucide-react'
+import { Search, Terminal, ShoppingCart, Tag, AlertCircle, Radar } from 'lucide-react'
+import { 
+  Box, Grid, Typography, Card, CardContent, 
+  Chip, Avatar, Paper, useTheme, TextField, InputAdornment,
+  Stack, List, ListItem, ListItemText
+} from '@mui/material'
 
 export default function LogsPage() {
-  const { botStatus, loading, refreshData } = useTrading()
+  const { botStatus } = useTrading()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('all')
   const containerRef = useRef<HTMLDivElement>(null)
+  const theme = useTheme()
 
   const logs = botStatus.logs || []
 
@@ -38,70 +42,165 @@ export default function LogsPage() {
   }, [logs])
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card variant="tonal" color="success">
-          <CardContent>
-            <p className="text-sm text-gray-400">Buy Orders</p>
-            <p className="text-3xl font-bold text-success-500 mt-2">{buyCount}</p>
-          </CardContent>
-        </Card>
-        <Card variant="tonal" color="info">
-          <CardContent>
-            <p className="text-sm text-gray-400">Sell Orders</p>
-            <p className="text-3xl font-bold text-info-500 mt-2">{sellCount}</p>
-          </CardContent>
-        </Card>
-        <Card variant="tonal" color="error">
-          <CardContent>
-            <p className="text-sm text-gray-400">Errors</p>
-            <p className="text-3xl font-bold text-error-500 mt-2">{errorCount}</p>
-          </CardContent>
-        </Card>
-      </div>
+    <Box sx={{ p: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ 
+            p: 3, 
+            borderRadius: 3, 
+            bgcolor: 'rgba(34, 197, 94, 0.05)', 
+            border: '1px solid rgba(34, 197, 94, 0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(34, 197, 94, 0.1)', color: 'success.main' }}>
+                <ShoppingCart size={18} />
+              </Avatar>
+              <Typography variant="caption" color="success.main" fontWeight={700}>Buy Orders</Typography>
+            </Box>
+            <Typography variant="h3" fontWeight={800} color="success.main">{buyCount}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ 
+            p: 3, 
+            borderRadius: 3, 
+            bgcolor: 'rgba(3, 218, 198, 0.05)', 
+            border: '1px solid rgba(3, 218, 198, 0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
+                <Tag size={18} />
+              </Avatar>
+              <Typography variant="caption" color="secondary.main" fontWeight={700}>Sell Orders</Typography>
+            </Box>
+            <Typography variant="h3" fontWeight={800} color="secondary.main">{sellCount}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ 
+            p: 3, 
+            borderRadius: 3, 
+            bgcolor: 'rgba(239, 68, 68, 0.05)', 
+            border: '1px solid rgba(239, 68, 68, 0.1)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 1
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(239, 68, 68, 0.1)', color: 'error.main' }}>
+                <AlertCircle size={18} />
+              </Avatar>
+              <Typography variant="caption" color="error.main" fontWeight={700}>Errors</Typography>
+            </Box>
+            <Typography variant="h3" fontWeight={800} color="error.main">{errorCount}</Typography>
+          </Paper>
+        </Grid>
+      </Grid>
 
-      <Card>
-        <CardTitle>Bot Logs</CardTitle>
-        <CardContent className="space-y-4">
-          <div className="flex gap-2">
-            <div className="flex-1 flex items-center bg-surface px-3 rounded-lg">
-              <Search size={18} className="text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search logs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent py-2 px-2 outline-none text-sm"
-              />
-            </div>
-          </div>
+      <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
+            <Terminal size={18} />
+          </Avatar>
+          <Typography variant="h6" fontWeight={700}>Bot Logs</Typography>
+        </Box>
+        <CardContent sx={{ p: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            <TextField
+              placeholder="Search logs..."
+              size="small"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ 
+                flex: 1, 
+                minWidth: 200,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  bgcolor: 'rgba(255,255,255,0.03)',
+                  '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                  '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
+                }
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={18} className="text-gray-500" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
+              {[
+                { id: 'all', label: 'All', icon: Terminal },
+                { id: 'buy', label: 'Buy', icon: ShoppingCart },
+                { id: 'sell', label: 'Sell', icon: Tag },
+                { id: 'error', label: 'Error', icon: AlertCircle },
+                { id: 'scan', label: 'Scan', icon: Radar },
+              ].map(type => (
+                <Chip
+                  key={type.id}
+                  label={type.label}
+                  icon={<type.icon size={14} />}
+                  onClick={() => setFilterType(type.id)}
+                  color={filterType === type.id ? 'primary' : 'default'}
+                  variant={filterType === type.id ? 'filled' : 'outlined'}
+                  sx={{ 
+                    borderRadius: 1.5, 
+                    fontWeight: 600,
+                    bgcolor: filterType === type.id ? 'primary.main' : 'transparent',
+                    borderColor: filterType === type.id ? 'primary.main' : 'rgba(255,255,255,0.1)',
+                    '&:hover': { bgcolor: filterType === type.id ? 'primary.dark' : 'rgba(255,255,255,0.05)' }
+                  }}
+                />
+              ))}
+            </Stack>
+          </Box>
 
-          <div className="flex gap-2 flex-wrap">
-            {['all', 'buy', 'sell', 'error', 'scan'].map(type => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  filterType === type ? 'bg-primary-700 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          <div ref={containerRef} className="bg-surface p-3 rounded-lg max-h-96 overflow-y-auto font-mono text-sm space-y-1">
-            {filteredLogs.map((log, i) => (
-              <div key={i} className="text-gray-400">
-                <span className="text-gray-600">{log.timestamp}</span> {log.message}
-              </div>
-            ))}
-            {filteredLogs.length === 0 && (
-              <p className="text-center text-gray-500 py-4">No logs match criteria</p>
-            )}
-          </div>
+          <Paper 
+            ref={containerRef}
+            sx={{ 
+              p: 2, 
+              borderRadius: 2, 
+              bgcolor: 'rgba(0,0,0,0.2)', 
+              maxHeight: 500, 
+              overflow: 'auto',
+              fontFamily: 'monospace',
+              fontSize: '0.85rem',
+              border: '1px solid rgba(255,255,255,0.05)'
+            }}
+          >
+            <List sx={{ py: 0 }}>
+              {filteredLogs.map((log, i) => (
+                <ListItem key={i} sx={{ py: 0.25, px: 0, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                  <Typography variant="caption" sx={{ color: 'text.disabled', minWidth: 70, pt: 0.25 }}>
+                    {log.timestamp}
+                  </Typography>
+                  <Typography variant="body2" sx={{ 
+                    color: log.message.toLowerCase().includes('error') ? 'error.main' : 
+                           log.message.toLowerCase().includes('buy') ? 'success.main' :
+                           log.message.toLowerCase().includes('sell') ? 'info.main' : 'text.secondary',
+                    wordBreak: 'break-word'
+                  }}>
+                    {log.message}
+                  </Typography>
+                </ListItem>
+              ))}
+              {filteredLogs.length === 0 && (
+                <Box sx={{ textAlign: 'center', py: 8 }}>
+                  <Search size={32} className="text-gray-600" style={{ marginBottom: 8 }} />
+                  <Typography variant="body2" color="text.disabled">No logs match criteria</Typography>
+                </Box>
+              )}
+            </List>
+          </Paper>
         </CardContent>
       </Card>
-    </div>
+    </Box>
   )
 }

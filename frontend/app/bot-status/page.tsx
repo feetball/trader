@@ -1,228 +1,322 @@
 'use client'
 
 import { useTrading } from '@/hooks/useTrading'
-import { Card, CardTitle, CardContent } from '@/components/Card'
-import Chip from '@/components/Chip'
-import Button from '@/components/Button'
 import { RefreshCw, Power, Square, Cpu, Settings, Target, Clock, Activity, BarChart3, DollarSign, Zap, Monitor } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { frontendLogger, type FrontendLog } from '@/lib/logger'
+import { 
+  Box, Grid, Typography, Card, CardHeader, CardContent, 
+  Button, Chip, Avatar, IconButton, Tooltip, 
+  CircularProgress, Divider, useTheme, Paper, List, ListItem, ListItemText
+} from '@mui/material'
 
 // Utility to get log color class based on content
 function getBotLogColor(message: string): string {
   const lowerMsg = message?.toLowerCase()
-  if (lowerMsg.includes('error')) return 'text-error-400'
-  if (lowerMsg.includes('success') || lowerMsg.includes('sold')) return 'text-success-400'
-  if (lowerMsg.includes('buy') || lowerMsg.includes('bought')) return 'text-info-400'
-  return 'text-gray-400'
+  if (lowerMsg.includes('error')) return 'error.main'
+  if (lowerMsg.includes('success') || lowerMsg.includes('sold')) return 'success.main'
+  if (lowerMsg.includes('buy') || lowerMsg.includes('bought')) return 'info.main'
+  return 'text.secondary'
 }
 
 // Utility to get log color class based on level
 function getFrontendLogColor(level: string): string {
-  if (level === 'error') return 'text-error-400'
-  if (level === 'warn') return 'text-warning-400'
-  if (level === 'success') return 'text-success-400'
-  return 'text-gray-400'
+  if (level === 'error') return 'error.main'
+  if (level === 'warn') return 'warning.main'
+  if (level === 'success') return 'success.main'
+  return 'text.secondary'
 }
 
 export default function BotStatusPage() {
   const { botStatus, botLoading, loading, portfolio, settings, startBot, stopBot, refreshData } = useTrading()
   const [frontendLogs, setFrontendLogs] = useState<FrontendLog[]>([])
+  const theme = useTheme()
 
   // Subscribe to frontend logs
   useEffect(() => {
-    // Get initial logs
     setFrontendLogs(frontendLogger.getLogs())
-    
-    // Subscribe to updates
     const unsubscribe = frontendLogger.subscribe((logs) => {
       setFrontendLogs(logs)
     })
-
-    // Log page load
     frontendLogger.info('Bot Status page loaded')
-
     return unsubscribe
   }, [])
 
   return (
-    <div className="p-3 md:p-6 space-y-3 md:space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto">
-      {/* Main Status Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-6">
-        <Card variant="glass" className="lg:col-span-2">
-          <CardTitle icon={<Cpu size={18} className="text-primary-400" />}>
-            Bot Status
-          </CardTitle>
-          <CardContent>
-            <div className="flex items-start gap-6">
-              {/* Status Indicator */}
-              <div className="relative">
-                <div className={`w-24 h-24 rounded-2xl flex items-center justify-center ${
-                  botStatus.running 
-                    ? 'bg-gradient-to-br from-success-500/30 to-success-600/10 shadow-glow-success' 
-                    : 'bg-gradient-to-br from-gray-500/30 to-gray-600/10'
-                }`}>
-                  <Cpu size={40} className={botStatus.running ? 'text-success-400 animate-pulse' : 'text-gray-500'} />
-                </div>
-                {botStatus.running && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-success-500 animate-ping"></div>
-                )}
-              </div>
+    <Box sx={{ p: { xs: 1, md: 2 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* Main Status and Controls */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} lg={8}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <CardHeader 
+              avatar={<Avatar sx={{ bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}><Cpu size={20} /></Avatar>}
+              title={<Typography variant="h6" fontWeight={700}>Bot Status</Typography>}
+              sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', py: 2 }}
+            />
+            <CardContent sx={{ py: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                <Box sx={{ position: 'relative' }}>
+                  <Avatar sx={{ 
+                    width: 100, 
+                    height: 100, 
+                    borderRadius: 4,
+                    bgcolor: botStatus.running ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)',
+                    color: botStatus.running ? 'success.main' : 'text.disabled',
+                    boxShadow: botStatus.running ? '0 0 30px rgba(34, 197, 94, 0.2)' : 'none',
+                    transition: 'all 0.3s'
+                  }}>
+                    <Cpu size={48} className={botStatus.running ? 'animate-pulse' : ''} />
+                  </Avatar>
+                  {botStatus.running && (
+                    <Box sx={{ 
+                      position: 'absolute', 
+                      top: -4, 
+                      right: -4, 
+                      width: 16, 
+                      height: 16, 
+                      borderRadius: '50%', 
+                      bgcolor: 'success.main', 
+                      border: '3px solid',
+                      borderColor: 'background.paper',
+                      animation: 'pulse 2s infinite'
+                    }} />
+                  )}
+                </Box>
 
-              {/* Status Info */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <Chip 
-                    color={botStatus.running ? 'success' : 'grey'} 
-                    variant="glow"
-                    size="medium"
-                  >
-                    {botStatus.running ? '● Running' : '○ Stopped'}
-                  </Chip>
-                </div>
-                <p className="text-xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-4">
-                  {botStatus.message || 'Awaiting status...'}
-                </p>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <Activity size={14} className="text-info-400" />
-                    <span className="text-gray-500">Cycles:</span>
-                    <span className="font-mono text-white">{botStatus.cycleCount || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Zap size={14} className="text-warning-400" />
-                    <span className="text-gray-500">API Calls:</span>
-                    <span className="font-mono text-white">{botStatus.apiCalls || 0}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <Box sx={{ flex: 1, minWidth: 200 }}>
+                  <Box sx={{ mb: 2 }}>
+                    <Chip 
+                      label={botStatus.running ? 'RUNNING' : 'STOPPED'} 
+                      color={botStatus.running ? 'success' : 'default'}
+                      size="small"
+                      sx={{ fontWeight: 800, borderRadius: 1.5, px: 1 }}
+                    />
+                  </Box>
+                  <Typography variant="h5" fontWeight={800} gutterBottom>
+                    {botStatus.message || 'Awaiting status...'}
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mt: 1 }}>
+                    <Grid item xs={6}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Activity size={14} className="text-info-400" />
+                        <Typography variant="caption" color="text.secondary">Cycles:</Typography>
+                        <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace' }}>{botStatus.cycleCount || 0}</Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Zap size={14} className="text-warning-400" />
+                        <Typography variant="caption" color="text.secondary">API Calls:</Typography>
+                        <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace' }}>{botStatus.apiCalls || 0}</Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        {/* Controls Card */}
-        <Card variant="glass">
-          <CardTitle icon={<Settings size={18} className="text-info-400" />}>
-            Controls
-          </CardTitle>
-          <CardContent className="space-y-4">
-            {!botStatus.running ? (
-              <button
-                onClick={startBot}
-                disabled={botLoading}
-                className="group relative w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-glow-success"
-                title="Start the trading bot to begin scanning markets and executing trades"
+        <Grid item xs={12} lg={4}>
+          <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <CardHeader 
+              avatar={<Avatar sx={{ bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}><Settings size={20} /></Avatar>}
+              title={<Typography variant="h6" fontWeight={700}>Controls</Typography>}
+              sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', py: 2 }}
+            />
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 3 }}>
+              {!botStatus.running ? (
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="success"
+                  size="large"
+                  startIcon={<Power size={20} />}
+                  onClick={startBot}
+                  disabled={botLoading}
+                  sx={{ 
+                    py: 2, 
+                    borderRadius: 2, 
+                    fontWeight: 700,
+                    boxShadow: '0 8px 24px rgba(34, 197, 94, 0.3)',
+                    '&:hover': { boxShadow: '0 12px 32px rgba(34, 197, 94, 0.4)' }
+                  }}
+                >
+                  Start Bot
+                </Button>
+              ) : (
+                <Button
+                  fullWidth
+                  variant="contained"
+                  color="error"
+                  size="large"
+                  startIcon={<Square size={20} />}
+                  onClick={stopBot}
+                  disabled={botLoading}
+                  sx={{ 
+                    py: 2, 
+                    borderRadius: 2, 
+                    fontWeight: 700,
+                    boxShadow: '0 8px 24px rgba(239, 68, 68, 0.3)',
+                    '&:hover': { boxShadow: '0 12px 32px rgba(239, 68, 68, 0.4)' }
+                  }}
+                >
+                  Stop Bot
+                </Button>
+              )}
+              <Button
+                fullWidth
+                variant="outlined"
+                color="inherit"
+                size="large"
+                startIcon={<RefreshCw size={18} className={loading ? 'animate-spin' : ''} />}
+                onClick={refreshData}
+                disabled={loading}
+                sx={{ 
+                  py: 1.5, 
+                  borderRadius: 2, 
+                  borderColor: 'rgba(255,255,255,0.1)',
+                  '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.2)' }
+                }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-success-600 via-success-500 to-success-600 bg-[length:200%_100%] animate-shimmer"></div>
-                <Power size={20} className="relative z-10" />
-                <span className="relative z-10">Start Bot</span>
-              </button>
-            ) : (
-              <button
-                onClick={stopBot}
-                disabled={botLoading}
-                className="group relative w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white overflow-hidden transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-glow-error"
-                title="Stop the trading bot and halt all trading activities"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-error-600 via-error-500 to-error-600 bg-[length:200%_100%] animate-shimmer"></div>
-                <Square size={20} className="relative z-10" />
-                <span className="relative z-10">Stop Bot</span>
-              </button>
-            )}
-            <button
-              onClick={refreshData}
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-medium text-gray-300 glass hover:bg-white/10 transition-all duration-300 disabled:opacity-50"
-              title="Refresh portfolio data, positions, and trading statistics from the server"
-            >
-              <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
-              Refresh Data
-            </button>
-          </CardContent>
-        </Card>
-      </div>
+                Refresh Data
+              </Button>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <Grid container spacing={3}>
         {[
           { label: 'Open Positions', value: portfolio.openPositions || 0, suffix: `/${settings.MAX_POSITIONS}`, icon: Target, color: 'primary' },
           { label: 'Available Cash', value: '$' + (portfolio.cash?.toFixed(0) || '0'), icon: DollarSign, color: 'success' },
           { label: 'Total Trades', value: portfolio.totalTrades || 0, icon: BarChart3, color: 'info' },
           { label: 'Scan Interval', value: settings.SCAN_INTERVAL + 's', icon: Clock, color: 'warning' },
         ].map((stat, i) => (
-          <div key={i} title={`${stat.label}: ${stat.value}${stat.suffix || ''} - ${stat.label === 'Open Positions' ? 'Number of active trades currently held' : stat.label === 'Available Cash' ? 'Cash available for new trades' : stat.label === 'Total Trades' ? 'Total number of completed trades' : 'How often the bot scans for opportunities'}`}>
-            <Card variant="glass" hover className="group">
-              <CardContent>
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`p-1.5 rounded-lg bg-${stat.color}-500/20`}>
-                  <stat.icon size={14} className={`text-${stat.color}-400`} />
-                </div>
-                <p className="text-xs text-gray-500">{stat.label}</p>
-              </div>
-              <p className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-                {stat.value}{stat.suffix || ''}
-              </p>
+          <Grid item xs={6} md={3} key={i}>
+            <Paper sx={{ 
+              p: 2.5, 
+              borderRadius: 3, 
+              bgcolor: 'background.paper', 
+              backgroundImage: 'none', 
+              border: '1px solid rgba(255,255,255,0.05)',
+              '&:hover': { borderColor: `${stat.color}.main`, transform: 'translateY(-4px)' },
+              transition: 'all 0.3s'
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                <Avatar sx={{ 
+                  width: 28, 
+                  height: 28, 
+                  bgcolor: `rgba(${stat.color === 'primary' ? '124, 77, 255' : stat.color === 'success' ? '34, 197, 94' : stat.color === 'info' ? '3, 218, 198' : '245, 158, 11'}, 0.1)`, 
+                  color: `${stat.color}.main` 
+                }}>
+                  <stat.icon size={14} />
+                </Avatar>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>{stat.label}</Typography>
+              </Box>
+              <Typography variant="h5" fontWeight={800}>
+                {stat.value}<Typography component="span" variant="body2" color="text.disabled">{stat.suffix || ''}</Typography>
+              </Typography>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Logs Section */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <CardHeader 
+              avatar={<Avatar sx={{ bgcolor: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' }}><Activity size={20} /></Avatar>}
+              title={<Typography variant="h6" fontWeight={700}>Bot Logs</Typography>}
+              sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', py: 2 }}
+            />
+            <CardContent sx={{ p: 0 }}>
+              <List sx={{ maxHeight: 400, overflow: 'auto', py: 0 }}>
+                {botStatus.logs?.map((log, i) => (
+                  <ListItem 
+                    key={`bot-${log.timestamp}-${i}`}
+                    sx={{ 
+                      borderBottom: '1px solid rgba(255,255,255,0.03)',
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' }
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <Typography variant="caption" sx={{ color: 'text.disabled', fontFamily: 'monospace', minWidth: 70 }}>
+                            {log.timestamp}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: getBotLogColor(log.message), fontFamily: 'monospace' }}>
+                            {log.message}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+                {!botStatus.logs?.length && (
+                  <Box sx={{ textAlign: 'center', py: 8 }}>
+                    <Activity size={32} className="text-gray-600" style={{ marginBottom: 8 }} />
+                    <Typography variant="body2" color="text.disabled">No logs yet. Start the bot to see activity.</Typography>
+                  </Box>
+                )}
+              </List>
             </CardContent>
           </Card>
-          </div>
-        ))}
-      </div>
+        </Grid>
 
-      {/* Bot Logs - Show ALL logs */}
-      <Card variant="glass">
-        <CardTitle icon={<Activity size={18} className="text-warning-400" />}>
-          Bot Logs
-        </CardTitle>
-        <CardContent>
-          <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar font-mono text-sm">
-            {botStatus.logs?.map((log, i) => (
-              <div 
-                key={`bot-${log.timestamp}-${i}`}
-                className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <span className="text-gray-600 text-xs whitespace-nowrap">{log.timestamp}</span>
-                <span className={`flex-1 ${getBotLogColor(log.message)}`}>
-                  {log.message}
-                </span>
-              </div>
-            ))}
-            {!botStatus.logs?.length && (
-              <div className="text-center py-8">
-                <Activity size={32} className="mx-auto text-gray-600 mb-2" />
-                <p className="text-gray-500">No logs yet. Start the bot to see activity.</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        <Grid item xs={12} md={6}>
+          <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <CardHeader 
+              avatar={<Avatar sx={{ bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'info.main' }}><Monitor size={20} /></Avatar>}
+              title={<Typography variant="h6" fontWeight={700}>Frontend Logs</Typography>}
+              sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', py: 2 }}
+            />
+            <CardContent sx={{ p: 0 }}>
+              <List sx={{ maxHeight: 400, overflow: 'auto', py: 0 }}>
+                {frontendLogs.map((log, i) => (
+                  <ListItem 
+                    key={`frontend-${log.timestamp}-${i}`}
+                    sx={{ 
+                      borderBottom: '1px solid rgba(255,255,255,0.03)',
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.02)' }
+                    }}
+                  >
+                    <ListItemText
+                      primary={
+                        <Box sx={{ display: 'flex', gap: 2 }}>
+                          <Typography variant="caption" sx={{ color: 'text.disabled', fontFamily: 'monospace', minWidth: 70 }}>
+                            {log.timestamp}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: getFrontendLogColor(log.level), fontFamily: 'monospace' }}>
+                            {log.message}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+                {!frontendLogs.length && (
+                  <Box sx={{ textAlign: 'center', py: 8 }}>
+                    <Monitor size={32} className="text-gray-600" style={{ marginBottom: 8 }} />
+                    <Typography variant="body2" color="text.disabled">No frontend logs yet.</Typography>
+                  </Box>
+                )}
+              </List>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-      {/* Frontend Logs */}
-      <Card variant="glass">
-        <CardTitle icon={<Monitor size={18} className="text-info-400" />}>
-          Frontend Logs
-        </CardTitle>
-        <CardContent>
-          <div className="space-y-2 max-h-96 overflow-y-auto custom-scrollbar font-mono text-sm">
-            {frontendLogs.map((log, i) => (
-              <div 
-                key={`frontend-${log.timestamp}-${i}`}
-                className="flex items-start gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <span className="text-gray-600 text-xs whitespace-nowrap">{log.timestamp}</span>
-                <span className={`flex-1 ${getFrontendLogColor(log.level)}`}>
-                  {log.message}
-                </span>
-              </div>
-            ))}
-            {!frontendLogs.length && (
-              <div className="text-center py-8">
-                <Monitor size={32} className="mx-auto text-gray-600 mb-2" />
-                <p className="text-gray-500">No frontend logs yet.</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+      <style jsx global>{`
+        @keyframes pulse {
+          0% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.2); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </Box>
   )
 }

@@ -1,55 +1,85 @@
 'use client'
 
 import { useTrading, type Position } from '@/hooks/useTrading'
-import Chip from '@/components/Chip'
 import WidgetGrid, { Widget } from '@/components/WidgetGrid'
 import AuditEntryDisplay from '@/components/AuditEntryDisplay'
 import { TrendingUp, TrendingDown, DollarSign, Wallet, Trophy, Target, Zap, BarChart3, Activity, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { 
+  Box, Typography, Chip, IconButton, Tooltip, 
+  CircularProgress, Button, Divider, useTheme,
+  Avatar, List, ListItem, ListItemText, ListItemAvatar,
+  Paper, Fade
+} from '@mui/material'
 
 // Individual widget components with enhanced visuals
 function TotalValueWidget() {
   const { portfolio } = useTrading()
   const roi = portfolio.roi || 0
   return (
-    <div className="relative">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="p-2 rounded-lg bg-gradient-to-br from-primary-500/20 to-info-500/20">
-          <DollarSign size={18} className="text-primary-400" />
-        </div>
-        <span className="text-sm text-gray-400">Total Value</span>
-      </div>
-      <div className="text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+    <Box sx={{ position: 'relative' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+        <Avatar sx={{ 
+          width: 32, 
+          height: 32, 
+          bgcolor: 'rgba(124, 77, 255, 0.1)', 
+          color: 'primary.main' 
+        }}>
+          <DollarSign size={18} />
+        </Avatar>
+        <Typography variant="caption" color="text.secondary" fontWeight={600}>Total Value</Typography>
+      </Box>
+      <Typography variant="h4" sx={{ 
+        fontWeight: 800, 
+        background: 'linear-gradient(135deg, #fff 0%, #ccc 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent'
+      }}>
         ${(portfolio.totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </div>
-      <div className={`mt-3 flex items-center gap-2 ${roi >= 0 ? 'text-success-400' : 'text-error-400'}`}>
-        <div className={`p-1 rounded-md ${roi >= 0 ? 'bg-success-500/20' : 'bg-error-500/20'}`}>
-          {roi >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-        </div>
-        <span className="font-semibold">{roi >= 0 ? '+' : ''}{roi.toFixed(2)}% ROI</span>
-      </div>
-    </div>
+      </Typography>
+      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Chip 
+          size="small"
+          icon={roi >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+          label={`${roi >= 0 ? '+' : ''}${roi.toFixed(2)}% ROI`}
+          color={roi >= 0 ? 'success' : 'error'}
+          sx={{ fontWeight: 700, borderRadius: 1.5 }}
+        />
+      </Box>
+    </Box>
   )
 }
 
 function CashWidget() {
   const { portfolio } = useTrading()
   return (
-    <div className="relative">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="p-2 rounded-lg bg-gradient-to-br from-info-500/20 to-primary-500/20">
-          <Wallet size={18} className="text-info-400" />
-        </div>
-        <span className="text-sm text-gray-400">Available Cash</span>
-      </div>
-      <div className="text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+    <Box sx={{ position: 'relative' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+        <Avatar sx={{ 
+          width: 32, 
+          height: 32, 
+          bgcolor: 'rgba(3, 218, 198, 0.1)', 
+          color: 'secondary.main' 
+        }}>
+          <Wallet size={18} />
+        </Avatar>
+        <Typography variant="caption" color="text.secondary" fontWeight={600}>Available Cash</Typography>
+      </Box>
+      <Typography variant="h4" sx={{ 
+        fontWeight: 800, 
+        background: 'linear-gradient(135deg, #fff 0%, #ccc 100%)',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent'
+      }}>
         ${(portfolio.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </div>
-      <div className="mt-3 text-sm text-gray-500 flex items-center gap-2">
-        <span className="inline-block w-2 h-2 rounded-full bg-info-500/50 animate-pulse"></span>
-        Positions: ${(portfolio.positionsValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </div>
-    </div>
+      </Typography>
+      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'secondary.main', animation: 'pulse 2s infinite' }} />
+        <Typography variant="caption" color="text.secondary">
+          Positions: ${(portfolio.positionsValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </Typography>
+      </Box>
+    </Box>
   )
 }
 
@@ -58,84 +88,87 @@ function ProfitWidget() {
   const profit = (portfolio.totalNetProfit ?? portfolio.totalProfit) || 0
   const isPositive = profit >= 0
   return (
-    <div className="relative">
-      <div className="flex items-center gap-2 mb-2">
-        <div className={`p-2 rounded-lg bg-gradient-to-br ${isPositive ? 'from-success-500/20 to-success-400/10' : 'from-error-500/20 to-error-400/10'}`}>
-          <TrendingUp size={18} className={isPositive ? 'text-success-400' : 'text-error-400'} />
-        </div>
-        <span className="text-sm text-gray-400">Total Profit</span>
-      </div>
-      <div className={`text-4xl font-bold ${isPositive ? 'gradient-text-profit' : 'gradient-text-loss'}`}>
+    <Box sx={{ position: 'relative' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+        <Avatar sx={{ 
+          width: 32, 
+          height: 32, 
+          bgcolor: isPositive ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
+          color: isPositive ? 'success.main' : 'error.main' 
+        }}>
+          <TrendingUp size={18} />
+        </Avatar>
+        <Typography variant="caption" color="text.secondary" fontWeight={600}>Total Profit</Typography>
+      </Box>
+      <Typography variant="h4" sx={{ 
+        fontWeight: 800, 
+        color: isPositive ? 'success.main' : 'error.main',
+        textShadow: isPositive ? '0 0 20px rgba(34, 197, 94, 0.2)' : '0 0 20px rgba(239, 68, 68, 0.2)'
+      }}>
         {isPositive ? '+' : ''}${profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-      </div>
-      <div className="mt-3 text-sm text-gray-500 flex items-center gap-3">
-        <span>{portfolio.totalTrades || 0} trades</span>
-        <span className="text-gray-600">•</span>
-        <span>Fees: ${(portfolio.totalFees || 0).toFixed(2)}</span>
-      </div>
-    </div>
+      </Typography>
+      <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Typography variant="caption" color="text.secondary">{portfolio.totalTrades || 0} trades</Typography>
+        <Typography variant="caption" color="text.disabled">•</Typography>
+        <Typography variant="caption" color="text.secondary">Fees: ${(portfolio.totalFees || 0).toFixed(2)}</Typography>
+      </Box>
+    </Box>
   )
 }
 
 function WinRateWidget() {
   const { portfolio } = useTrading()
   const winRate = portfolio.winRate || 0
-  const circumference = 2 * Math.PI * 36
-  const progress = (winRate / 100) * circumference
   
   return (
-    <div className="relative flex items-center gap-4">
-      <div className="relative w-24 h-24">
-        <svg className="w-full h-full transform -rotate-90">
-          <circle
-            cx="48"
-            cy="48"
-            r="36"
-            stroke="currentColor"
-            strokeWidth="6"
-            fill="none"
-            className="text-gray-800"
-          />
-          <circle
-            cx="48"
-            cy="48"
-            r="36"
-            stroke="url(#gradient)"
-            strokeWidth="6"
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={circumference - progress}
-            className="transition-all duration-1000 ease-out"
-          />
-          <defs>
-            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#22d3ee" />
-              <stop offset="100%" stopColor="#a855f7" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-2xl font-bold">{winRate.toFixed(0)}%</span>
-        </div>
-      </div>
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Trophy size={16} className="text-warning-400" />
-          <span className="text-sm text-gray-400">Win Rate</span>
-        </div>
-        <div className="space-y-1 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-success-500"></span>
-            <span className="text-success-400">{portfolio.winningTrades || 0} Wins</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-error-500"></span>
-            <span className="text-error-400">{portfolio.losingTrades || 0} Losses</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+      <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+        <CircularProgress 
+          variant="determinate" 
+          value={100} 
+          size={80} 
+          thickness={5} 
+          sx={{ color: 'rgba(255,255,255,0.05)' }} 
+        />
+        <CircularProgress 
+          variant="determinate" 
+          value={winRate} 
+          size={80} 
+          thickness={5} 
+          sx={{ 
+            position: 'absolute', 
+            left: 0, 
+            color: 'primary.main',
+            '& .MuiCircularProgress-circle': { strokeLinecap: 'round' }
+          }} 
+        />
+        <Box sx={{ 
+          position: 'absolute', 
+          inset: 0, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center' 
+        }}>
+          <Typography variant="h6" fontWeight={800}>{winRate.toFixed(0)}%</Typography>
+        </Box>
+      </Box>
+      <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Trophy size={16} className="text-warning-500" />
+          <Typography variant="caption" color="text.secondary" fontWeight={600}>Win Rate</Typography>
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'success.main' }} />
+            <Typography variant="caption" color="success.main" fontWeight={600}>{portfolio.winningTrades || 0} Wins</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'error.main' }} />
+            <Typography variant="caption" color="error.main" fontWeight={600}>{portfolio.losingTrades || 0} Losses</Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   )
 }
 
@@ -164,79 +197,94 @@ function PositionsWidget() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-gradient-to-br from-warning-500/20 to-primary-500/20">
-            <Target size={16} className="text-warning-400" />
-          </div>
-          <span className="text-sm text-gray-400">Open Positions ({livePositions.length})</span>
-        </div>
+    <Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' }}>
+            <Target size={16} />
+          </Avatar>
+          <Typography variant="subtitle2" fontWeight={700}>Open Positions ({livePositions.length})</Typography>
+        </Box>
         {totalUnrealizedPL !== 0 && (
-          <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
-            totalUnrealizedPL >= 0 
-              ? 'bg-success-500/20 text-success-400 shadow-glow-success' 
-              : 'bg-error-500/20 text-error-400 shadow-glow-error'
-          }`}>
-            {totalUnrealizedPL >= 0 ? '+' : ''}${totalUnrealizedPL.toFixed(2)}
-          </div>
+          <Chip 
+            label={`${totalUnrealizedPL >= 0 ? '+' : ''}$${totalUnrealizedPL.toFixed(2)}`}
+            color={totalUnrealizedPL >= 0 ? 'success' : 'error'}
+            size="small"
+            sx={{ fontWeight: 700, borderRadius: 1.5 }}
+          />
         )}
-      </div>
-      <div className="space-y-2 max-h-80 overflow-y-auto custom-scrollbar">
+      </Box>
+      <List sx={{ maxHeight: 320, overflow: 'auto', pr: 1 }}>
         {livePositions.map((pos, idx) => (
-          <div 
+          <ListItem 
             key={pos.id} 
-            className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 group"
-            style={{ animationDelay: `${idx * 50}ms` }}
+            sx={{ 
+              mb: 1, 
+              borderRadius: 2, 
+              bgcolor: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.05)',
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' },
+              transition: 'all 0.2s'
+            }}
+            secondaryAction={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography 
+                  variant="body2" 
+                  fontWeight={700} 
+                  sx={{ 
+                    color: (pos.currentPLPercent || 0) >= 0 ? 'success.main' : 'error.main',
+                    bgcolor: (pos.currentPLPercent || 0) >= 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    px: 1, py: 0.5, borderRadius: 1
+                  }}
+                >
+                  {(pos.currentPLPercent || 0) >= 0 ? '+' : ''}{(pos.currentPLPercent || 0).toFixed(2)}%
+                </Typography>
+                <IconButton 
+                  size="small" 
+                  onClick={() => handleForceSell(pos)}
+                  disabled={sellingId === pos.id}
+                  sx={{ color: 'error.light', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
+                >
+                  {sellingId === pos.id ? <CircularProgress size={16} color="inherit" /> : <X size={16} />}
+                </IconButton>
+              </Box>
+            }
           >
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
-                <Chip onClick={() => openCoinbase(pos.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
-                  {pos.symbol}
-                </Chip>
-                <span className="text-xs text-gray-500 font-mono">Coins: {(pos.quantity || 0).toFixed(4)}</span>
-                <span className="text-xs text-gray-500 font-mono">Invested: ${(pos.investedAmount || 0).toFixed(2)}</span>
-              </div>
-              <AuditEntryDisplay audit={pos.audit} className="text-xs text-gray-600 font-mono flex flex-wrap gap-x-3 gap-y-1" />
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-mono mt-1">
-                <span className="text-gray-500">Entry: ${(pos.entryPrice || 0).toFixed(6)}</span>
-                {pos.currentPrice && <span className="text-info-400">Now: ${pos.currentPrice.toFixed(6)}</span>}
-                {pos.stopLoss && <span className="text-error-400">Stop: ${pos.stopLoss.toFixed(6)}</span>}
-                {pos.targetPrice && <span className="text-success-400">Target: ${pos.targetPrice.toFixed(6)}</span>}
-              </div>
-              <p className="text-xs text-gray-500 mt-1 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                (pos.currentPLPercent || 0) >= 0 
-                  ? 'bg-success-500/20 text-success-400' 
-                  : 'bg-error-500/20 text-error-400'
-              }`}>
-                {(pos.currentPLPercent || 0) >= 0 ? '+' : ''}{(pos.currentPLPercent || 0).toFixed(2)}%
-              </div>
-              <button
-                onClick={() => handleForceSell(pos)}
-                disabled={sellingId === pos.id}
-                className="p-2 rounded-lg bg-error-500/20 hover:bg-error-500/30 text-error-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed opacity-0 group-hover:opacity-100"
-                title="Force sell this position"
-              >
-                {sellingId === pos.id ? (
-                  <div className="animate-spin">⏳</div>
-                ) : (
-                  <X size={16} />
-                )}
-              </button>
-            </div>
-          </div>
+            <ListItemText
+              primary={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                  <Typography 
+                    variant="body2" 
+                    fontWeight={700} 
+                    onClick={() => openCoinbase(pos.symbol)}
+                    sx={{ cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+                  >
+                    {pos.symbol}
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled">
+                    {(pos.quantity || 0).toFixed(4)} coins
+                  </Typography>
+                </Box>
+              }
+              secondary={
+                <Box>
+                  <AuditEntryDisplay audit={pos.audit} className="contents" />
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary">Entry: ${pos.entryPrice?.toFixed(6)}</Typography>
+                    {pos.currentPrice && <Typography variant="caption" color="info.main">Now: ${pos.currentPrice.toFixed(6)}</Typography>}
+                  </Box>
+                </Box>
+              }
+            />
+          </ListItem>
         ))}
         {livePositions.length === 0 && (
-          <div className="text-center py-8">
-            <Target size={32} className="mx-auto text-gray-600 mb-2" />
-            <p className="text-gray-500">No open positions</p>
-          </div>
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <Typography variant="body2" color="text.disabled">No open positions</Typography>
+          </Box>
         )}
-      </div>
-    </div>
+      </List>
+    </Box>
   )
 }
 
@@ -247,33 +295,36 @@ function TopPerformersWidget() {
   }, [coinPerformance])
 
   return (
-    <div className="space-y-2">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       {topPerformers.map((coin, idx) => (
-        <div 
+        <Paper 
           key={coin.symbol} 
-          className="p-3 rounded-xl bg-gradient-to-r from-success-500/10 to-transparent border border-success-500/20 hover:border-success-500/40 transition-all duration-300"
+          sx={{ 
+            p: 1.5, 
+            borderRadius: 2, 
+            bgcolor: 'rgba(34, 197, 94, 0.03)', 
+            border: '1px solid rgba(34, 197, 94, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-mono">#{idx + 1}</span>
-              <Chip size="small" className="bg-success-500/20">{coin.symbol}</Chip>
-            </div>
-            <span className="text-success-400 font-bold">+${coin.profit.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-            <span>{coin.trades} trades</span>
-            <span className="text-gray-600">•</span>
-            <span className="text-success-400">{coin.winRate.toFixed(0)}% win</span>
-          </div>
-        </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography variant="caption" color="text.disabled" fontWeight={700}>#{idx + 1}</Typography>
+            <Chip label={coin.symbol} size="small" sx={{ bgcolor: 'rgba(34, 197, 94, 0.1)', color: 'success.light', fontWeight: 700 }} />
+          </Box>
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="body2" fontWeight={700} color="success.main">+${coin.profit.toFixed(2)}</Typography>
+            <Typography variant="caption" color="text.disabled">{coin.winRate.toFixed(0)}% win</Typography>
+          </Box>
+        </Paper>
       ))}
       {topPerformers.length === 0 && (
-        <div className="text-center py-8">
-          <Trophy size={32} className="mx-auto text-gray-600 mb-2" />
-          <p className="text-gray-500">No profitable coins yet</p>
-        </div>
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body2" color="text.disabled">No profitable coins yet</Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }
 
@@ -284,90 +335,94 @@ function WorstPerformersWidget() {
   }, [coinPerformance])
 
   return (
-    <div className="space-y-2">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       {worstPerformers.map((coin, idx) => (
-        <div 
+        <Paper 
           key={coin.symbol} 
-          className="p-3 rounded-xl bg-gradient-to-r from-error-500/10 to-transparent border border-error-500/20 hover:border-error-500/40 transition-all duration-300"
+          sx={{ 
+            p: 1.5, 
+            borderRadius: 2, 
+            bgcolor: 'rgba(239, 68, 68, 0.03)', 
+            border: '1px solid rgba(239, 68, 68, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-mono">#{idx + 1}</span>
-              <Chip size="small" className="bg-error-500/20">{coin.symbol}</Chip>
-            </div>
-            <span className="text-error-400 font-bold">${coin.profit.toFixed(2)}</span>
-          </div>
-          <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-            <span>{coin.trades} trades</span>
-            <span className="text-gray-600">•</span>
-            <span className="text-error-400">{coin.winRate.toFixed(0)}% win</span>
-          </div>
-        </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Typography variant="caption" color="text.disabled" fontWeight={700}>#{idx + 1}</Typography>
+            <Chip label={coin.symbol} size="small" sx={{ bgcolor: 'rgba(239, 68, 68, 0.1)', color: 'error.light', fontWeight: 700 }} />
+          </Box>
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="body2" fontWeight={700} color="error.main">${coin.profit.toFixed(2)}</Typography>
+            <Typography variant="caption" color="text.disabled">{coin.winRate.toFixed(0)}% win</Typography>
+          </Box>
+        </Paper>
       ))}
       {worstPerformers.length === 0 && (
-        <div className="text-center py-8">
-          <BarChart3 size={32} className="mx-auto text-gray-600 mb-2" />
-          <p className="text-gray-500">No losing coins yet</p>
-        </div>
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body2" color="text.disabled">No losing coins yet</Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }
 
 function RecentTradesWidget() {
   const { recentTrades, openCoinbase } = useTrading()
   return (
-    <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, maxHeight: 400, overflow: 'auto', pr: 1 }}>
       {recentTrades.slice(0, 5).map((trade, idx) => (
-        <div 
+        <Paper 
           key={idx} 
-          className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 hover:scale-[1.01] ${
-            trade.profit >= 0 
-              ? 'bg-gradient-to-r from-success-500/5 to-transparent border-success-500/20 hover:border-success-500/40' 
-              : 'bg-gradient-to-r from-error-500/5 to-transparent border-error-500/20 hover:border-error-500/40'
-          }`}
+          sx={{ 
+            p: 2, 
+            borderRadius: 2, 
+            bgcolor: trade.profit >= 0 ? 'rgba(34, 197, 94, 0.03)' : 'rgba(239, 68, 68, 0.03)', 
+            border: '1px solid',
+            borderColor: trade.profit >= 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            '&:hover': { borderColor: trade.profit >= 0 ? 'success.main' : 'error.main' },
+            transition: 'all 0.2s'
+          }}
         >
-          <div className="flex-1">
-            <div className="flex items-center justify-between gap-3">
-              <Chip onClick={() => openCoinbase(trade.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
-                {trade.symbol}
-              </Chip>
-              <div className="flex items-center gap-3">
-                <span className={`font-bold ${trade.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
-                  {trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)}
-                </span>
-                <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
-                  trade.profitPercent >= 0 
-                    ? 'bg-success-500/20 text-success-400' 
-                    : 'bg-error-500/20 text-error-400'
-                }`}>
-                  {trade.profitPercent >= 0 ? '+' : ''}{trade.profitPercent.toFixed(2)}%
-                </div>
-              </div>
-            </div>
-            {!trade.audit && (
-              <div className="mt-2">
-                <span className="text-xs text-gray-600 font-mono px-2 py-1 rounded-lg bg-white/5">
-                  Audit: legacy trade (no signal/config snapshot)
-                </span>
-              </div>
-            )}
-            <div className="mt-1 text-xs text-gray-500 font-mono flex flex-wrap gap-x-3 gap-y-1">
-              <AuditEntryDisplay audit={trade.audit} className="contents" />
-              <span>Coins: {(trade.quantity || 0).toFixed(4)}</span>
-              <span>Buy: {new Date(trade.entryTime).toLocaleString()} @ ${(trade.entryPrice || 0).toFixed(6)}</span>
-              <span>Sell: {new Date(trade.exitTime).toLocaleString()} @ ${(trade.exitPrice || 0).toFixed(6)}</span>
-            </div>
-          </div>
-        </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+            <Chip 
+              label={trade.symbol} 
+              size="small" 
+              onClick={() => openCoinbase(trade.symbol)}
+              sx={{ cursor: 'pointer', fontWeight: 700, bgcolor: 'rgba(255,255,255,0.05)' }} 
+            />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Typography variant="body2" fontWeight={700} color={trade.profit >= 0 ? 'success.main' : 'error.main'}>
+                {trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)}
+              </Typography>
+              <Typography 
+                variant="caption" 
+                fontWeight={700} 
+                sx={{ 
+                  color: trade.profitPercent >= 0 ? 'success.main' : 'error.main',
+                  bgcolor: trade.profitPercent >= 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  px: 1, py: 0.25, borderRadius: 1
+                }}
+              >
+                {trade.profitPercent >= 0 ? '+' : ''}{trade.profitPercent.toFixed(2)}%
+              </Typography>
+            </Box>
+          </Box>
+          <AuditEntryDisplay audit={trade.audit} className="contents" />
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
+            <Typography variant="caption" color="text.disabled">Coins: {(trade.quantity || 0).toFixed(4)}</Typography>
+            <Typography variant="caption" color="text.disabled">Buy: ${trade.entryPrice?.toFixed(6)}</Typography>
+            <Typography variant="caption" color="text.disabled">Sell: ${trade.exitPrice?.toFixed(6)}</Typography>
+          </Box>
+        </Paper>
       ))}
       {recentTrades.length === 0 && (
-        <div className="text-center py-8">
-          <Zap size={32} className="mx-auto text-gray-600 mb-2" />
-          <p className="text-gray-500">No trades yet</p>
-        </div>
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body2" color="text.disabled">No trades yet</Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }
 
@@ -385,55 +440,52 @@ function RecentActivityWidget() {
     return activity.profit >= 0 ? 'WIN' : 'LOSS'
   }
 
-  const getActivityStyles = (type: string) => {
-    switch(type) {
-      case 'BUY': return 'from-info-500/10 border-info-500/20 hover:border-info-500/40'
-      case 'WIN': return 'from-success-500/10 border-success-500/20 hover:border-success-500/40'
-      default: return 'from-error-500/10 border-error-500/20 hover:border-error-500/40'
-    }
-  }
-
   return (
-    <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
       {recentActivities.map((activity, idx) => {
         const type = getActivityType(activity)
+        const color = getActivityColor(activity)
         return (
-          <div 
+          <Paper 
             key={idx} 
-            className={`p-3 rounded-xl bg-gradient-to-r to-transparent border transition-all duration-300 ${getActivityStyles(type)}`}
+            sx={{ 
+              p: 1.5, 
+              borderRadius: 2, 
+              bgcolor: 'rgba(255,255,255,0.02)', 
+              border: '1px solid rgba(255,255,255,0.05)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Activity size={14} className={
-                  type === 'BUY' ? 'text-info-400' : type === 'WIN' ? 'text-success-400' : 'text-error-400'
-                } />
-                <Chip 
-                  size="small" 
-                  color={getActivityColor(activity)}
-                >
-                  {type}
-                </Chip>
-                <span className="text-sm font-medium">{activity.symbol}</span>
-              </div>
-              <span className="text-xs text-gray-500 font-mono">
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Chip 
+                label={type} 
+                size="small" 
+                color={color as any} 
+                sx={{ height: 20, fontSize: '0.65rem', fontWeight: 800 }} 
+              />
+              <Typography variant="body2" fontWeight={600}>{activity.symbol}</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              {activity.profit !== undefined && (
+                <Typography variant="caption" fontWeight={700} color={activity.profit >= 0 ? 'success.main' : 'error.main'}>
+                  {activity.profit >= 0 ? '+' : ''}${activity.profit.toFixed(2)}
+                </Typography>
+              )}
+              <Typography variant="caption" display="block" color="text.disabled" sx={{ fontSize: '0.6rem' }}>
                 {new Date(activity.timestamp).toLocaleTimeString()}
-              </span>
-            </div>
-            {activity.profit !== undefined && (
-              <p className={`text-sm mt-2 font-bold ${activity.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
-                {activity.profit >= 0 ? '+' : ''}${activity.profit.toFixed(2)}
-              </p>
-            )}
-          </div>
+              </Typography>
+            </Box>
+          </Paper>
         )
       })}
       {recentActivities.length === 0 && (
-        <div className="text-center py-8">
-          <Activity size={32} className="mx-auto text-gray-600 mb-2" />
-          <p className="text-gray-500">No activity yet</p>
-        </div>
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Typography variant="body2" color="text.disabled">No activity yet</Typography>
+        </Box>
       )}
-    </div>
+    </Box>
   )
 }
 
@@ -451,8 +503,15 @@ export default function OverviewPage() {
   ], [])
 
   return (
-    <div className="p-3 md:p-6 max-h-[calc(100vh-80px)] overflow-y-auto">
+    <Box sx={{ p: { xs: 1, md: 2 } }}>
       <WidgetGrid widgets={widgets} storageKey="overview" />
-    </div>
+      <style jsx global>{`
+        @keyframes pulse {
+          0% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.2); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+    </Box>
   )
 }

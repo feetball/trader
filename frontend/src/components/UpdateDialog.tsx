@@ -1,15 +1,13 @@
 'use client'
 
 import { useTrading } from '@/hooks/useTrading'
-import { AlertCircle, X, Check } from 'lucide-react'
+import { AlertCircle, X, Check, Terminal, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
-import Box from '@mui/material/Box'
+import { 
+  Dialog, DialogTitle, DialogContent, DialogActions, 
+  Button, Typography, Box, Avatar, IconButton, 
+  Paper, Stack, Divider, Collapse
+} from '@mui/material'
 
 export default function UpdateDialog() {
   const { updatePrompt, confirmUpdate, applyUpdate, updateLogs } = useTrading()
@@ -41,58 +39,135 @@ export default function UpdateDialog() {
   const isApplying = updatePrompt.mode === 'applying'
   const isComplete = updatePrompt.mode === 'complete'
 
+  const getStatusColor = () => {
+    if (isComplete) return 'success'
+    if (isAvailable) return 'info'
+    return 'warning'
+  }
+
+  const statusColor = getStatusColor()
+
   return (
-    <Dialog open onClose={() => { updatePrompt.visible = false }} maxWidth="md" fullWidth>
-      <DialogTitle>
-        <div className="flex items-center gap-3">
-          {isComplete ? (
-            <Check className="text-success-500" size={20} />
-          ) : (
-            <AlertCircle className={`text-${isAvailable ? 'info' : 'warning'}-500`} size={20} />
-          )}
-          <span>{isAvailable ? 'Update Available' : isReady ? 'Update Ready' : isApplying ? 'Applying Update' : 'Update Complete'}</span>
-        </div>
+    <Dialog 
+      open 
+      onClose={() => { updatePrompt.visible = false }} 
+      maxWidth="sm" 
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 4,
+          bgcolor: 'background.paper',
+          backgroundImage: 'none',
+          border: '1px solid rgba(255,255,255,0.05)'
+        }
+      }}
+    >
+      <DialogTitle sx={{ p: 3, pb: 2 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Avatar sx={{ 
+            bgcolor: `rgba(${statusColor === 'success' ? '34, 197, 94' : statusColor === 'info' ? '124, 77, 255' : '245, 158, 11'}, 0.1)`, 
+            color: `${statusColor}.main` 
+          }}>
+            {isComplete ? <Check size={20} /> : <AlertCircle size={20} />}
+          </Avatar>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="h6" fontWeight={700}>
+              {isAvailable ? 'Update Available' : isReady ? 'Update Ready' : isApplying ? 'Applying Update' : 'Update Complete'}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" fontWeight={600}>
+              VERSION {updatePrompt.newVersion || 'UNKNOWN'}
+            </Typography>
+          </Box>
+          <IconButton size="small" onClick={() => { updatePrompt.visible = false }} disabled={isApplying || confirming}>
+            <X size={18} />
+          </IconButton>
+        </Stack>
       </DialogTitle>
-      <DialogContent dividers>
-        <Typography variant="body1" gutterBottom>
-          {isAvailable && `Version ${updatePrompt.newVersion || 'unknown'} is available.`}
-          {isReady && `Version ${updatePrompt.newVersion || 'unknown'} has been prepared.`}
-          {isApplying && 'Applying update...'}
-          {isComplete && `Version ${updatePrompt.newVersion || 'unknown'} has been applied!`}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" gutterBottom>
-          {isAvailable && 'Click Apply to download and prepare the update.'}
-          {isReady && 'Click Restart to restart the server and apply the update now, or Cancel to postpone.'}
-          {isApplying && 'Please wait while the update is being applied...'}
-          {isComplete && 'The update has been successfully applied. Click OK to continue.'}
+
+      <DialogContent sx={{ p: 3, pt: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+          {isAvailable && 'A new version of the trading bot is available. Click Apply to download and prepare the update.'}
+          {isReady && 'The update has been prepared and is ready to be installed. Click Restart to apply it now.'}
+          {isApplying && 'Please wait while the update is being applied. The server will restart automatically.'}
+          {isComplete && 'The update has been successfully applied! The system is now running the latest version.'}
         </Typography>
 
         {updateLogs.length > 0 && (
-          <Box mt={2}>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-gray-300">Update Log</h3>
-              <button onClick={() => setShowLogs(!showLogs)} className="text-xs px-2 py-1 text-gray-400 hover:text-gray-300 border border-gray-600 rounded">{showLogs ? 'Hide' : 'Show'}</button>
-            </div>
-            {showLogs && (
-              <Box sx={{ bgcolor: '#0f1724', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 1, p: 1, maxHeight: 240, overflow: 'auto' }}>
-                <div className="font-mono text-xs text-gray-300 space-y-1">
+          <Box>
+            <Button 
+              size="small" 
+              variant="text" 
+              color="inherit"
+              onClick={() => setShowLogs(!showLogs)}
+              startIcon={<Terminal size={14} />}
+              endIcon={showLogs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              sx={{ mb: 1, fontWeight: 700, fontSize: '0.7rem', opacity: 0.7 }}
+            >
+              {showLogs ? 'HIDE UPDATE LOGS' : 'SHOW UPDATE LOGS'}
+            </Button>
+            
+            <Collapse in={showLogs}>
+              <Paper sx={{ 
+                bgcolor: 'rgba(0,0,0,0.3)', 
+                border: '1px solid rgba(255,255,255,0.05)', 
+                borderRadius: 2, 
+                p: 2, 
+                maxHeight: 200, 
+                overflow: 'auto' 
+              }}>
+                <Stack spacing={0.5}>
                   {updateLogs.map((log, i) => (
-                    <div key={i} className="text-gray-400">{log}</div>
+                    <Typography key={i} variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary', display: 'block' }}>
+                      <Box component="span" sx={{ color: 'primary.main', mr: 1 }}>$</Box>
+                      {log}
+                    </Typography>
                   ))}
-                </div>
-              </Box>
-            )}
+                </Stack>
+              </Paper>
+            </Collapse>
           </Box>
         )}
       </DialogContent>
-      <DialogActions>
+
+      <DialogActions sx={{ p: 3, pt: 1, gap: 1 }}>
         {isComplete ? (
-          <Button variant="contained" color="success" onClick={() => window.location.reload()}>OK</Button>
+          <Button 
+            variant="contained" 
+            fullWidth 
+            onClick={() => window.location.reload()}
+            sx={{ borderRadius: 3, py: 1.2, fontWeight: 700 }}
+          >
+            Reload Dashboard
+          </Button>
         ) : (
           <>
-            <Button onClick={() => { updatePrompt.visible = false }} disabled={isApplying || confirming}>Cancel</Button>
-            {isAvailable && <Button variant="contained" color="primary" onClick={handleApply} disabled={confirming}>{confirming ? 'Applying...' : 'Apply'}</Button>}
-            {isReady && <Button variant="contained" color="primary" onClick={handleConfirm} disabled={confirming}>{confirming ? 'Restarting...' : 'Restart'}</Button>}
+            <Button 
+              onClick={() => { updatePrompt.visible = false }} 
+              disabled={isApplying || confirming}
+              sx={{ borderRadius: 3, px: 3 }}
+            >
+              Cancel
+            </Button>
+            {isAvailable && (
+              <Button 
+                variant="contained" 
+                onClick={handleApply} 
+                disabled={confirming}
+                sx={{ borderRadius: 3, px: 4, fontWeight: 700 }}
+              >
+                {confirming ? 'Applying...' : 'Apply Update'}
+              </Button>
+            )}
+            {isReady && (
+              <Button 
+                variant="contained" 
+                onClick={handleConfirm} 
+                disabled={confirming}
+                sx={{ borderRadius: 3, px: 4, fontWeight: 700 }}
+              >
+                {confirming ? 'Restarting...' : 'Restart Now'}
+              </Button>
+            )}
           </>
         )}
       </DialogActions>

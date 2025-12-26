@@ -6,6 +6,11 @@ import {
   Save, Check, Settings2, ChevronDown, ChevronUp, Eye, EyeOff,
   Layout, Columns, Grid3X3
 } from 'lucide-react'
+import { 
+  Grid, Box, Typography, Button, IconButton, Tooltip, 
+  Menu, MenuItem, Paper, Divider, useTheme, useMediaQuery,
+  Fade, Grow, Zoom, Card, CardHeader, CardContent, Chip
+} from '@mui/material'
 
 export interface Widget {
   id: string
@@ -35,11 +40,11 @@ interface WidgetGridProps {
 const STORAGE_PREFIX = 'widget-layout-'
 
 const gradients = [
-  'from-primary-500/20 via-transparent to-transparent',
-  'from-info-500/20 via-transparent to-transparent',
-  'from-success-500/20 via-transparent to-transparent',
-  'from-warning-500/20 via-transparent to-transparent',
-  'from-error-500/20 via-transparent to-transparent',
+  'linear-gradient(135deg, rgba(124, 77, 255, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
+  'linear-gradient(135deg, rgba(3, 218, 198, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
+  'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
+  'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
+  'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
 ]
 
 export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutChange }: WidgetGridProps) {
@@ -47,9 +52,12 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
   const [draggedId, setDraggedId] = useState<string | null>(null)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [showAddMenu, setShowAddMenu] = useState(false)
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [savedLayout, setSavedLayout] = useState<WidgetLayout[]>([])
+
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   // Initialize layout from storage or defaults
   useEffect(() => {
@@ -121,7 +129,6 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
     setDraggedId(id)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', id)
-    // Add a drag image
     const elem = e.currentTarget as HTMLElement
     e.dataTransfer.setDragImage(elem, elem.offsetWidth / 2, 20)
   }, [])
@@ -148,11 +155,9 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
       
       if (draggedIdx === -1 || targetIdx === -1) return prev
 
-      // Move dragged item to target position
       const [dragged] = newLayout.splice(draggedIdx, 1)
       newLayout.splice(targetIdx, 0, dragged)
       
-      // Update order numbers
       return newLayout.map((l, idx) => ({ ...l, order: idx }))
     })
 
@@ -171,16 +176,6 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
     ))
   }, [])
 
-  const changeWidth = useCallback((id: string, delta: number) => {
-    setLayout(prev => prev.map(l => {
-      if (l.id !== id) return l
-      const widget = widgets.find(w => w.id === id)
-      const minWidth = widget?.minWidth || 1
-      const newWidth = Math.max(minWidth, Math.min(4, l.width + delta)) as 1 | 2 | 3 | 4
-      return { ...l, width: newWidth }
-    }))
-  }, [widgets])
-
   const setWidgetWidth = useCallback((id: string, width: 1 | 2 | 3 | 4) => {
     setLayout(prev => prev.map(l => 
       l.id === id ? { ...l, width } : l
@@ -197,7 +192,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
     setLayout(prev => prev.map(l => 
       l.id === id ? { ...l, hidden: false, collapsed: false } : l
     ))
-    setShowAddMenu(false)
+    setAnchorEl(null)
   }, [])
 
   const resetLayout = useCallback(() => {
@@ -207,13 +202,13 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
     setHasUnsavedChanges(false)
   }, [storageKey, initDefaultLayout])
 
-  const getWidthClass = (width: number) => {
+  const getGridProps = (width: number) => {
     switch (width) {
-      case 1: return 'col-span-1'
-      case 2: return 'col-span-1 md:col-span-2'
-      case 3: return 'col-span-1 md:col-span-2 lg:col-span-3'
-      case 4: return 'col-span-1 md:col-span-2 lg:col-span-4'
-      default: return 'col-span-1 md:col-span-2'
+      case 1: return { xs: 12, md: 6, lg: 3 }
+      case 2: return { xs: 12, md: 12, lg: 6 }
+      case 3: return { xs: 12, md: 12, lg: 9 }
+      case 4: return { xs: 12, md: 12, lg: 12 }
+      default: return { xs: 12, md: 12, lg: 6 }
     }
   }
 
@@ -221,133 +216,144 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
   const hiddenWidgets = layout.filter(l => l.hidden)
 
   return (
-    <div className="space-y-4">
+    <Box sx={{ width: '100%' }}>
       {/* Edit Controls */}
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex items-center gap-2">
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        mb: 3,
+        flexWrap: 'wrap',
+        gap: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {isEditing && (
+            <Typography variant="caption" color="text.secondary">
+              {visibleWidgets.length} visible • {hiddenWidgets.length} hidden
+            </Typography>
+          )}
+        </Box>
+        
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {isEditing && hiddenWidgets.length > 0 && (
             <>
-              <span className="text-xs text-gray-500">
-                {visibleWidgets.length} widgets visible
-                {hiddenWidgets.length > 0 && ` • ${hiddenWidgets.length} hidden`}
-              </span>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<Plus size={16} />}
+                endIcon={<ChevronDown size={14} />}
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+                sx={{ borderRadius: 2, textTransform: 'none' }}
+              >
+                Add Widget
+              </Button>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={() => setAnchorEl(null)}
+                PaperProps={{
+                  sx: { 
+                    mt: 1, 
+                    minWidth: 200,
+                    bgcolor: 'background.paper',
+                    backgroundImage: 'none',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: 2
+                  }
+                }}
+              >
+                <Box sx={{ px: 2, py: 1 }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    HIDDEN WIDGETS
+                  </Typography>
+                </Box>
+                <Divider sx={{ opacity: 0.1 }} />
+                {hiddenWidgets.map(item => {
+                  const widget = widgets.find(w => w.id === item.id)
+                  if (!widget) return null
+                  return (
+                    <MenuItem key={item.id} onClick={() => showWidget(item.id)} sx={{ py: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Eye size={16} className="text-gray-400" />
+                        <Typography variant="body2">{widget.title}</Typography>
+                      </Box>
+                    </MenuItem>
+                  )
+                })}
+              </Menu>
             </>
           )}
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {/* Add Widget Button */}
-          {isEditing && hiddenWidgets.length > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => setShowAddMenu(!showAddMenu)}
-                className="px-4 py-2 text-xs font-medium rounded-xl glass hover:shadow-glow-sm text-gray-300 hover:text-white transition-all duration-300 flex items-center gap-2"
-                title="Show hidden widgets that can be added back to the dashboard"
-              >
-                <Plus size={14} />
-                Add Widget
-                <ChevronDown size={12} className={`transition-transform ${showAddMenu ? 'rotate-180' : ''}`} />
-              </button>
-              
-              {/* Add Widget Dropdown */}
-              {showAddMenu && (
-                <div className="absolute top-full right-0 mt-2 w-64 glass rounded-xl border border-white/10 shadow-xl z-50 overflow-hidden">
-                  <div className="p-2 border-b border-white/10">
-                    <p className="text-xs text-gray-400 px-2">Hidden Widgets</p>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto custom-scrollbar">
-                    {hiddenWidgets.map(item => {
-                      const widget = widgets.find(w => w.id === item.id)
-                      if (!widget) return null
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => showWidget(item.id)}
-                          className="w-full px-4 py-3 text-left hover:bg-white/10 transition-colors flex items-center gap-3"
-                        >
-                          <Eye size={14} className="text-gray-400" />
-                          <span className="text-sm">{widget.title}</span>
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Save Button */}
           {isEditing && hasUnsavedChanges && (
-            <button
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              startIcon={<Save size={16} />}
               onClick={saveLayout}
-              className="px-4 py-2 text-xs font-medium rounded-xl bg-gradient-to-r from-success-500 to-success-600 text-white shadow-glow-success hover:shadow-glow-md transition-all duration-300 flex items-center gap-2"
-              title="Save current widget layout and sizing to browser storage"
+              sx={{ borderRadius: 2, textTransform: 'none', boxShadow: '0 0 15px rgba(34, 197, 94, 0.3)' }}
             >
-              <Save size={14} />
               Save
-            </button>
+            </Button>
           )}
 
-          {/* Reset Button */}
           {isEditing && (
-            <button
+            <Button
+              variant="outlined"
+              color="inherit"
+              size="small"
+              startIcon={<RotateCcw size={16} />}
               onClick={resetLayout}
-              className="px-4 py-2 text-xs font-medium rounded-xl glass hover:shadow-glow-sm text-gray-300 hover:text-white transition-all duration-300 flex items-center gap-2"
-              title="Reset all widgets to their default positions, sizes, and visibility"
+              sx={{ borderRadius: 2, textTransform: 'none', borderColor: 'rgba(255,255,255,0.1)' }}
             >
-              <RotateCcw size={14} />
               Reset
-            </button>
+            </Button>
           )}
 
-          {/* Edit/Done Button */}
-          <button
+          <Button
+            variant={isEditing ? "contained" : "outlined"}
+            color={isEditing ? "primary" : "inherit"}
+            size="small"
+            startIcon={isEditing ? <Check size={16} /> : <Settings2 size={16} />}
             onClick={() => {
               if (isEditing && hasUnsavedChanges) {
                 saveLayout()
               }
               setIsEditing(!isEditing)
-              setShowAddMenu(false)
+              setAnchorEl(null)
             }}
-            className={`group px-4 py-2 text-xs font-medium rounded-xl transition-all duration-300 flex items-center gap-2 ${
-              isEditing 
-                ? 'bg-gradient-to-r from-primary-500 to-info-500 text-white shadow-glow-sm' 
-                : 'glass hover:shadow-glow-sm text-gray-300 hover:text-white'
-            }`}
-            title={isEditing ? 'Save changes and exit customization mode' : 'Enter customization mode to rearrange, resize, and hide widgets'}
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: 'none',
+              borderColor: isEditing ? 'transparent' : 'rgba(255,255,255,0.1)',
+              boxShadow: isEditing ? '0 0 15px rgba(124, 77, 255, 0.3)' : 'none'
+            }}
           >
-            {isEditing ? (
-              <>
-                <Check size={14} />
-                Done
-              </>
-            ) : (
-              <>
-                <Settings2 size={14} className="group-hover:animate-spin" />
-                Customize
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+            {isEditing ? 'Done' : 'Customize'}
+          </Button>
+        </Box>
+      </Box>
 
       {/* Widget Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Grid container spacing={3}>
         {visibleWidgets.map((item, index) => {
           const widget = widgets.find(w => w.id === item.id)
           if (!widget) return null
 
           const isDragging = draggedId === item.id
           const isDragOver = dragOverId === item.id
-          const gradientClass = widget.gradient || gradients[index % gradients.length]
+          const gradient = widget.gradient || gradients[index % gradients.length]
 
           return (
-            <div
-              key={item.id}
-              className={`${getWidthClass(item.width)} transition-all duration-300 ${
-                isDragging ? 'opacity-50' : 'animate-fade-in'
-              }`}
-              style={{ animationDelay: `${index * 50}ms` }}
+            <Grid 
+              item 
+              key={item.id} 
+              {...getGridProps(item.width)}
+              sx={{ 
+                transition: 'all 0.3s ease',
+                opacity: isDragging ? 0.5 : 1,
+                transform: isDragging ? 'scale(0.98)' : 'none'
+              }}
               draggable={isEditing}
               onDragStart={(e) => handleDragStart(e, item.id)}
               onDragOver={(e) => handleDragOver(e, item.id)}
@@ -355,131 +361,148 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
               onDrop={(e) => handleDrop(e, item.id)}
               onDragEnd={handleDragEnd}
             >
-              <div className={`
-                relative overflow-hidden rounded-2xl h-full
-                bg-gradient-to-br ${gradientClass}
-                transition-all duration-500 ease-out
-                ${isDragging ? 'scale-95 rotate-1' : ''}
-                ${isDragOver ? 'ring-2 ring-primary-400 ring-offset-2 ring-offset-background scale-[1.02]' : ''}
-                ${isEditing ? 'cursor-move hover:shadow-glow-sm' : 'hover:shadow-lg hover:shadow-primary-500/10'}
-              `}>
-                {/* Glassmorphism card */}
-                <div className="glass rounded-2xl h-full">
-                  {/* Animated border gradient */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-500/20 via-info-500/20 to-success-500/20 opacity-0 hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-                  
-                  {/* Widget Header */}
-                  <div className={`
-                    relative flex items-center justify-between px-4 py-3 
-                    border-b border-white/5
-                    ${isEditing ? 'bg-white/5' : ''}
-                  `}>
-                    <div className="flex items-center gap-3">
-                      {isEditing && (
-                        <span title="Drag to reorder this widget">
-                          <GripVertical size={16} className="text-gray-400 cursor-grab active:cursor-grabbing" />
-                        </span>
-                      )}
-                      <h3 className="font-semibold text-sm bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+              <Card 
+                sx={{ 
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  bgcolor: 'background.paper',
+                  backgroundImage: gradient,
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: 3,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    borderColor: isEditing ? 'primary.main' : 'rgba(255,255,255,0.1)',
+                    boxShadow: isEditing ? '0 0 20px rgba(124, 77, 255, 0.15)' : '0 8px 32px rgba(0,0,0,0.4)'
+                  },
+                  ...(isDragOver && {
+                    borderColor: 'primary.main',
+                    borderStyle: 'dashed',
+                    borderWidth: 2,
+                    transform: 'scale(1.02)',
+                    zIndex: 10
+                  })
+                }}
+              >
+                <CardHeader
+                  title={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      {isEditing && <GripVertical size={16} className="text-gray-500 cursor-grab active:cursor-grabbing" />}
+                      <Typography variant="subtitle2" fontWeight={700} sx={{ letterSpacing: '0.02em' }}>
                         {widget.title}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-1">
+                      </Typography>
+                    </Box>
+                  }
+                  action={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       {isEditing ? (
                         <>
-                          {/* Width Controls */}
-                          <div className="flex items-center gap-0.5 mr-2 bg-white/5 rounded-lg p-0.5">
+                          <Box sx={{ display: 'flex', bgcolor: 'rgba(255,255,255,0.05)', borderRadius: 1.5, p: 0.5, mr: 1 }}>
                             {[1, 2, 3, 4].map((w) => (
-                              <button
+                              <IconButton
                                 key={w}
+                                size="small"
                                 onClick={() => setWidgetWidth(item.id, w as 1 | 2 | 3 | 4)}
                                 disabled={w < (widget.minWidth || 1)}
-                                className={`w-6 h-6 text-xs rounded-md transition-all ${
-                                  item.width === w
-                                    ? 'bg-primary-500 text-white'
-                                    : 'hover:bg-white/10 text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed'
-                                }`}
-                                title={`Width: ${w}/4`}
+                                sx={{ 
+                                  width: 24, 
+                                  height: 24, 
+                                  fontSize: '0.65rem',
+                                  borderRadius: 1,
+                                  bgcolor: item.width === w ? 'primary.main' : 'transparent',
+                                  color: item.width === w ? 'white' : 'text.secondary',
+                                  '&:hover': { bgcolor: item.width === w ? 'primary.dark' : 'rgba(255,255,255,0.1)' }
+                                }}
                               >
                                 {w}
-                              </button>
+                              </IconButton>
                             ))}
-                          </div>
-
-                          {/* Hide Button */}
-                          <button
-                            onClick={() => hideWidget(item.id)}
-                            className="p-1.5 hover:bg-error-500/20 rounded-lg transition-all group"
-                            title="Hide this widget from the dashboard"
-                          >
-                            <EyeOff size={14} className="text-gray-400 group-hover:text-error-400" />
-                          </button>
+                          </Box>
+                          <Tooltip title="Hide widget">
+                            <IconButton size="small" onClick={() => hideWidget(item.id)} sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}>
+                              <EyeOff size={14} />
+                            </IconButton>
+                          </Tooltip>
                         </>
                       ) : (
-                        <button
-                          onClick={() => toggleCollapse(item.id)}
-                          className="p-1.5 hover:bg-white/10 rounded-lg transition-all"
-                          title={item.collapsed ? 'Expand widget to show content' : 'Collapse widget to save space'}
-                        >
-                          {item.collapsed ? (
-                            <ChevronDown size={14} className="text-gray-400" />
-                          ) : (
-                            <ChevronUp size={14} className="text-gray-400" />
-                          )}
-                        </button>
+                        <IconButton size="small" onClick={() => toggleCollapse(item.id)} sx={{ color: 'text.secondary' }}>
+                          {item.collapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                        </IconButton>
                       )}
-                    </div>
-                  </div>
+                    </Box>
+                  }
+                  sx={{ 
+                    px: 2.5, 
+                    py: 1.5, 
+                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    bgcolor: isEditing ? 'rgba(255,255,255,0.02)' : 'transparent'
+                  }}
+                />
+                
+                <Fade in={!item.collapsed}>
+                  <CardContent sx={{ 
+                    p: 2.5, 
+                    flexGrow: 1,
+                    display: item.collapsed ? 'none' : 'block'
+                  }}>
+                    {widget.component}
+                  </CardContent>
+                </Fade>
 
-                  {/* Widget Content */}
-                  <div className={`
-                    transition-all duration-500 ease-out overflow-hidden
-                    ${item.collapsed ? 'max-h-0 opacity-0' : 'max-h-[800px] opacity-100'}
-                  `}>
-                    <div className="p-4">
-                      {widget.component}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Drag overlay indicator */}
                 {isDragOver && (
-                  <div className="absolute inset-0 bg-primary-500/10 rounded-2xl border-2 border-dashed border-primary-400 flex items-center justify-center pointer-events-none">
-                    <span className="text-primary-400 font-medium text-sm">Drop here</span>
-                  </div>
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    inset: 0, 
+                    bgcolor: 'rgba(124, 77, 255, 0.05)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    pointerEvents: 'none'
+                  }}>
+                    <Typography variant="button" color="primary.main" fontWeight={700}>
+                      Drop Here
+                    </Typography>
+                  </Box>
                 )}
-              </div>
-            </div>
+              </Card>
+            </Grid>
           )
         })}
 
         {/* Empty State */}
         {visibleWidgets.length === 0 && (
-          <div className="col-span-full py-12 text-center">
-            <Grid3X3 size={48} className="mx-auto text-gray-600 mb-4" />
-            <p className="text-gray-500 text-lg mb-2">No widgets visible</p>
-            <p className="text-gray-600 text-sm mb-4">Add widgets to customize your dashboard</p>
-            {hiddenWidgets.length > 0 && (
-              <button
-                onClick={() => setShowAddMenu(true)}
-                className="px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-primary-500 to-info-500 text-white shadow-glow-sm hover:shadow-glow-md transition-all duration-300 inline-flex items-center gap-2"
-              >
-                <Plus size={16} />
-                Add Widget
-              </button>
-            )}
-          </div>
+          <Grid item xs={12}>
+            <Paper sx={{ 
+              py: 8, 
+              textAlign: 'center', 
+              bgcolor: 'transparent', 
+              border: '2px dashed rgba(255,255,255,0.1)',
+              borderRadius: 4
+            }}>
+              <Grid3X3 size={48} className="text-gray-600" style={{ marginBottom: 16 }} />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No widgets visible
+              </Typography>
+              <Typography variant="body2" color="text.disabled" sx={{ mb: 3 }}>
+                Add widgets to customize your dashboard
+              </Typography>
+              {hiddenWidgets.length > 0 && (
+                <Button
+                  variant="contained"
+                  startIcon={<Plus size={18} />}
+                  onClick={(e) => setAnchorEl(e.currentTarget)}
+                  sx={{ borderRadius: 2, textTransform: 'none' }}
+                >
+                  Add Widget
+                </Button>
+              )}
+            </Paper>
+          </Grid>
         )}
-      </div>
-
-      {/* Click outside to close menu */}
-      {showAddMenu && (
-        <div 
-          className="fixed inset-0 z-40" 
-          onClick={() => setShowAddMenu(false)}
-        />
-      )}
-    </div>
+      </Grid>
+    </Box>
   )
 }
 

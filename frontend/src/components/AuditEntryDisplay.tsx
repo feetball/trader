@@ -1,3 +1,5 @@
+import { Box, Typography, Tooltip } from '@mui/material'
+
 interface AuditEntry {
   grade?: string
   score?: number
@@ -17,21 +19,17 @@ interface TradeAuditConfig {
 }
 
 type AuditEntryDisplayProps = {
-  // Legacy/simple usage: <AuditEntryDisplay audit={pos.audit} />
   audit?: {
     entry?: AuditEntry | null
     configAtEntry?: TradeAuditConfig
     configAtExit?: TradeAuditConfig
   }
-
-  // Rich usage: <AuditEntryDisplay entry=... showVolume showReasons ... />
   entry?: AuditEntry | null
   showVolume?: boolean
   showReasons?: boolean
   maxReasons?: number
   configAtEntry?: TradeAuditConfig
   configAtExit?: TradeAuditConfig
-
   className?: string
 }
 
@@ -55,7 +53,7 @@ export function AuditEntryDisplay({
   maxReasons = 3,
   configAtEntry,
   configAtExit,
-  className = 'text-xs text-gray-500 font-mono flex flex-wrap gap-x-3 gap-y-1',
+  className = '',
 }: AuditEntryDisplayProps) {
   const entry = entryProp ?? audit?.entry
   const cfgBuy = configAtEntry ?? audit?.configAtEntry
@@ -76,45 +74,57 @@ export function AuditEntryDisplay({
   
   if (!hasAnyEntryData && !hasAnyCfg) return null
 
-  // When className is 'contents', render children directly without wrapper
-  // This allows the children to be direct flex items of the parent container
-  const children = (
+  const content = (
     <>
       {entry?.grade && (
-        <span>Grade {entry.grade}{typeof entry.score === 'number' ? ` (${entry.score})` : ''}</span>
+        <Typography component="span" variant="caption" sx={{ color: 'text.secondary', mr: 1.5 }}>
+          Grade <strong>{entry.grade}</strong>{typeof entry.score === 'number' ? ` (${entry.score})` : ''}
+        </Typography>
       )}
       {typeof entry?.momentum === 'number' && (
-        <span>Mom {entry.momentum >= 0 ? '+' : ''}{entry.momentum.toFixed(2)}%</span>
+        <Typography component="span" variant="caption" sx={{ color: 'text.secondary', mr: 1.5 }}>
+          Mom <strong>{entry.momentum >= 0 ? '+' : ''}{entry.momentum.toFixed(2)}%</strong>
+        </Typography>
       )}
       {typeof entry?.rsi === 'number' && (
-        <span>RSI {entry.rsi.toFixed(0)}</span>
+        <Typography component="span" variant="caption" sx={{ color: 'text.secondary', mr: 1.5 }}>
+          RSI <strong>{entry.rsi.toFixed(0)}</strong>
+        </Typography>
       )}
       {showVolume && typeof entry?.volumeSurge?.ratio === 'number' && (
-        <span>Vol {entry.volumeSurge.ratio.toFixed(2)}x</span>
+        <Typography component="span" variant="caption" sx={{ color: 'text.secondary', mr: 1.5 }}>
+          Vol <strong>{entry.volumeSurge.ratio.toFixed(2)}x</strong>
+        </Typography>
       )}
       {cfgBuyText && (
-        <span>Cfg Buy {cfgBuyText}</span>
+        <Typography component="span" variant="caption" sx={{ color: 'primary.light', mr: 1.5 }}>
+          Cfg Buy <strong>{cfgBuyText}</strong>
+        </Typography>
       )}
       {cfgSellText && (
-        <span>Cfg Sell {cfgSellText}</span>
+        <Typography component="span" variant="caption" sx={{ color: 'secondary.light', mr: 1.5 }}>
+          Cfg Sell <strong>{cfgSellText}</strong>
+        </Typography>
       )}
       {showReasons && Array.isArray(entry?.reasons) && entry.reasons.length > 0 && (
-        <span>
-          Why {entry.reasons.slice(0, maxReasons).join(' • ')}
-          {entry.reasons.length > maxReasons ? ' …' : ''}
-        </span>
+        <Tooltip title={entry.reasons.join(' • ')}>
+          <Typography component="span" variant="caption" sx={{ color: 'text.disabled', cursor: 'help' }}>
+            Why {entry.reasons.slice(0, maxReasons).join(' • ')}
+            {entry.reasons.length > maxReasons ? ' …' : ''}
+          </Typography>
+        </Tooltip>
       )}
     </>
   )
 
   if (className === 'contents') {
-    return children
+    return content
   }
 
   return (
-    <div className={className}>
-      {children}
-    </div>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }} className={className}>
+      {content}
+    </Box>
   )
 }
 
