@@ -1,5 +1,10 @@
 'use client'
 
+import CardMui from '@mui/material/Card'
+import CardContentMui from '@mui/material/CardContent'
+import CardHeaderMui from '@mui/material/CardHeader'
+import Box from '@mui/material/Box'
+
 interface CardProps {
   children: React.ReactNode
   className?: string
@@ -7,52 +12,32 @@ interface CardProps {
   color?: string
   hover?: boolean
   glow?: boolean
+  title?: React.ReactNode
+  subheader?: React.ReactNode
 }
 
-export function Card({ children, className = '', variant = 'default', color = '', hover = false, glow = false }: CardProps) {
-  const glowColors: { [key: string]: string } = {
-    success: 'hover:shadow-glow-success',
-    error: 'hover:shadow-glow-error',
-    warning: 'hover:shadow-glow-warning',
-    primary: 'hover:shadow-glow-sm',
-    info: 'hover:shadow-glow-sm',
-  }
-
-  let baseClass = 'glass rounded-2xl border border-white/10 transition-all duration-300'
-  
-  if (variant === 'tonal' && color) {
-    const colorMap: { [key: string]: string } = {
-      success: 'bg-gradient-to-br from-success-500/20 to-success-500/5 border-success-500/30',
-      error: 'bg-gradient-to-br from-error-500/20 to-error-500/5 border-error-500/30',
-      warning: 'bg-gradient-to-br from-warning-500/20 to-warning-500/5 border-warning-500/30',
-      info: 'bg-gradient-to-br from-info-500/20 to-info-500/5 border-info-500/30',
-      primary: 'bg-gradient-to-br from-primary-500/20 to-primary-500/5 border-primary-500/30',
-    }
-    baseClass = `rounded-2xl ${colorMap[color] || baseClass} transition-all duration-300`
-  } else if (variant === 'outlined') {
-    baseClass = 'bg-transparent rounded-2xl border-2 border-white/20 transition-all duration-300'
-  } else if (variant === 'glass') {
-    baseClass = 'glass rounded-2xl border border-white/10 backdrop-blur-xl transition-all duration-300'
-  }
-
-  if (hover) {
-    baseClass += ' hover:scale-[1.02] hover:border-white/20'
-  }
-
-  if (glow && color) {
-    baseClass += ` ${glowColors[color] || 'hover:shadow-glow-sm'}`
-  }
-
+export function Card({ children, className = '', variant = 'default', color = '', hover = false, glow = false, title, subheader }: CardProps) {
+  // Use MUI Card and let styles be applied via sx and utility classes
   return (
-    <div className={`${baseClass} ${className}`}>
-      {children}
-    </div>
+    <CardMui
+      elevation={variant === 'tonal' ? 3 : 1}
+      sx={{
+        borderRadius: 2,
+        overflow: 'visible',
+      }}
+      className={`${className}`}
+    >
+      {title && <CardHeaderMui title={title as any} subheader={subheader as any} />}
+      <CardContentMui>
+        {children}
+      </CardContentMui>
+    </CardMui>
   )
 }
 
 export function CardTitle({ children, className = '', icon }: { children: React.ReactNode; className?: string; icon?: React.ReactNode }) {
   return (
-    <div className={`px-6 py-4 border-b border-white/10 ${className}`}>
+    <Box className={`px-6 py-4 border-b border-white/10 ${className}`}> 
       <div className="flex items-center gap-3">
         {icon && (
           <div className="p-2 rounded-lg bg-gradient-to-br from-primary-500/20 to-info-500/20">
@@ -63,14 +48,14 @@ export function CardTitle({ children, className = '', icon }: { children: React.
           {children}
         </h3>
       </div>
-    </div>
+    </Box>
   )
 }
 
 export function CardContent({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`p-6 ${className}`}>
+    <CardContentMui className={className}>
       {children}
-    </div>
+    </CardContentMui>
   )
 }

@@ -3,6 +3,13 @@
 import { useTrading } from '@/hooks/useTrading'
 import { AlertCircle, X, Check } from 'lucide-react'
 import { useState } from 'react'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 
 export default function UpdateDialog() {
   const { updatePrompt, confirmUpdate, applyUpdate, updateLogs } = useTrading()
@@ -35,100 +42,60 @@ export default function UpdateDialog() {
   const isComplete = updatePrompt.mode === 'complete'
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-surface-light border border-gray-700 rounded-lg p-6 max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-4">
+    <Dialog open onClose={() => { updatePrompt.visible = false }} maxWidth="md" fullWidth>
+      <DialogTitle>
+        <div className="flex items-center gap-3">
           {isComplete ? (
-            <Check className="text-success-500" size={24} />
+            <Check className="text-success-500" size={20} />
           ) : (
-            <AlertCircle className={`text-${isAvailable ? 'info' : 'warning'}-500`} size={24} />
+            <AlertCircle className={`text-${isAvailable ? 'info' : 'warning'}-500`} size={20} />
           )}
-          <h2 className="text-xl font-semibold">
-            {isAvailable ? 'Update Available' : isReady ? 'Update Ready' : isApplying ? 'Applying Update' : 'Update Complete'}
-          </h2>
+          <span>{isAvailable ? 'Update Available' : isReady ? 'Update Ready' : isApplying ? 'Applying Update' : 'Update Complete'}</span>
         </div>
-
-        <p className="text-gray-300 mb-2">
+      </DialogTitle>
+      <DialogContent dividers>
+        <Typography variant="body1" gutterBottom>
           {isAvailable && `Version ${updatePrompt.newVersion || 'unknown'} is available.`}
           {isReady && `Version ${updatePrompt.newVersion || 'unknown'} has been prepared.`}
           {isApplying && 'Applying update...'}
           {isComplete && `Version ${updatePrompt.newVersion || 'unknown'} has been applied!`}
-        </p>
-
-        <p className="text-gray-400 text-sm mb-4">
+        </Typography>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
           {isAvailable && 'Click Apply to download and prepare the update.'}
           {isReady && 'Click Restart to restart the server and apply the update now, or Cancel to postpone.'}
           {isApplying && 'Please wait while the update is being applied...'}
           {isComplete && 'The update has been successfully applied. Click OK to continue.'}
-        </p>
+        </Typography>
 
-        {/* Logs Section */}
         {updateLogs.length > 0 && (
-          <div className="flex-1 min-h-[200px] mb-4 flex flex-col">
+          <Box mt={2}>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-semibold text-gray-300">Update Log</h3>
-              <button
-                onClick={() => setShowLogs(!showLogs)}
-                className="text-xs px-2 py-1 text-gray-400 hover:text-gray-300 border border-gray-600 rounded"
-              >
-                {showLogs ? 'Hide' : 'Show'}
-              </button>
+              <button onClick={() => setShowLogs(!showLogs)} className="text-xs px-2 py-1 text-gray-400 hover:text-gray-300 border border-gray-600 rounded">{showLogs ? 'Hide' : 'Show'}</button>
             </div>
             {showLogs && (
-              <div className="flex-1 bg-gray-900 border border-gray-700 rounded p-3 overflow-y-auto">
+              <Box sx={{ bgcolor: '#0f1724', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 1, p: 1, maxHeight: 240, overflow: 'auto' }}>
                 <div className="font-mono text-xs text-gray-300 space-y-1">
                   {updateLogs.map((log, i) => (
-                    <div key={i} className="text-gray-400">
-                      {log}
-                    </div>
+                    <div key={i} className="text-gray-400">{log}</div>
                   ))}
                 </div>
-              </div>
+              </Box>
             )}
-          </div>
+          </Box>
         )}
-
-        {/* Buttons */}
-        <div className="flex gap-3">
-          {isComplete ? (
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-success-600 hover:bg-success-700 text-white rounded-lg flex-1 font-medium"
-            >
-              OK
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={() => updatePrompt.visible = false}
-                disabled={isApplying || confirming}
-                className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg flex-1 disabled:opacity-50"
-              >
-                {isApplying ? 'Applying...' : 'Cancel'}
-              </button>
-              {isAvailable && (
-                <button
-                  onClick={handleApply}
-                  disabled={confirming}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex-1 disabled:opacity-50"
-                >
-                  {confirming ? 'Applying...' : 'Apply'}
-                </button>
-              )}
-              {isReady && (
-                <button
-                  onClick={handleConfirm}
-                  disabled={confirming}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg flex-1 disabled:opacity-50"
-                >
-                  {confirming ? 'Restarting...' : 'Restart'}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+      <DialogActions>
+        {isComplete ? (
+          <Button variant="contained" color="success" onClick={() => window.location.reload()}>OK</Button>
+        ) : (
+          <>
+            <Button onClick={() => { updatePrompt.visible = false }} disabled={isApplying || confirming}>Cancel</Button>
+            {isAvailable && <Button variant="contained" color="primary" onClick={handleApply} disabled={confirming}>{confirming ? 'Applying...' : 'Apply'}</Button>}
+            {isReady && <Button variant="contained" color="primary" onClick={handleConfirm} disabled={confirming}>{confirming ? 'Restarting...' : 'Restart'}</Button>}
+          </>
+        )}
+      </DialogActions>
+    </Dialog>
   )
 }

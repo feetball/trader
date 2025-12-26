@@ -53,6 +53,7 @@ export default function Sidebar() {
       <button
         className="md:hidden fixed top-4 left-4 z-50 p-3 glass rounded-xl shadow-glow-sm hover:shadow-glow-md transition-all duration-300"
         onClick={() => setOpen(!open)}
+        aria-label={open ? 'Close menu' : 'Open menu'}
       >
         {open ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
       </button>
