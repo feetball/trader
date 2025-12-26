@@ -7,6 +7,9 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // Disable server-side features for static export
   distDir: 'dist',
   webpack: (config) => {

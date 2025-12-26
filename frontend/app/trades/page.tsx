@@ -2,17 +2,23 @@
 
 import { useTrading } from '@/hooks/useTrading'
 import { AuditEntryDisplay } from '@/components/AuditEntryDisplay'
-import { extractTradeAuditData, formatTradeAuditTexts } from '@/lib/utils'
-import { TrendingUp, TrendingDown, BarChart3, DollarSign, Target, History, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { extractTradeAuditData } from '@/lib/utils'
 import { 
   Box, Grid, Typography, Card, CardContent, 
   Chip, Avatar, Table, TableBody, TableCell, 
-  TableContainer, TableHead, TableRow, Paper, useTheme, Divider
+  TableContainer, TableHead, TableRow, Paper, Divider
 } from '@mui/material'
+import TrendingUpRounded from '@mui/icons-material/TrendingUpRounded'
+import TrendingDownRounded from '@mui/icons-material/TrendingDownRounded'
+import BarChartRounded from '@mui/icons-material/BarChartRounded'
+import AttachMoneyRounded from '@mui/icons-material/AttachMoneyRounded'
+import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded'
+import HistoryRounded from '@mui/icons-material/HistoryRounded'
+import NorthEastRounded from '@mui/icons-material/NorthEastRounded'
+import SouthEastRounded from '@mui/icons-material/SouthEastRounded'
 
 export default function TradeHistoryPage() {
   const { trades, openCoinbase } = useTrading()
-  const theme = useTheme()
 
   const totalProfit = trades.reduce((sum, t) => sum + (t.netProfit ?? t.profit), 0)
   const winRate = trades.length ? (trades.filter(t => (t.netProfit ?? t.profit) > 0).length / trades.length * 100) : 0
@@ -26,27 +32,27 @@ export default function TradeHistoryPage() {
             { 
               label: 'Win Rate', 
               value: winRate.toFixed(1) + '%', 
-              icon: Target, 
+              icon: TrackChangesRounded, 
               color: 'primary',
               subtext: `${trades.filter(t => (t.netProfit ?? t.profit) > 0).length}W / ${trades.filter(t => (t.netProfit ?? t.profit) <= 0).length}L`
             },
             { 
               label: 'Avg Profit', 
               value: '$' + avgProfit.toFixed(2), 
-              icon: BarChart3, 
+              icon: BarChartRounded, 
               color: avgProfit >= 0 ? 'success' : 'error',
               trend: avgProfit >= 0 ? 'up' : 'down'
             },
             { 
               label: 'Total Trades', 
               value: trades.length, 
-              icon: History, 
+              icon: HistoryRounded, 
               color: 'info' 
             },
             { 
               label: 'Total Profit', 
               value: (totalProfit >= 0 ? '+' : '') + '$' + totalProfit.toFixed(2), 
-              icon: DollarSign,
+              icon: AttachMoneyRounded,
               color: totalProfit >= 0 ? 'success' : 'error',
               trend: totalProfit >= 0 ? 'up' : 'down',
               highlight: true
@@ -69,11 +75,11 @@ export default function TradeHistoryPage() {
                     bgcolor: `rgba(${stat.color === 'primary' ? '124, 77, 255' : stat.color === 'success' ? '34, 197, 94' : stat.color === 'info' ? '3, 218, 198' : '239, 68, 68'}, 0.1)`, 
                     color: `${stat.color}.main` 
                   }}>
-                    <stat.icon size={16} />
+                      <stat.icon fontSize="small" />
                   </Avatar>
                   {stat.trend && (
                     <Box sx={{ color: stat.trend === 'up' ? 'success.main' : 'error.main' }}>
-                      {stat.trend === 'up' ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
+                        {stat.trend === 'up' ? <NorthEastRounded fontSize="small" /> : <SouthEastRounded fontSize="small" />}
                     </Box>
                   )}
                 </Box>
@@ -95,7 +101,7 @@ export default function TradeHistoryPage() {
       <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
         <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
-            <History size={18} />
+            <HistoryRounded fontSize="small" />
           </Avatar>
           <Typography variant="h6" fontWeight={700}>Trade History</Typography>
         </Box>
@@ -172,7 +178,7 @@ export default function TradeHistoryPage() {
                       </TableCell>
                       <TableCell align="right">
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, color: isProfit ? 'success.main' : 'error.main' }}>
-                          {isProfit ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                          {isProfit ? <TrendingUpRounded fontSize="small" /> : <TrendingDownRounded fontSize="small" />}
                           <Typography variant="body2" fontWeight={700}>
                             {isProfit ? '+' : ''}${profit.toFixed(2)}
                           </Typography>
@@ -199,7 +205,7 @@ export default function TradeHistoryPage() {
           </TableContainer>
           {trades.length === 0 && (
             <Box sx={{ textAlign: 'center', py: 12 }}>
-              <History size={48} className="text-gray-600" style={{ marginBottom: 16 }} />
+              <HistoryRounded sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">No trades yet</Typography>
               <Typography variant="body2" color="text.disabled">Start the bot to begin trading</Typography>
             </Box>

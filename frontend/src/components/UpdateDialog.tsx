@@ -1,13 +1,18 @@
 'use client'
 
 import { useTrading } from '@/hooks/useTrading'
-import { AlertCircle, X, Check, Terminal, ChevronDown, ChevronUp } from 'lucide-react'
 import { useState } from 'react'
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, 
   Button, Typography, Box, Avatar, IconButton, 
-  Paper, Stack, Divider, Collapse
+  Paper, Stack, Collapse
 } from '@mui/material'
+import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded'
+import CloseRounded from '@mui/icons-material/CloseRounded'
+import CheckRounded from '@mui/icons-material/CheckRounded'
+import TerminalRounded from '@mui/icons-material/TerminalRounded'
+import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded'
+import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded'
 
 export default function UpdateDialog() {
   const { updatePrompt, confirmUpdate, applyUpdate, updateLogs } = useTrading()
@@ -68,7 +73,7 @@ export default function UpdateDialog() {
             bgcolor: `rgba(${statusColor === 'success' ? '34, 197, 94' : statusColor === 'info' ? '124, 77, 255' : '245, 158, 11'}, 0.1)`, 
             color: `${statusColor}.main` 
           }}>
-            {isComplete ? <Check size={20} /> : <AlertCircle size={20} />}
+            {isComplete ? <CheckRounded /> : <ErrorOutlineRounded />}
           </Avatar>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" fontWeight={700}>
@@ -79,7 +84,7 @@ export default function UpdateDialog() {
             </Typography>
           </Box>
           <IconButton size="small" onClick={() => { updatePrompt.visible = false }} disabled={isApplying || confirming}>
-            <X size={18} />
+            <CloseRounded fontSize="small" />
           </IconButton>
         </Stack>
       </DialogTitle>
@@ -99,8 +104,8 @@ export default function UpdateDialog() {
               variant="text" 
               color="inherit"
               onClick={() => setShowLogs(!showLogs)}
-              startIcon={<Terminal size={14} />}
-              endIcon={showLogs ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              startIcon={<TerminalRounded fontSize="small" />}
+              endIcon={showLogs ? <ExpandLessRounded fontSize="small" /> : <ExpandMoreRounded fontSize="small" />}
               sx={{ mb: 1, fontWeight: 700, fontSize: '0.7rem', opacity: 0.7 }}
             >
               {showLogs ? 'HIDE UPDATE LOGS' : 'SHOW UPDATE LOGS'}

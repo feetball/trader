@@ -4,13 +4,16 @@ import { useTrading } from '@/hooks/useTrading'
 import { formatTimestamp } from '@/lib/utils'
 import { 
   Box, Grid, Typography, Card, CardContent, 
-  Chip, Avatar, Paper, useTheme, Divider, List, ListItem, ListItemText
+  Chip, Avatar, Paper, Divider, List, ListItem, ListItemText
 } from '@mui/material'
-import { Activity, TrendingUp, TrendingDown, Calendar, Clock } from 'lucide-react'
+import TimelineRounded from '@mui/icons-material/TimelineRounded'
+import TrendingUpRounded from '@mui/icons-material/TrendingUpRounded'
+import TrendingDownRounded from '@mui/icons-material/TrendingDownRounded'
+import CalendarTodayRounded from '@mui/icons-material/CalendarTodayRounded'
+import AccessTimeRounded from '@mui/icons-material/AccessTimeRounded'
 
 export default function ActivityPage() {
   const { activities, openCoinbase } = useTrading()
-  const theme = useTheme()
 
   const today = new Date().toDateString()
   const todayActivities = activities.filter(a => new Date(a.timestamp).toDateString() === today)
@@ -34,7 +37,7 @@ export default function ActivityPage() {
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(34, 197, 94, 0.1)', color: 'success.main' }}>
-                  <TrendingUp size={18} />
+                  <TrendingUpRounded fontSize="small" />
                 </Avatar>
                 <Typography variant="caption" color="success.main" fontWeight={700}>Wins Today</Typography>
               </Box>
@@ -53,7 +56,7 @@ export default function ActivityPage() {
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(239, 68, 68, 0.1)', color: 'error.main' }}>
-                  <TrendingDown size={18} />
+                  <TrendingDownRounded fontSize="small" />
                 </Avatar>
                 <Typography variant="caption" color="error.main" fontWeight={700}>Losses Today</Typography>
               </Box>
@@ -77,7 +80,7 @@ export default function ActivityPage() {
                   bgcolor: todayNet >= 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
                   color: todayNet >= 0 ? 'success.main' : 'error.main' 
                 }}>
-                  <Calendar size={18} />
+                  <CalendarTodayRounded fontSize="small" />
                 </Avatar>
                 <Typography variant="caption" color={todayNet >= 0 ? 'success.main' : 'error.main'} fontWeight={700}>Net Today</Typography>
               </Box>
@@ -92,7 +95,7 @@ export default function ActivityPage() {
       <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
         <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
-            <Activity size={18} />
+            <TimelineRounded fontSize="small" />
           </Avatar>
           <Typography variant="h6" fontWeight={700}>Activity Timeline</Typography>
         </Box>
@@ -127,7 +130,7 @@ export default function ActivityPage() {
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.disabled' }}>
-                        <Clock size={12} />
+                        <AccessTimeRounded fontSize="inherit" sx={{ fontSize: 14 }} />
                         <Typography variant="caption">{formatTimestamp(activity.timestamp)}</Typography>
                       </Box>
                     </Box>
@@ -142,7 +145,7 @@ export default function ActivityPage() {
             ))}
             {activities.length === 0 && (
               <Box sx={{ textAlign: 'center', py: 12 }}>
-                <Activity size={48} className="text-gray-600" style={{ marginBottom: 16 }} />
+                <TimelineRounded sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
                 <Typography variant="h6" color="text.secondary">No recent activity</Typography>
               </Box>
             )}

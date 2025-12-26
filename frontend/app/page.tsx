@@ -3,14 +3,20 @@
 import { useTrading, type Position } from '@/hooks/useTrading'
 import WidgetGrid, { Widget } from '@/components/WidgetGrid'
 import AuditEntryDisplay from '@/components/AuditEntryDisplay'
-import { TrendingUp, TrendingDown, DollarSign, Wallet, Trophy, Target, Zap, BarChart3, Activity, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { 
-  Box, Typography, Chip, IconButton, Tooltip, 
-  CircularProgress, Button, Divider, useTheme,
-  Avatar, List, ListItem, ListItemText, ListItemAvatar,
-  Paper, Fade
+  Box, Typography, Chip, IconButton,
+  CircularProgress,
+  Avatar, List, ListItem, ListItemText,
+  Paper
 } from '@mui/material'
+import TrendingUpRounded from '@mui/icons-material/TrendingUpRounded'
+import TrendingDownRounded from '@mui/icons-material/TrendingDownRounded'
+import AttachMoneyRounded from '@mui/icons-material/AttachMoneyRounded'
+import AccountBalanceWalletRounded from '@mui/icons-material/AccountBalanceWalletRounded'
+import EmojiEventsRounded from '@mui/icons-material/EmojiEventsRounded'
+import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded'
+import CloseRounded from '@mui/icons-material/CloseRounded'
 
 // Individual widget components with enhanced visuals
 function TotalValueWidget() {
@@ -25,22 +31,17 @@ function TotalValueWidget() {
           bgcolor: 'rgba(124, 77, 255, 0.1)', 
           color: 'primary.main' 
         }}>
-          <DollarSign size={18} />
+          <AttachMoneyRounded fontSize="small" />
         </Avatar>
         <Typography variant="caption" color="text.secondary" fontWeight={600}>Total Value</Typography>
       </Box>
-      <Typography variant="h4" sx={{ 
-        fontWeight: 800, 
-        background: 'linear-gradient(135deg, #fff 0%, #ccc 100%)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent'
-      }}>
+      <Typography variant="h4" sx={{ fontWeight: 800 }}>
         ${(portfolio.totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </Typography>
       <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
         <Chip 
           size="small"
-          icon={roi >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+          icon={roi >= 0 ? <TrendingUpRounded fontSize="small" /> : <TrendingDownRounded fontSize="small" />}
           label={`${roi >= 0 ? '+' : ''}${roi.toFixed(2)}% ROI`}
           color={roi >= 0 ? 'success' : 'error'}
           sx={{ fontWeight: 700, borderRadius: 1.5 }}
@@ -61,20 +62,15 @@ function CashWidget() {
           bgcolor: 'rgba(3, 218, 198, 0.1)', 
           color: 'secondary.main' 
         }}>
-          <Wallet size={18} />
+          <AccountBalanceWalletRounded fontSize="small" />
         </Avatar>
         <Typography variant="caption" color="text.secondary" fontWeight={600}>Available Cash</Typography>
       </Box>
-      <Typography variant="h4" sx={{ 
-        fontWeight: 800, 
-        background: 'linear-gradient(135deg, #fff 0%, #ccc 100%)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent'
-      }}>
+      <Typography variant="h4" sx={{ fontWeight: 800 }}>
         ${(portfolio.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </Typography>
       <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'secondary.main', animation: 'pulse 2s infinite' }} />
+        <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'secondary.main' }} />
         <Typography variant="caption" color="text.secondary">
           Positions: ${(portfolio.positionsValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
         </Typography>
@@ -96,14 +92,13 @@ function ProfitWidget() {
           bgcolor: isPositive ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', 
           color: isPositive ? 'success.main' : 'error.main' 
         }}>
-          <TrendingUp size={18} />
+          {isPositive ? <TrendingUpRounded fontSize="small" /> : <TrendingDownRounded fontSize="small" />}
         </Avatar>
         <Typography variant="caption" color="text.secondary" fontWeight={600}>Total Profit</Typography>
       </Box>
       <Typography variant="h4" sx={{ 
         fontWeight: 800, 
-        color: isPositive ? 'success.main' : 'error.main',
-        textShadow: isPositive ? '0 0 20px rgba(34, 197, 94, 0.2)' : '0 0 20px rgba(239, 68, 68, 0.2)'
+        color: isPositive ? 'success.main' : 'error.main'
       }}>
         {isPositive ? '+' : ''}${profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </Typography>
@@ -154,7 +149,7 @@ function WinRateWidget() {
       </Box>
       <Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Trophy size={16} className="text-warning-500" />
+          <EmojiEventsRounded fontSize="small" sx={{ color: 'warning.main' }} />
           <Typography variant="caption" color="text.secondary" fontWeight={600}>Win Rate</Typography>
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
@@ -201,7 +196,7 @@ function PositionsWidget() {
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar sx={{ width: 28, height: 28, bgcolor: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' }}>
-            <Target size={16} />
+            <TrackChangesRounded fontSize="small" />
           </Avatar>
           <Typography variant="subtitle2" fontWeight={700}>Open Positions ({livePositions.length})</Typography>
         </Box>
@@ -245,7 +240,7 @@ function PositionsWidget() {
                   disabled={sellingId === pos.id}
                   sx={{ color: 'error.light', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                 >
-                  {sellingId === pos.id ? <CircularProgress size={16} color="inherit" /> : <X size={16} />}
+                  {sellingId === pos.id ? <CircularProgress size={16} color="inherit" /> : <CloseRounded fontSize="small" />}
                 </IconButton>
               </Box>
             }
@@ -505,13 +500,6 @@ export default function OverviewPage() {
   return (
     <Box sx={{ p: { xs: 1, md: 2 } }}>
       <WidgetGrid widgets={widgets} storageKey="overview" />
-      <style jsx global>{`
-        @keyframes pulse {
-          0% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.2); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </Box>
   )
 }

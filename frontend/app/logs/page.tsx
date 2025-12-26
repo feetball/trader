@@ -2,19 +2,23 @@
 
 import { useTrading } from '@/hooks/useTrading'
 import { useState, useEffect, useRef } from 'react'
-import { Search, Terminal, ShoppingCart, Tag, AlertCircle, Radar } from 'lucide-react'
 import { 
   Box, Grid, Typography, Card, CardContent, 
-  Chip, Avatar, Paper, useTheme, TextField, InputAdornment,
+  Chip, Avatar, Paper, TextField, InputAdornment,
   Stack, List, ListItem, ListItemText
 } from '@mui/material'
+import SearchRounded from '@mui/icons-material/SearchRounded'
+import CodeRounded from '@mui/icons-material/CodeRounded'
+import ShoppingCartRounded from '@mui/icons-material/ShoppingCartRounded'
+import LocalOfferRounded from '@mui/icons-material/LocalOfferRounded'
+import ErrorOutlineRounded from '@mui/icons-material/ErrorOutlineRounded'
+import TravelExploreRounded from '@mui/icons-material/TravelExploreRounded'
 
 export default function LogsPage() {
   const { botStatus } = useTrading()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('all')
   const containerRef = useRef<HTMLDivElement>(null)
-  const theme = useTheme()
 
   const logs = botStatus.logs || []
 
@@ -56,7 +60,7 @@ export default function LogsPage() {
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(34, 197, 94, 0.1)', color: 'success.main' }}>
-                <ShoppingCart size={18} />
+                <ShoppingCartRounded fontSize="small" />
               </Avatar>
               <Typography variant="caption" color="success.main" fontWeight={700}>Buy Orders</Typography>
             </Box>
@@ -75,7 +79,7 @@ export default function LogsPage() {
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
-                <Tag size={18} />
+                <LocalOfferRounded fontSize="small" />
               </Avatar>
               <Typography variant="caption" color="secondary.main" fontWeight={700}>Sell Orders</Typography>
             </Box>
@@ -94,7 +98,7 @@ export default function LogsPage() {
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(239, 68, 68, 0.1)', color: 'error.main' }}>
-                <AlertCircle size={18} />
+                <ErrorOutlineRounded fontSize="small" />
               </Avatar>
               <Typography variant="caption" color="error.main" fontWeight={700}>Errors</Typography>
             </Box>
@@ -106,7 +110,7 @@ export default function LogsPage() {
       <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
         <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
-            <Terminal size={18} />
+            <CodeRounded fontSize="small" />
           </Avatar>
           <Typography variant="h6" fontWeight={700}>Bot Logs</Typography>
         </Box>
@@ -130,23 +134,23 @@ export default function LogsPage() {
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <Search size={18} className="text-gray-500" />
+                    <SearchRounded fontSize="small" sx={{ color: 'text.disabled' }} />
                   </InputAdornment>
                 ),
               }}
             />
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', gap: 1 }}>
               {[
-                { id: 'all', label: 'All', icon: Terminal },
-                { id: 'buy', label: 'Buy', icon: ShoppingCart },
-                { id: 'sell', label: 'Sell', icon: Tag },
-                { id: 'error', label: 'Error', icon: AlertCircle },
-                { id: 'scan', label: 'Scan', icon: Radar },
+                { id: 'all', label: 'All', icon: CodeRounded },
+                { id: 'buy', label: 'Buy', icon: ShoppingCartRounded },
+                { id: 'sell', label: 'Sell', icon: LocalOfferRounded },
+                { id: 'error', label: 'Error', icon: ErrorOutlineRounded },
+                { id: 'scan', label: 'Scan', icon: TravelExploreRounded },
               ].map(type => (
                 <Chip
                   key={type.id}
                   label={type.label}
-                  icon={<type.icon size={14} />}
+                  icon={<type.icon fontSize="small" />}
                   onClick={() => setFilterType(type.id)}
                   color={filterType === type.id ? 'primary' : 'default'}
                   variant={filterType === type.id ? 'filled' : 'outlined'}
@@ -193,7 +197,7 @@ export default function LogsPage() {
               ))}
               {filteredLogs.length === 0 && (
                 <Box sx={{ textAlign: 'center', py: 8 }}>
-                  <Search size={32} className="text-gray-600" style={{ marginBottom: 8 }} />
+                  <SearchRounded sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
                   <Typography variant="body2" color="text.disabled">No logs match criteria</Typography>
                 </Box>
               )}

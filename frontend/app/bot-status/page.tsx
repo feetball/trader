@@ -1,14 +1,26 @@
 'use client'
 
 import { useTrading } from '@/hooks/useTrading'
-import { RefreshCw, Power, Square, Cpu, Settings, Target, Clock, Activity, BarChart3, DollarSign, Zap, Monitor } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { frontendLogger, type FrontendLog } from '@/lib/logger'
 import { 
   Box, Grid, Typography, Card, CardHeader, CardContent, 
-  Button, Chip, Avatar, IconButton, Tooltip, 
-  CircularProgress, Divider, useTheme, Paper, List, ListItem, ListItemText
+  Button, Chip, Avatar,
+  CircularProgress, Divider, Paper, List, ListItem, ListItemText
 } from '@mui/material'
+import RefreshRounded from '@mui/icons-material/RefreshRounded'
+import PowerSettingsNewRounded from '@mui/icons-material/PowerSettingsNewRounded'
+import StopCircleRounded from '@mui/icons-material/StopCircleRounded'
+import MemoryRounded from '@mui/icons-material/MemoryRounded'
+import SettingsRounded from '@mui/icons-material/SettingsRounded'
+import TrackChangesRounded from '@mui/icons-material/TrackChangesRounded'
+import AccessTimeRounded from '@mui/icons-material/AccessTimeRounded'
+import AutorenewRounded from '@mui/icons-material/AutorenewRounded'
+import BarChartRounded from '@mui/icons-material/BarChartRounded'
+import AttachMoneyRounded from '@mui/icons-material/AttachMoneyRounded'
+import BoltRounded from '@mui/icons-material/BoltRounded'
+import MonitorRounded from '@mui/icons-material/MonitorRounded'
+import NotesRounded from '@mui/icons-material/NotesRounded'
 
 // Utility to get log color class based on content
 function getBotLogColor(message: string): string {
@@ -30,7 +42,6 @@ function getFrontendLogColor(level: string): string {
 export default function BotStatusPage() {
   const { botStatus, botLoading, loading, portfolio, settings, startBot, stopBot, refreshData } = useTrading()
   const [frontendLogs, setFrontendLogs] = useState<FrontendLog[]>([])
-  const theme = useTheme()
 
   // Subscribe to frontend logs
   useEffect(() => {
@@ -49,7 +60,7 @@ export default function BotStatusPage() {
         <Grid item xs={12} lg={8}>
           <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
             <CardHeader 
-              avatar={<Avatar sx={{ bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}><Cpu size={20} /></Avatar>}
+              avatar={<Avatar sx={{ bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}><MemoryRounded fontSize="small" /></Avatar>}
               title={<Typography variant="h6" fontWeight={700}>Bot Status</Typography>}
               sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', py: 2 }}
             />
@@ -62,10 +73,9 @@ export default function BotStatusPage() {
                     borderRadius: 4,
                     bgcolor: botStatus.running ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255,255,255,0.05)',
                     color: botStatus.running ? 'success.main' : 'text.disabled',
-                    boxShadow: botStatus.running ? '0 0 30px rgba(34, 197, 94, 0.2)' : 'none',
                     transition: 'all 0.3s'
                   }}>
-                    <Cpu size={48} className={botStatus.running ? 'animate-pulse' : ''} />
+                    <MemoryRounded sx={{ fontSize: 48 }} />
                   </Avatar>
                   {botStatus.running && (
                     <Box sx={{ 
@@ -77,8 +87,7 @@ export default function BotStatusPage() {
                       borderRadius: '50%', 
                       bgcolor: 'success.main', 
                       border: '3px solid',
-                      borderColor: 'background.paper',
-                      animation: 'pulse 2s infinite'
+                      borderColor: 'background.paper'
                     }} />
                   )}
                 </Box>
@@ -98,14 +107,14 @@ export default function BotStatusPage() {
                   <Grid container spacing={2} sx={{ mt: 1 }}>
                     <Grid item xs={6}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Activity size={14} className="text-info-400" />
+                        <AutorenewRounded fontSize="small" sx={{ color: 'info.main' }} />
                         <Typography variant="caption" color="text.secondary">Cycles:</Typography>
                         <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace' }}>{botStatus.cycleCount || 0}</Typography>
                       </Box>
                     </Grid>
                     <Grid item xs={6}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Zap size={14} className="text-warning-400" />
+                        <BoltRounded fontSize="small" sx={{ color: 'warning.main' }} />
                         <Typography variant="caption" color="text.secondary">API Calls:</Typography>
                         <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace' }}>{botStatus.apiCalls || 0}</Typography>
                       </Box>
@@ -120,7 +129,7 @@ export default function BotStatusPage() {
         <Grid item xs={12} lg={4}>
           <Card sx={{ height: '100%', borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
             <CardHeader 
-              avatar={<Avatar sx={{ bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}><Settings size={20} /></Avatar>}
+              avatar={<Avatar sx={{ bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}><SettingsRounded fontSize="small" /></Avatar>}
               title={<Typography variant="h6" fontWeight={700}>Controls</Typography>}
               sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', py: 2 }}
             />
@@ -131,15 +140,14 @@ export default function BotStatusPage() {
                   variant="contained"
                   color="success"
                   size="large"
-                  startIcon={<Power size={20} />}
+                  startIcon={<PowerSettingsNewRounded />}
                   onClick={startBot}
                   disabled={botLoading}
                   sx={{ 
                     py: 2, 
                     borderRadius: 2, 
                     fontWeight: 700,
-                    boxShadow: '0 8px 24px rgba(34, 197, 94, 0.3)',
-                    '&:hover': { boxShadow: '0 12px 32px rgba(34, 197, 94, 0.4)' }
+                    '&:hover': { filter: 'brightness(1.05)' }
                   }}
                 >
                   Start Bot
@@ -150,15 +158,14 @@ export default function BotStatusPage() {
                   variant="contained"
                   color="error"
                   size="large"
-                  startIcon={<Square size={20} />}
+                  startIcon={<StopCircleRounded />}
                   onClick={stopBot}
                   disabled={botLoading}
                   sx={{ 
                     py: 2, 
                     borderRadius: 2, 
                     fontWeight: 700,
-                    boxShadow: '0 8px 24px rgba(239, 68, 68, 0.3)',
-                    '&:hover': { boxShadow: '0 12px 32px rgba(239, 68, 68, 0.4)' }
+                    '&:hover': { filter: 'brightness(1.05)' }
                   }}
                 >
                   Stop Bot
@@ -169,7 +176,7 @@ export default function BotStatusPage() {
                 variant="outlined"
                 color="inherit"
                 size="large"
-                startIcon={<RefreshCw size={18} className={loading ? 'animate-spin' : ''} />}
+                startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <RefreshRounded />}
                 onClick={refreshData}
                 disabled={loading}
                 sx={{ 
@@ -189,10 +196,10 @@ export default function BotStatusPage() {
       {/* Stats Grid */}
       <Grid container spacing={3}>
         {[
-          { label: 'Open Positions', value: portfolio.openPositions || 0, suffix: `/${settings.MAX_POSITIONS}`, icon: Target, color: 'primary' },
-          { label: 'Available Cash', value: '$' + (portfolio.cash?.toFixed(0) || '0'), icon: DollarSign, color: 'success' },
-          { label: 'Total Trades', value: portfolio.totalTrades || 0, icon: BarChart3, color: 'info' },
-          { label: 'Scan Interval', value: settings.SCAN_INTERVAL + 's', icon: Clock, color: 'warning' },
+          { label: 'Open Positions', value: portfolio.openPositions || 0, suffix: `/${settings.MAX_POSITIONS}`, icon: TrackChangesRounded, color: 'primary' },
+          { label: 'Available Cash', value: '$' + (portfolio.cash?.toFixed(0) || '0'), icon: AttachMoneyRounded, color: 'success' },
+          { label: 'Total Trades', value: portfolio.totalTrades || 0, icon: BarChartRounded, color: 'info' },
+          { label: 'Scan Interval', value: settings.SCAN_INTERVAL + 's', icon: AccessTimeRounded, color: 'warning' },
         ].map((stat, i) => (
           <Grid item xs={6} md={3} key={i}>
             <Paper sx={{ 
@@ -211,7 +218,7 @@ export default function BotStatusPage() {
                   bgcolor: `rgba(${stat.color === 'primary' ? '124, 77, 255' : stat.color === 'success' ? '34, 197, 94' : stat.color === 'info' ? '3, 218, 198' : '245, 158, 11'}, 0.1)`, 
                   color: `${stat.color}.main` 
                 }}>
-                  <stat.icon size={14} />
+                  <stat.icon fontSize="small" />
                 </Avatar>
                 <Typography variant="caption" color="text.secondary" fontWeight={600}>{stat.label}</Typography>
               </Box>
@@ -228,7 +235,7 @@ export default function BotStatusPage() {
         <Grid item xs={12} md={6}>
           <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
             <CardHeader 
-              avatar={<Avatar sx={{ bgcolor: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' }}><Activity size={20} /></Avatar>}
+              avatar={<Avatar sx={{ bgcolor: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' }}><NotesRounded fontSize="small" /></Avatar>}
               title={<Typography variant="h6" fontWeight={700}>Bot Logs</Typography>}
               sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', py: 2 }}
             />
@@ -258,7 +265,7 @@ export default function BotStatusPage() {
                 ))}
                 {!botStatus.logs?.length && (
                   <Box sx={{ textAlign: 'center', py: 8 }}>
-                    <Activity size={32} className="text-gray-600" style={{ marginBottom: 8 }} />
+                    <NotesRounded sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
                     <Typography variant="body2" color="text.disabled">No logs yet. Start the bot to see activity.</Typography>
                   </Box>
                 )}
@@ -270,7 +277,7 @@ export default function BotStatusPage() {
         <Grid item xs={12} md={6}>
           <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
             <CardHeader 
-              avatar={<Avatar sx={{ bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'info.main' }}><Monitor size={20} /></Avatar>}
+              avatar={<Avatar sx={{ bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'info.main' }}><MonitorRounded fontSize="small" /></Avatar>}
               title={<Typography variant="h6" fontWeight={700}>Frontend Logs</Typography>}
               sx={{ borderBottom: '1px solid rgba(255,255,255,0.05)', py: 2 }}
             />
@@ -300,7 +307,7 @@ export default function BotStatusPage() {
                 ))}
                 {!frontendLogs.length && (
                   <Box sx={{ textAlign: 'center', py: 8 }}>
-                    <Monitor size={32} className="text-gray-600" style={{ marginBottom: 8 }} />
+                    <MonitorRounded sx={{ fontSize: 32, color: 'text.disabled', mb: 1 }} />
                     <Typography variant="body2" color="text.disabled">No frontend logs yet.</Typography>
                   </Box>
                 )}
@@ -309,14 +316,6 @@ export default function BotStatusPage() {
           </Card>
         </Grid>
       </Grid>
-
-      <style jsx global>{`
-        @keyframes pulse {
-          0% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.6; transform: scale(1.2); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </Box>
   )
 }

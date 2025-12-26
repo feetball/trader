@@ -2,16 +2,21 @@
 
 import { useTrading } from '@/hooks/useTrading'
 import { useMemo } from 'react'
-import { Trophy, TrendingDown, BarChart3, ArrowUpRight, ArrowDownRight, Award, Flame } from 'lucide-react'
 import { 
   Box, Grid, Typography, Card, CardContent, 
   Chip, Avatar, Table, TableBody, TableCell, 
-  TableContainer, TableHead, TableRow, Paper, useTheme 
+  TableContainer, TableHead, TableRow, Paper
 } from '@mui/material'
+import EmojiEventsRounded from '@mui/icons-material/EmojiEventsRounded'
+import TrendingDownRounded from '@mui/icons-material/TrendingDownRounded'
+import BarChartRounded from '@mui/icons-material/BarChartRounded'
+import NorthEastRounded from '@mui/icons-material/NorthEastRounded'
+import SouthEastRounded from '@mui/icons-material/SouthEastRounded'
+import MilitaryTechRounded from '@mui/icons-material/MilitaryTechRounded'
+import LocalFireDepartmentRounded from '@mui/icons-material/LocalFireDepartmentRounded'
 
 export default function PerformancePage() {
   const { coinPerformance, openCoinbase } = useTrading()
-  const theme = useTheme()
 
   const bestCoin = useMemo(() => 
     coinPerformance?.length ? [...coinPerformance].sort((a, b) => b.profit - a.profit)[0] : null, 
@@ -54,16 +59,15 @@ export default function PerformancePage() {
                     width: 48, 
                     height: 48, 
                     bgcolor: 'rgba(34, 197, 94, 0.1)', 
-                    color: 'success.main',
-                    boxShadow: '0 0 20px rgba(34, 197, 94, 0.2)'
+                    color: 'success.main'
                   }}>
-                    <Trophy size={24} />
+                    <EmojiEventsRounded />
                   </Avatar>
                   <Chip 
                     label="Best" 
                     color="success" 
                     size="small" 
-                    icon={<ArrowUpRight size={12} />}
+                    icon={<NorthEastRounded fontSize="small" />}
                     sx={{ fontWeight: 700, borderRadius: 1.5 }}
                   />
                 </Box>
@@ -106,16 +110,15 @@ export default function PerformancePage() {
                     width: 48, 
                     height: 48, 
                     bgcolor: 'rgba(239, 68, 68, 0.1)', 
-                    color: 'error.main',
-                    boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)'
+                    color: 'error.main'
                   }}>
-                    <TrendingDown size={24} />
+                    <TrendingDownRounded />
                   </Avatar>
                   <Chip 
                     label="Worst" 
                     color="error" 
                     size="small" 
-                    icon={<ArrowDownRight size={12} />}
+                    icon={<SouthEastRounded fontSize="small" />}
                     sx={{ fontWeight: 700, borderRadius: 1.5 }}
                   />
                 </Box>
@@ -158,16 +161,15 @@ export default function PerformancePage() {
                     width: 48, 
                     height: 48, 
                     bgcolor: 'rgba(3, 218, 198, 0.1)', 
-                    color: 'secondary.main',
-                    boxShadow: '0 0 20px rgba(3, 218, 198, 0.2)'
+                    color: 'secondary.main'
                   }}>
-                    <Flame size={24} />
+                    <LocalFireDepartmentRounded />
                   </Avatar>
                   <Chip 
                     label="Active" 
                     color="info" 
                     size="small" 
-                    icon={<BarChart3 size={12} />}
+                    icon={<BarChartRounded fontSize="small" />}
                     sx={{ fontWeight: 700, borderRadius: 1.5 }}
                   />
                 </Box>
@@ -186,7 +188,7 @@ export default function PerformancePage() {
                   {mostTraded?.trades} trades
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, color: (mostTraded?.profit ?? 0) >= 0 ? 'success.main' : 'error.main' }}>
-                  {(mostTraded?.profit ?? 0) >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+                  {(mostTraded?.profit ?? 0) >= 0 ? <NorthEastRounded fontSize="small" /> : <SouthEastRounded fontSize="small" />}
                   <Typography variant="caption" fontWeight={700}>
                     {(mostTraded?.profit ?? 0) >= 0 ? '+' : ''}${(mostTraded?.profit ?? 0).toFixed(2)}
                   </Typography>
@@ -201,7 +203,7 @@ export default function PerformancePage() {
       <Card sx={{ borderRadius: 3, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
         <Box sx={{ p: 2, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar sx={{ width: 32, height: 32, bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
-            <BarChart3 size={18} />
+            <BarChartRounded fontSize="small" />
           </Avatar>
           <Typography variant="h6" fontWeight={700}>Performance by Coin</Typography>
         </Box>
@@ -284,7 +286,7 @@ export default function PerformancePage() {
           </TableContainer>
           {coinPerformance.length === 0 && (
             <Box sx={{ textAlign: 'center', py: 12 }}>
-              <Award size={48} className="text-gray-600" style={{ marginBottom: 16 }} />
+              <MilitaryTechRounded sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
               <Typography variant="h6" color="text.secondary">No performance data yet</Typography>
               <Typography variant="body2" color="text.disabled">Start trading to see your coin performance</Typography>
             </Box>

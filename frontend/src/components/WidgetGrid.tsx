@@ -2,15 +2,21 @@
 
 import { useState, useCallback, useEffect, ReactNode } from 'react'
 import { 
-  GripVertical, RotateCcw, Maximize2, Minimize2, X, Plus, 
-  Save, Check, Settings2, ChevronDown, ChevronUp, Eye, EyeOff,
-  Layout, Columns, Grid3X3
-} from 'lucide-react'
-import { 
   Grid, Box, Typography, Button, IconButton, Tooltip, 
-  Menu, MenuItem, Paper, Divider, useTheme, useMediaQuery,
-  Fade, Grow, Zoom, Card, CardHeader, CardContent, Chip
+  Menu, MenuItem, Paper, Divider,
+  Fade, Card, CardHeader, CardContent
 } from '@mui/material'
+import DragIndicatorRounded from '@mui/icons-material/DragIndicatorRounded'
+import RestartAltRounded from '@mui/icons-material/RestartAltRounded'
+import AddRounded from '@mui/icons-material/AddRounded'
+import SaveRounded from '@mui/icons-material/SaveRounded'
+import CheckRounded from '@mui/icons-material/CheckRounded'
+import TuneRounded from '@mui/icons-material/TuneRounded'
+import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded'
+import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded'
+import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
+import VisibilityOffRounded from '@mui/icons-material/VisibilityOffRounded'
+import GridViewRounded from '@mui/icons-material/GridViewRounded'
 
 export interface Widget {
   id: string
@@ -39,14 +45,6 @@ interface WidgetGridProps {
 
 const STORAGE_PREFIX = 'widget-layout-'
 
-const gradients = [
-  'linear-gradient(135deg, rgba(124, 77, 255, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
-  'linear-gradient(135deg, rgba(3, 218, 198, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
-  'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
-  'linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
-  'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(0, 0, 0, 0) 100%)',
-]
-
 export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutChange }: WidgetGridProps) {
   const [layout, setLayout] = useState<WidgetLayout[]>([])
   const [draggedId, setDraggedId] = useState<string | null>(null)
@@ -55,9 +53,6 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [savedLayout, setSavedLayout] = useState<WidgetLayout[]>([])
-
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
 
   // Initialize layout from storage or defaults
   useEffect(() => {
@@ -240,8 +235,8 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
               <Button
                 variant="outlined"
                 size="small"
-                startIcon={<Plus size={16} />}
-                endIcon={<ChevronDown size={14} />}
+                startIcon={<AddRounded fontSize="small" />}
+                endIcon={<ExpandMoreRounded fontSize="small" />}
                 onClick={(e) => setAnchorEl(e.currentTarget)}
                 sx={{ borderRadius: 2, textTransform: 'none' }}
               >
@@ -274,7 +269,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                   return (
                     <MenuItem key={item.id} onClick={() => showWidget(item.id)} sx={{ py: 1.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Eye size={16} className="text-gray-400" />
+                        <VisibilityRounded fontSize="small" sx={{ opacity: 0.7 }} />
                         <Typography variant="body2">{widget.title}</Typography>
                       </Box>
                     </MenuItem>
@@ -289,7 +284,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
               variant="contained"
               color="success"
               size="small"
-              startIcon={<Save size={16} />}
+              startIcon={<SaveRounded fontSize="small" />}
               onClick={saveLayout}
               sx={{ borderRadius: 2, textTransform: 'none', boxShadow: '0 0 15px rgba(34, 197, 94, 0.3)' }}
             >
@@ -302,7 +297,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
               variant="outlined"
               color="inherit"
               size="small"
-              startIcon={<RotateCcw size={16} />}
+              startIcon={<RestartAltRounded fontSize="small" />}
               onClick={resetLayout}
               sx={{ borderRadius: 2, textTransform: 'none', borderColor: 'rgba(255,255,255,0.1)' }}
             >
@@ -314,7 +309,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
             variant={isEditing ? "contained" : "outlined"}
             color={isEditing ? "primary" : "inherit"}
             size="small"
-            startIcon={isEditing ? <Check size={16} /> : <Settings2 size={16} />}
+            startIcon={isEditing ? <CheckRounded fontSize="small" /> : <TuneRounded fontSize="small" />}
             onClick={() => {
               if (isEditing && hasUnsavedChanges) {
                 saveLayout()
@@ -336,13 +331,12 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
 
       {/* Widget Grid */}
       <Grid container spacing={3}>
-        {visibleWidgets.map((item, index) => {
+        {visibleWidgets.map((item) => {
           const widget = widgets.find(w => w.id === item.id)
           if (!widget) return null
 
           const isDragging = draggedId === item.id
           const isDragOver = dragOverId === item.id
-          const gradient = widget.gradient || gradients[index % gradients.length]
 
           return (
             <Grid 
@@ -369,13 +363,13 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                   position: 'relative',
                   overflow: 'hidden',
                   bgcolor: 'background.paper',
-                  backgroundImage: gradient,
-                  border: '1px solid rgba(255,255,255,0.05)',
+                  backgroundImage: 'none',
+                  border: '1px solid var(--md-sys-color-outline)',
                   borderRadius: 3,
                   transition: 'all 0.3s ease',
                   '&:hover': {
                     borderColor: isEditing ? 'primary.main' : 'rgba(255,255,255,0.1)',
-                    boxShadow: isEditing ? '0 0 20px rgba(124, 77, 255, 0.15)' : '0 8px 32px rgba(0,0,0,0.4)'
+                    boxShadow: isEditing ? 'var(--md-elevation-2)' : 'var(--md-elevation-1)'
                   },
                   ...(isDragOver && {
                     borderColor: 'primary.main',
@@ -389,7 +383,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                 <CardHeader
                   title={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      {isEditing && <GripVertical size={16} className="text-gray-500 cursor-grab active:cursor-grabbing" />}
+                      {isEditing && <DragIndicatorRounded fontSize="small" sx={{ opacity: 0.7 }} />}
                       <Typography variant="subtitle2" fontWeight={700} sx={{ letterSpacing: '0.02em' }}>
                         {widget.title}
                       </Typography>
@@ -422,13 +416,13 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                           </Box>
                           <Tooltip title="Hide widget">
                             <IconButton size="small" onClick={() => hideWidget(item.id)} sx={{ color: 'text.secondary', '&:hover': { color: 'error.main' } }}>
-                              <EyeOff size={14} />
+                              <VisibilityOffRounded fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         </>
                       ) : (
                         <IconButton size="small" onClick={() => toggleCollapse(item.id)} sx={{ color: 'text.secondary' }}>
-                          {item.collapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+                          {item.collapsed ? <ExpandMoreRounded fontSize="small" /> : <ExpandLessRounded fontSize="small" />}
                         </IconButton>
                       )}
                     </Box>
@@ -436,7 +430,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
                   sx={{ 
                     px: 2.5, 
                     py: 1.5, 
-                    borderBottom: '1px solid rgba(255,255,255,0.05)',
+                    borderBottom: '1px solid var(--md-sys-color-outline)',
                     bgcolor: isEditing ? 'rgba(255,255,255,0.02)' : 'transparent'
                   }}
                 />
@@ -481,7 +475,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
               border: '2px dashed rgba(255,255,255,0.1)',
               borderRadius: 4
             }}>
-              <Grid3X3 size={48} className="text-gray-600" style={{ marginBottom: 16 }} />
+              <GridViewRounded sx={{ fontSize: 48, opacity: 0.45, mb: 2 }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>
                 No widgets visible
               </Typography>
@@ -491,7 +485,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
               {hiddenWidgets.length > 0 && (
                 <Button
                   variant="contained"
-                  startIcon={<Plus size={18} />}
+                  startIcon={<AddRounded />}
                   onClick={(e) => setAnchorEl(e.currentTarget)}
                   sx={{ borderRadius: 2, textTransform: 'none' }}
                 >

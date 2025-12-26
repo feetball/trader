@@ -3,40 +3,47 @@
 import { useTrading } from '@/hooks/useTrading'
 import Link from 'next/link'
 import { 
-  BarChart3, Cpu, Trophy, History, Bell, Terminal, 
-  Settings, HelpCircle, Info, Zap, Shield, CheckCircle2,
-  ArrowRight, Layers, Server, Globe, Package
-} from 'lucide-react'
-import { 
   Box, Typography, Grid, Card, CardContent, 
   Avatar, Paper, Stack, Divider, List, ListItem, 
-  ListItemIcon, ListItemText, useTheme, Button,
+  ListItemIcon, ListItemText, Button,
   Chip
 } from '@mui/material'
+import BarChartRounded from '@mui/icons-material/BarChartRounded'
+import MemoryRounded from '@mui/icons-material/MemoryRounded'
+import EmojiEventsRounded from '@mui/icons-material/EmojiEventsRounded'
+import HistoryRounded from '@mui/icons-material/HistoryRounded'
+import NotificationsRounded from '@mui/icons-material/NotificationsRounded'
+import CodeRounded from '@mui/icons-material/CodeRounded'
+import SettingsRounded from '@mui/icons-material/SettingsRounded'
+import HelpOutlineRounded from '@mui/icons-material/HelpOutlineRounded'
+import InfoOutlined from '@mui/icons-material/InfoOutlined'
+import BoltRounded from '@mui/icons-material/BoltRounded'
+import ShieldRounded from '@mui/icons-material/ShieldRounded'
+import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded'
+import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
+import LayersRounded from '@mui/icons-material/LayersRounded'
+import DnsRounded from '@mui/icons-material/DnsRounded'
+import PublicRounded from '@mui/icons-material/PublicRounded'
+import Inventory2Rounded from '@mui/icons-material/Inventory2Rounded'
 
 export default function HelpPage() {
   const { appVersion, settings } = useTrading()
-  const theme = useTheme()
 
   const pages = [
-    { href: '/', icon: BarChart3, title: 'Overview', desc: 'Portfolio summary, positions, recent trades', color: 'primary.main' },
-    { href: '/bot-status', icon: Cpu, title: 'Bot Status', desc: 'Control panel, live status', color: 'secondary.main' },
-    { href: '/performance', icon: Trophy, title: 'Performance', desc: 'Profit/loss analytics by coin', color: 'success.main' },
-    { href: '/trades', icon: History, title: 'Trade History', desc: 'Complete trade history', color: 'info.main' },
-    { href: '/activity', icon: Bell, title: 'Activity', desc: 'Timeline of trading events', color: 'warning.main' },
-    { href: '/logs', icon: Terminal, title: 'Logs', desc: 'Full bot output', color: 'error.main' },
-    { href: '/settings', icon: Settings, title: 'Settings', desc: 'Configuration controls', color: 'primary.main' },
+    { href: '/', icon: BarChartRounded, title: 'Overview', desc: 'Portfolio summary, positions, recent trades', color: 'primary.main' },
+    { href: '/bot-status', icon: MemoryRounded, title: 'Bot Status', desc: 'Control panel, live status', color: 'secondary.main' },
+    { href: '/performance', icon: EmojiEventsRounded, title: 'Performance', desc: 'Profit/loss analytics by coin', color: 'success.main' },
+    { href: '/trades', icon: HistoryRounded, title: 'Trade History', desc: 'Complete trade history', color: 'info.main' },
+    { href: '/activity', icon: NotificationsRounded, title: 'Activity', desc: 'Timeline of trading events', color: 'warning.main' },
+    { href: '/logs', icon: CodeRounded, title: 'Logs', desc: 'Full bot output', color: 'error.main' },
+    { href: '/settings', icon: SettingsRounded, title: 'Settings', desc: 'Configuration controls', color: 'primary.main' },
   ]
 
   return (
     <Box sx={{ p: { xs: 2, md: 4 }, pb: 12, maxWidth: 1200, mx: 'auto' }}>
       {/* Hero Section */}
       <Box sx={{ textAlign: 'center', mb: 8 }}>
-        <Typography variant="h3" fontWeight={800} gutterBottom sx={{ 
-          background: 'linear-gradient(45deg, #7C4DFF 30%, #03DAC6 90%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent'
-        }}>
+        <Typography variant="h3" fontWeight={800} gutterBottom>
           Trader Expressive
         </Typography>
         <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ mb: 2 }}>
@@ -49,6 +56,9 @@ export default function HelpPage() {
           A high-performance trading bot designed for sub-$1 cryptocurrencies, 
           leveraging real-time market data and advanced technical indicators.
         </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 700, mx: 'auto', mt: 2 }}>
+          Tip: in Settings, hover the <strong>ⓘ</strong> icons to see field-by-field help.
+        </Typography>
       </Box>
 
       <Grid container spacing={4}>
@@ -57,7 +67,7 @@ export default function HelpPage() {
           <Card sx={{ height: '100%', borderRadius: 4, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
             <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
-                <Info size={20} />
+                <InfoOutlined />
               </Avatar>
               <Typography variant="h6" fontWeight={700}>About the Bot</Typography>
             </Box>
@@ -72,7 +82,7 @@ export default function HelpPage() {
               </Typography>
               
               <Typography variant="subtitle2" fontWeight={700} sx={{ mt: 4, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Zap size={16} className="text-warning-400" /> Key Features
+                <BoltRounded fontSize="small" sx={{ color: 'warning.main' }} /> Key Features
               </Typography>
               <List dense disablePadding>
                 {[
@@ -85,7 +95,7 @@ export default function HelpPage() {
                 ].map((text, i) => (
                   <ListItem key={i} sx={{ px: 0, py: 0.5 }}>
                     <ListItemIcon sx={{ minWidth: 32 }}>
-                      <CheckCircle2 size={16} color={theme.palette.success.main} />
+                      <CheckCircleRounded fontSize="small" sx={{ color: 'success.main' }} />
                     </ListItemIcon>
                     <ListItemText primary={text} primaryTypographyProps={{ variant: 'body2', color: 'text.secondary' }} />
                   </ListItem>
@@ -100,7 +110,7 @@ export default function HelpPage() {
           <Card sx={{ height: '100%', borderRadius: 4, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
             <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
-                <Settings size={20} />
+                <SettingsRounded />
               </Avatar>
               <Typography variant="h6" fontWeight={700}>Active Configuration</Typography>
             </Box>
@@ -132,7 +142,7 @@ export default function HelpPage() {
                   href="/settings" 
                   variant="outlined" 
                   fullWidth 
-                  endIcon={<ArrowRight size={16} />}
+                  endIcon={<ArrowForwardRounded fontSize="small" />}
                   sx={{ borderRadius: 3, py: 1.5 }}
                 >
                   Modify Settings
@@ -167,7 +177,7 @@ export default function HelpPage() {
                   >
                     <CardContent sx={{ p: 3 }}>
                       <Avatar sx={{ mb: 2, bgcolor: `rgba(${page.color === 'primary.main' ? '124, 77, 255' : '3, 218, 198'}, 0.1)`, color: page.color }}>
-                        <Icon size={20} />
+                        <Icon fontSize="small" />
                       </Avatar>
                       <Typography variant="subtitle1" fontWeight={700} gutterBottom>{page.title}</Typography>
                       <Typography variant="body2" color="text.secondary">{page.desc}</Typography>
@@ -184,7 +194,7 @@ export default function HelpPage() {
           <Card sx={{ borderRadius: 4, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
             <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'rgba(124, 77, 255, 0.1)', color: 'primary.main' }}>
-                <Layers size={20} />
+                <LayersRounded />
               </Avatar>
               <Typography variant="h6" fontWeight={700}>System Architecture</Typography>
             </Box>
@@ -220,15 +230,15 @@ export default function HelpPage() {
 
               <Grid container spacing={3}>
                 {[
-                  { label: 'Frontend', title: 'Next.js 14', desc: 'React 18 + MUI v5', icon: Globe, color: 'primary.main' },
-                  { label: 'Backend', title: 'Node.js', desc: 'Express + WebSocket', icon: Server, color: 'secondary.main' },
-                  { label: 'Trading', title: 'Exchange API', desc: 'Real-time execution', icon: Zap, color: 'warning.main' },
-                  { label: 'Deploy', title: 'Docker', desc: 'Containerized', icon: Package, color: 'info.main' },
+                  { label: 'Frontend', title: 'Next.js 14', desc: 'React 18 + MUI v5', icon: PublicRounded, color: 'primary.main' },
+                  { label: 'Backend', title: 'Node.js', desc: 'Express + WebSocket', icon: DnsRounded, color: 'secondary.main' },
+                  { label: 'Trading', title: 'Exchange API', desc: 'Real-time execution', icon: BoltRounded, color: 'warning.main' },
+                  { label: 'Deploy', title: 'Docker', desc: 'Containerized', icon: Inventory2Rounded, color: 'info.main' },
                 ].map((tech, i) => (
                   <Grid item xs={12} sm={6} md={3} key={i}>
                     <Paper sx={{ p: 2.5, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
                       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
-                        <tech.icon size={16} style={{ color: theme.palette.text.secondary }} />
+                        <tech.icon fontSize="small" sx={{ color: 'text.secondary' }} />
                         <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 1 }}>
                           {tech.label}
                         </Typography>
@@ -248,7 +258,7 @@ export default function HelpPage() {
           <Card sx={{ borderRadius: 4, bgcolor: 'background.paper', backgroundImage: 'none', border: '1px solid rgba(255,255,255,0.05)' }}>
             <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 2 }}>
               <Avatar sx={{ bgcolor: 'rgba(3, 218, 198, 0.1)', color: 'secondary.main' }}>
-                <HelpCircle size={20} />
+                <HelpOutlineRounded />
               </Avatar>
               <Typography variant="h6" fontWeight={700}>Getting Started</Typography>
             </Box>

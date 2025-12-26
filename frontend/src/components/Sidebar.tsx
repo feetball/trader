@@ -3,26 +3,38 @@
 import { useTrading } from '@/hooks/useTrading'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  BarChart3, Cpu, Trophy, History, Bell, Terminal, HelpCircle, Settings, 
-  Menu, X, Zap, RefreshCw, Activity, AlertTriangle, CheckCircle, XCircle 
-} from 'lucide-react'
 import { useState } from 'react'
 import { 
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, 
   Box, Typography, Divider, IconButton, useMediaQuery, useTheme, 
   Chip, Tooltip, Button, Snackbar, Alert, CircularProgress
 } from '@mui/material'
+import DashboardRounded from '@mui/icons-material/DashboardRounded'
+import MemoryRounded from '@mui/icons-material/MemoryRounded'
+import EmojiEventsRounded from '@mui/icons-material/EmojiEventsRounded'
+import HistoryRounded from '@mui/icons-material/HistoryRounded'
+import NotificationsRounded from '@mui/icons-material/NotificationsRounded'
+import TerminalRounded from '@mui/icons-material/TerminalRounded'
+import HelpOutlineRounded from '@mui/icons-material/HelpOutlineRounded'
+import SettingsRounded from '@mui/icons-material/SettingsRounded'
+import MenuRounded from '@mui/icons-material/MenuRounded'
+import CloseRounded from '@mui/icons-material/CloseRounded'
+import BoltRounded from '@mui/icons-material/BoltRounded'
+import RefreshRounded from '@mui/icons-material/RefreshRounded'
+import MonitorHeartRounded from '@mui/icons-material/MonitorHeartRounded'
+import WarningAmberRounded from '@mui/icons-material/WarningAmberRounded'
+import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded'
+import CancelRounded from '@mui/icons-material/CancelRounded'
 
 const navLinks = [
-  { href: '/', icon: BarChart3, label: 'Overview', tooltip: 'Main dashboard overview' },
-  { href: '/bot-status', icon: Cpu, label: 'Bot Status', tooltip: 'Control and monitor the trading bot' },
-  { href: '/performance', icon: Trophy, label: 'Performance', tooltip: 'View trading performance analytics' },
-  { href: '/trades', icon: History, label: 'Trade History', tooltip: 'Browse complete trade history' },
-  { href: '/activity', icon: Bell, label: 'Activity', tooltip: 'See recent trading activity' },
-  { href: '/logs', icon: Terminal, label: 'Logs', tooltip: 'View detailed bot logs' },
-  { href: '/settings', icon: Settings, label: 'Settings', tooltip: 'Configure trading parameters' },
-  { href: '/help', icon: HelpCircle, label: 'Help', tooltip: 'Get help and documentation' },
+  { href: '/', icon: DashboardRounded, label: 'Overview', tooltip: 'Main dashboard overview' },
+  { href: '/bot-status', icon: MemoryRounded, label: 'Bot Status', tooltip: 'Control and monitor the trading bot' },
+  { href: '/performance', icon: EmojiEventsRounded, label: 'Performance', tooltip: 'View trading performance analytics' },
+  { href: '/trades', icon: HistoryRounded, label: 'Trade History', tooltip: 'Browse complete trade history' },
+  { href: '/activity', icon: NotificationsRounded, label: 'Activity', tooltip: 'See recent trading activity' },
+  { href: '/logs', icon: TerminalRounded, label: 'Logs', tooltip: 'View detailed bot logs' },
+  { href: '/settings', icon: SettingsRounded, label: 'Settings', tooltip: 'Configure trading parameters' },
+  { href: '/help', icon: HelpOutlineRounded, label: 'Help', tooltip: 'Get help and documentation' },
 ]
 
 const DRAWER_WIDTH = 280
@@ -80,14 +92,14 @@ export default function Sidebar() {
           position: 'relative',
           width: 40,
           height: 40,
-          borderRadius: 2,
+          borderRadius: 2.5,
           bgcolor: 'primary.main',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 0 15px rgba(124, 77, 255, 0.4)'
+          boxShadow: 'var(--md-elevation-1)'
         }}>
-          <Zap size={22} color="white" />
+          <BoltRounded sx={{ color: 'primary.contrastText' }} />
           <Box sx={{ 
             position: 'absolute',
             top: -2,
@@ -130,22 +142,22 @@ export default function Sidebar() {
                     borderRadius: 2,
                     py: 1.5,
                     '&.Mui-selected': {
-                      bgcolor: 'rgba(124, 77, 255, 0.12)',
-                      color: 'primary.main',
+                      bgcolor: 'rgba(255,255,255,0.10)',
+                      color: 'text.primary',
                       '&:hover': {
-                        bgcolor: 'rgba(124, 77, 255, 0.18)',
+                        bgcolor: 'rgba(255,255,255,0.14)',
                       },
                       '& .MuiListItemIcon-root': {
-                        color: 'primary.main',
+                        color: 'text.primary',
                       }
                     },
                     '&:hover': {
-                      bgcolor: 'rgba(255, 255, 255, 0.05)',
+                      bgcolor: 'rgba(255,255,255,0.06)',
                     }
                   }}
                 >
                   <ListItemIcon sx={{ minWidth: 40 }}>
-                    <Icon size={20} />
+                    <Icon fontSize="small" />
                   </ListItemIcon>
                   <ListItemText 
                     primary={item.label} 
@@ -164,11 +176,11 @@ export default function Sidebar() {
       {/* Bottom Section */}
       <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <Box sx={{ 
-          bgcolor: 'rgba(255,255,255,0.03)', 
-          borderRadius: 2, 
+          bgcolor: 'rgba(255,255,255,0.04)', 
+          borderRadius: 2.5, 
           p: 2, 
           mb: 2,
-          border: '1px solid rgba(255,255,255,0.05)'
+          border: '1px solid var(--md-sys-color-outline)'
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -184,10 +196,10 @@ export default function Sidebar() {
             {botStatus.running && (
               <Chip 
                 size="small" 
-                icon={<Activity size={12} />} 
+                icon={<MonitorHeartRounded fontSize="small" />} 
                 label={`${botStatus.apiRate || 0}/min`}
                 variant="outlined"
-                sx={{ height: 20, fontSize: '0.65rem', borderColor: 'rgba(255,255,255,0.1)' }}
+                sx={{ height: 20, fontSize: '0.65rem', borderColor: 'var(--md-sys-color-outline)' }}
               />
             )}
           </Box>
@@ -197,9 +209,9 @@ export default function Sidebar() {
               {settings.EXCHANGE === 'KRAKEN' ? 'Kraken API' : 'Coinbase API'}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {exchangeApiStatus === 'ok' && <CheckCircle size={12} className="text-success-500" />}
-              {exchangeApiStatus === 'rate-limited' && <AlertTriangle size={12} className="text-warning-500" />}
-              {exchangeApiStatus === 'error' && <XCircle size={12} className="text-error-500" />}
+              {exchangeApiStatus === 'ok' && <CheckCircleRounded fontSize="inherit" sx={{ fontSize: 14, color: 'success.main' }} />}
+              {exchangeApiStatus === 'rate-limited' && <WarningAmberRounded fontSize="inherit" sx={{ fontSize: 14, color: 'warning.main' }} />}
+              {exchangeApiStatus === 'error' && <CancelRounded fontSize="inherit" sx={{ fontSize: 14, color: 'error.main' }} />}
               <Typography 
                 variant="caption" 
                 sx={{ 
@@ -228,17 +240,17 @@ export default function Sidebar() {
           fullWidth
           variant="outlined"
           size="small"
-          startIcon={checking ? <CircularProgress size={14} color="inherit" /> : <RefreshCw size={14} />}
+          startIcon={checking ? <CircularProgress size={14} color="inherit" /> : <RefreshRounded fontSize="small" />}
           onClick={handleCheckUpdates}
           disabled={checking}
           sx={{ 
             borderRadius: 2,
             textTransform: 'none',
-            borderColor: 'rgba(124, 77, 255, 0.3)',
-            color: 'primary.light',
+            borderColor: 'var(--md-sys-color-outline)',
+            color: 'text.primary',
             '&:hover': {
-              borderColor: 'primary.main',
-              bgcolor: 'rgba(124, 77, 255, 0.05)'
+              borderColor: 'var(--md-sys-color-outline)',
+              bgcolor: 'rgba(255,255,255,0.06)'
             }
           }}
         >
@@ -259,13 +271,12 @@ export default function Sidebar() {
             top: 16,
             left: 16,
             zIndex: 1200,
-            bgcolor: 'rgba(15, 23, 36, 0.8)',
-            backdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.1)',
-            '&:hover': { bgcolor: 'rgba(15, 23, 36, 0.9)' }
+            bgcolor: 'background.paper',
+            border: '1px solid var(--md-sys-color-outline)',
+            '&:hover': { bgcolor: 'rgba(255,255,255,0.06)' }
           }}
         >
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+          {mobileOpen ? <CloseRounded /> : <MenuRounded />}
         </IconButton>
       )}
 

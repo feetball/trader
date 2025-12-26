@@ -1,19 +1,13 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { useTrading } from '@/hooks/useTrading'
 import Sidebar from '@/components/Sidebar'
 import AppBar from '@/components/AppBar'
 import UpdateDialog from '@/components/UpdateDialog'
 import { ReactNode, useState, useEffect } from 'react'
-import { Box, useTheme, useMediaQuery } from '@mui/material'
-
-const DRAWER_WIDTH = 280
+import { Box } from '@mui/material'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false)
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   
   useEffect(() => {
     setMounted(true)
