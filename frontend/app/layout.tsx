@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '../src/styles/globals.css'
 import { TradingProvider } from '@/hooks/useTrading'
 import RootLayout from '@/components/RootLayout'
+import { MuiThemeProvider } from '@/theme/muiTheme'
 
 export const metadata: Metadata = {
   title: 'Big DK\'s Crypto Momentum Trader',
@@ -17,9 +18,11 @@ export default function Layout({
     <html lang="en" className="dark">
       <body className="bg-surface text-white">
         <TradingProvider>
-          <RootLayout>
-            {children}
-          </RootLayout>
+          <MuiThemeProvider>
+            <RootLayout>
+              {children}
+            </RootLayout>
+          </MuiThemeProvider>
         </TradingProvider>
       </body>
     </html>
