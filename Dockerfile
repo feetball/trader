@@ -16,7 +16,7 @@ RUN apk add --no-cache git
 
 # Copy backend files
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 COPY *.js ./
 COPY config.default.js ./
