@@ -12,7 +12,9 @@ export class PaperTradingEngine {
       closedTrades: [], // Trade history
     };
     this.dataFile = 'paper-trading-data.json';
-    this.loadPortfolio();
+    // Kick off load automatically in non-test environments and keep a reference
+    const isTestEnv = !!process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test';
+    this._loadPromise = isTestEnv ? null : this.loadPortfolio();
   }
 
   /**

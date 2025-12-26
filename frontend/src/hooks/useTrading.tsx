@@ -153,6 +153,9 @@ interface Settings {
   MAKER_FEE_PERCENT: number
   TAKER_FEE_PERCENT: number
   TAX_PERCENT: number
+  EXCHANGE: 'COINBASE' | 'KRAKEN'
+  KRAKEN_API_KEY?: string
+  KRAKEN_API_SECRET?: string
 }
 
 interface SettingsHistoryEntry {
@@ -188,7 +191,7 @@ export interface TradingContextType {
   settingsHistory: SettingsHistoryEntry[]
   settingsComment: string
   totalUnrealizedPL: number
-  coinbaseApiStatus: 'ok' | 'rate-limited' | 'error' | 'unknown'
+  exchangeApiStatus: 'ok' | 'rate-limited' | 'error' | 'unknown' 
   
   // Functions
   setSettingsComment: (comment: string) => void
@@ -264,11 +267,12 @@ export function TradingProvider({ children }: { children: ReactNode }) {
     MAKER_FEE_PERCENT: 0.25,
     TAKER_FEE_PERCENT: 0.5,
     TAX_PERCENT: 0,
+    EXCHANGE: 'COINBASE',
   })
 
   const [settingsHistory, setSettingsHistory] = useState<SettingsHistoryEntry[]>([])
   const [settingsComment, setSettingsComment] = useState('')
-  const [coinbaseApiStatus, setCoinbaseApiStatus] = useState<'ok' | 'rate-limited' | 'error' | 'unknown'>('unknown')
+  const [exchangeApiStatus, setExchangeApiStatus] = useState<'ok' | 'rate-limited' | 'error' | 'unknown'>('unknown')
 
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -442,14 +446,14 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       setLastUpdate(new Date().toLocaleTimeString())
       // If we got data successfully, API is OK
       if (liveRes.data) {
-        setCoinbaseApiStatus('ok')
+        setExchangeApiStatus('ok')
       }
     } catch (e: any) {
       // Check for rate limiting or API errors
       if (e?.response?.status === 429) {
-        setCoinbaseApiStatus('rate-limited')
+        setExchangeApiStatus('rate-limited')
       } else if (e?.response?.status >= 500) {
-        setCoinbaseApiStatus('error')
+        setExchangeApiStatus('error')
       }
     }
   }, [])
@@ -511,9 +515,11 @@ export function TradingProvider({ children }: { children: ReactNode }) {
         if (type === 'botStatus') {
           setBotStatus(data)
           setLastUpdate(new Date().toLocaleTimeString())
-          // Update Coinbase API status from bot status
-          if (data.coinbaseApiStatus) {
-            setCoinbaseApiStatus(data.coinbaseApiStatus)
+          // Update exchange API status from bot status (handles legacy Coinbase field)
+          if (data.exchangeApiStatus) {
+            setExchangeApiStatus(data.exchangeApiStatus)
+          } else if (data.coinbaseApiStatus) {
+            setExchangeApiStatus(data.coinbaseApiStatus)
           }
         } else if (type === 'portfolioSummary') {
           // Server-calculated portfolio summary - use directly
@@ -526,7 +532,10 @@ export function TradingProvider({ children }: { children: ReactNode }) {
           // Recent trades update
           setRecentTrades(Array.isArray(data) ? data : [])
         } else if (type === 'coinbaseApiStatus') {
-          setCoinbaseApiStatus(data.status || 'unknown')
+          // legacy message type
+          setExchangeApiStatus(data.status || 'unknown')
+        } else if (type === 'exchangeApiStatus') {
+          setExchangeApiStatus(data.status || 'unknown')
         } else if (type === 'updateLog') {
           setUpdateLogs(prev => [...prev, data.message])
         } else if (type === 'updateFailed') {
@@ -657,7 +666,7 @@ export function TradingProvider({ children }: { children: ReactNode }) {
       settingsHistory,
       settingsComment,
       totalUnrealizedPL,
-      coinbaseApiStatus,
+      exchangeApiStatus,
       setSettingsComment,
       startBot,
       stopBot,

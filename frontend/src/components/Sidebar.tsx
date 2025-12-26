@@ -19,7 +19,7 @@ const navLinks = [
 
 export default function Sidebar() {
   const pathname = usePathname()
-  const { botStatus, coinbaseApiStatus } = useTrading()
+  const { botStatus, exchangeApiStatus, settings } = useTrading()
   const [open, setOpen] = useState(false)
   const [checking, setChecking] = useState(false)
   const [toast, setToast] = useState<{ type: 'info' | 'success' | 'error'; message: string } | null>(null)
@@ -137,19 +137,19 @@ export default function Sidebar() {
               )}
             </div>
             
-            {/* Coinbase API Status */}
+            {/* Exchange API Status */}
             <div className="flex items-center justify-between text-xs">
-              <span className="text-gray-500">Coinbase API</span>
+              <span className="text-gray-500">{settings.EXCHANGE === 'KRAKEN' ? 'Kraken API' : 'Coinbase API'}</span>
               <div className={`flex items-center gap-1 ${
-                coinbaseApiStatus === 'ok' ? 'text-success-400' :
-                coinbaseApiStatus === 'rate-limited' ? 'text-warning-400' :
-                coinbaseApiStatus === 'error' ? 'text-error-400' : 'text-gray-400'
+                exchangeApiStatus === 'ok' ? 'text-success-400' :
+                exchangeApiStatus === 'rate-limited' ? 'text-warning-400' :
+                exchangeApiStatus === 'error' ? 'text-error-400' : 'text-gray-400'
               }`}>
-                {coinbaseApiStatus === 'ok' && <CheckCircle size={10} />}
-                {coinbaseApiStatus === 'rate-limited' && <AlertTriangle size={10} />}
-                {coinbaseApiStatus === 'error' && <XCircle size={10} />}
-                {coinbaseApiStatus === 'unknown' && <span className="w-2 h-2 rounded-full bg-gray-500" />}
-                <span className="capitalize">{coinbaseApiStatus === 'ok' ? 'OK' : coinbaseApiStatus}</span>
+                {exchangeApiStatus === 'ok' && <CheckCircle size={10} />}
+                {exchangeApiStatus === 'rate-limited' && <AlertTriangle size={10} />}
+                {exchangeApiStatus === 'error' && <XCircle size={10} />}
+                {exchangeApiStatus === 'unknown' && <span className="w-2 h-2 rounded-full bg-gray-500" />}
+                <span className="capitalize">{exchangeApiStatus === 'ok' ? 'OK' : exchangeApiStatus}</span>
               </div>
             </div>
             

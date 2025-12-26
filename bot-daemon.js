@@ -1,4 +1,7 @@
 import { CoinbaseClient } from './coinbase-client.js';
+import { CoinbaseWebSocket } from './websocket-feed.js';
+import { KrakenClient } from './kraken-client.js';
+import { KrakenWebSocket } from './kraken-websocket.js';
 import { MarketScanner } from './market-scanner.js';
 import { PaperTradingEngine } from './paper-trading.js';
 import { TradingStrategy } from './trading-strategy.js';
@@ -9,8 +12,18 @@ import { config } from './config-utils.js';
  */
 class TradingBotDaemon {
   constructor() {
-    this.client = new CoinbaseClient();
-    this.scanner = new MarketScanner(this.client);
+    // Initialize Exchange Client based on config
+    if (config.EXCHANGE === 'KRAKEN') {
+      this.client = new KrakenClient();
+      this.ws = new KrakenWebSocket();
+      console.log('[INIT] Using Kraken Exchange');
+    } else {
+      this.client = new CoinbaseClient();
+      this.ws = new CoinbaseWebSocket();
+      console.log('[INIT] Using Coinbase Exchange');
+    }
+
+    this.scanner = new MarketScanner(this.client, this.ws);
     this.paper = new PaperTradingEngine();
     this.strategy = new TradingStrategy(this.client, this.paper);
     this.isRunning = false;
@@ -60,8 +73,10 @@ class TradingBotDaemon {
     this.logStatus(`Stop Loss: ${config.STOP_LOSS}% | Trailing Stop: ${config.ENABLE_TRAILING_PROFIT ? `${config.TRAILING_STOP_PERCENT}%` : 'DISABLED'}`);
 
     // Reset API call counter on start
-    CoinbaseClient.resetApiCallCount();
-    this.logStatus('📊 API call counter reset');
+    if (config.EXCHANGE === 'COINBASE') {
+      CoinbaseClient.resetApiCallCount();
+      this.logStatus('📊 API call counter reset');
+    }
 
     try {
       await this.paper.loadPortfolio();
@@ -94,7 +109,9 @@ class TradingBotDaemon {
         await this.strategy.managePositions();
         
         // Update API count after position management
-        console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
+        if (config.EXCHANGE === 'COINBASE') {
+          console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
+        }
 
         // Scan for new opportunities
         if (this.paper.getPositionCount() < config.MAX_POSITIONS) {
@@ -102,7 +119,9 @@ class TradingBotDaemon {
           const opportunities = await this.scanner.scanMarkets();
           
           // Update API count after scan
-          console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
+          if (config.EXCHANGE === 'COINBASE') {
+            console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
+          }
 
           if (opportunities.length > 0) {
             console.log(`[STATUS] Evaluating top ${Math.min(3, opportunities.length)} opportunities...`);
@@ -120,9 +139,11 @@ class TradingBotDaemon {
 
         // Show portfolio summary
         const summary = this.paper.getPortfolioSummary();
-        const apiCalls = CoinbaseClient.getApiCallCount();
+        const apiCalls = config.EXCHANGE === 'COINBASE' ? CoinbaseClient.getApiCallCount() : 0;
         console.log(`[STATUS] Portfolio: $${summary.totalValue.toFixed(2)} | Cash: $${summary.cash.toFixed(2)} | Positions: ${summary.openPositions} | API: ${apiCalls}`);
-        console.log(`[APICALLS] ${apiCalls}`);
+        if (config.EXCHANGE === 'COINBASE') {
+          console.log(`[APICALLS] ${apiCalls}`);
+        }
 
         // Cycle completed successfully
         this.lastSuccessfulCycle = Date.now();
@@ -148,7 +169,9 @@ class TradingBotDaemon {
           if (this.paper.getPositionCount() > 0) {
             try {
               await this.strategy.managePositions();
-              console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
+              if (config.EXCHANGE === 'COINBASE') {
+                console.log(`[APICALLS] ${CoinbaseClient.getApiCallCount()}`);
+              }
             } catch (err) {
               this.logError('managePositions (fast check)', err);
             }
@@ -167,16 +190,14 @@ class TradingBotDaemon {
         console.error(`  Uptime: ${this.formatUptime()}`);
         console.error(`  Last successful cycle: ${this.lastSuccessfulCycle ? new Date(this.lastSuccessfulCycle).toISOString() : 'never'}`);
         
-        // If too many consecutive errors, increase wait time
-        let waitTime = 10000;
-        if (this.consecutiveErrors >= 5) {
-          waitTime = 60000;
+        // Compute backoff based on consecutive errors
+        const waitTime = this.computeBackoffWaitTime();
+        if (waitTime === 60000) {
           console.error(`  ⚠️ Multiple consecutive errors - waiting 60s before retry`);
-        } else if (this.consecutiveErrors >= 3) {
-          waitTime = 30000;
+        } else if (waitTime === 30000) {
           console.error(`  ⚠️ Consecutive errors - waiting 30s before retry`);
         }
-        
+
         console.log(`[STATUS] Error occurred, retrying in ${waitTime / 1000}s...`);
         await this.sleep(waitTime);
       }
@@ -206,49 +227,61 @@ class TradingBotDaemon {
   sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
+  // Compute wait time (ms) based on consecutive error count — extracted for testability
+  computeBackoffWaitTime() {
+    if (this.consecutiveErrors >= 5) return 60000;
+    if (this.consecutiveErrors >= 3) return 30000;
+    return 10000;
+  }
 }
 
-const bot = new TradingBotDaemon();
+// Only start if run directly
+if (process.argv[1] === import.meta.url.substring(7) || process.argv[1].endsWith('bot-daemon.js')) {
+  const bot = new TradingBotDaemon();
 
-// Handle graceful shutdown
-process.on('SIGTERM', () => {
-  bot.stop('SIGTERM signal received');
-  setTimeout(() => process.exit(0), 2000);
-});
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    bot.stop('SIGTERM signal received');
+    setTimeout(() => process.exit(0), 2000);
+  });
 
-process.on('SIGINT', () => {
-  bot.stop('SIGINT signal received (Ctrl+C)');
-  setTimeout(() => process.exit(0), 2000);
-});
+  process.on('SIGINT', () => {
+    bot.stop('SIGINT signal received (Ctrl+C)');
+    setTimeout(() => process.exit(0), 2000);
+  });
 
-// Handle uncaught errors
-process.on('uncaughtException', (error) => {
-  const timestamp = new Date().toISOString();
-  console.error(`\n[${timestamp}] 💥 UNCAUGHT EXCEPTION:`);
-  console.error(`  Message: ${error.message}`);
-  console.error(`  Stack: ${error.stack}`);
-  bot.stop('Uncaught exception');
-  setTimeout(() => process.exit(1), 2000);
-});
+  // Handle uncaught errors
+  process.on('uncaughtException', (error) => {
+    const timestamp = new Date().toISOString();
+    console.error(`\n[${timestamp}] 💥 UNCAUGHT EXCEPTION:`);
+    console.error(`  Message: ${error.message}`);
+    console.error(`  Stack: ${error.stack}`);
+    bot.stop('Uncaught exception');
+    setTimeout(() => process.exit(1), 2000);
+  });
 
-process.on('unhandledRejection', (reason, promise) => {
-  const timestamp = new Date().toISOString();
-  console.error(`\n[${timestamp}] 💥 UNHANDLED PROMISE REJECTION:`);
-  console.error(`  Reason: ${reason}`);
-  if (reason instanceof Error) {
-    console.error(`  Stack: ${reason.stack}`);
-  }
-  // Don't exit, but log it prominently
-  console.error(`  Bot will continue running but this should be investigated.`);
-});
+  process.on('unhandledRejection', (reason, promise) => {
+    const timestamp = new Date().toISOString();
+    console.error(`\n[${timestamp}] 💥 UNHANDLED PROMISE REJECTION:`);
+    console.error(`  Reason: ${reason}`);
+    if (reason instanceof Error) {
+      console.error(`  Stack: ${reason.stack}`);
+    }
+    // Don't exit, but log it prominently
+    console.error(`  Bot will continue running but this should be investigated.`);
+  });
 
-// Log startup
-console.log(`[${new Date().toISOString()}] Bot daemon process started (PID: ${process.pid})`);
+  // Log startup
+  console.log(`[${new Date().toISOString()}] Bot daemon process started (PID: ${process.pid})`);
 
-bot.start().catch(error => {
-  const timestamp = new Date().toISOString();
-  console.error(`\n[${timestamp}] 💥 FATAL ERROR DURING STARTUP:`);
-  console.error(`  Message: ${error.message}`);
-  console.error(`  Stack: ${error.stack}`);
-  process.exit(1);
-});
+  bot.start().catch(error => {
+    const timestamp = new Date().toISOString();
+    console.error(`\n[${timestamp}] 💥 FATAL ERROR DURING STARTUP:`);
+    console.error(`  Message: ${error.message}`);
+    console.error(`  Stack: ${error.stack}`);
+    process.exit(1);
+  });
+}
+
+export { TradingBotDaemon };
