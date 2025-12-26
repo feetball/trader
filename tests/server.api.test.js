@@ -5,7 +5,7 @@ import path from 'path';
 import { jest } from '@jest/globals';
 import { app, shutdownForTests, _addWsClient, _clearWsClients, _clearPendingUpdate, performUpdateSteps, broadcastPortfolio } from '../server.js';
 
-const DATA_FILE = 'paper-trading-data.json';
+const DATA_FILE = process.env.PAPER_TRADING_DATA || 'paper-trading-data.json';
 const UPDATE_FLAG = '.update-pending';
 const ENV_FILE = '.env';
 

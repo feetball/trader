@@ -5,7 +5,7 @@ import path from 'path';
 import request from 'supertest';
 import { app } from '../server.js';
 
-const DATA_PATH = path.join(process.cwd(), 'paper-trading-data.json');
+const DATA_PATH = process.env.PAPER_TRADING_DATA || path.join(process.cwd(), 'paper-trading-data.json');
 
 beforeEach(async () => {
   const initial = {

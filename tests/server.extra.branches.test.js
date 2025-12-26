@@ -9,7 +9,7 @@ afterEach(() => jest.restoreAllMocks());
 
 test('broadcastPortfolio skips non-ready clients', async () => {
   const sample = { cash: 10000, positions: [], closedTrades: [] };
-  await fs.writeFile('paper-trading-data.json', JSON.stringify(sample, null, 2));
+  await fs.writeFile(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', JSON.stringify(sample, null, 2));
 
   const client1 = { readyState: 1, send: jest.fn() };
   const client2 = { readyState: 0, send: jest.fn() };
@@ -23,7 +23,7 @@ test('broadcastPortfolio skips non-ready clients', async () => {
   expect(client2.send).not.toHaveBeenCalled();
 
   _clearWsClients();
-  try { if (fsSync.existsSync('paper-trading-data.json')) fsSync.unlinkSync('paper-trading-data.json'); } catch (e) {}
+  try { if (fsSync.existsSync(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json')) fsSync.unlinkSync(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json'); } catch (e) {}
 });
 
 test('GET /api/settings/history returns empty array when file malformed', async () => {

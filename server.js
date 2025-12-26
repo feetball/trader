@@ -194,12 +194,44 @@ function setExchangeApiStatus(status) {
   broadcast('botStatus', botStatus);
 }
 
+// Smoothing: require consecutive confirmations before changing status to avoid flicker
+let _exchangeCandidate = null;
+let _exchangeCandidateCount = 0;
+const EXCHANGE_STATUS_THRESHOLD = 2;
+
+function maybeSetExchangeApiStatus(status) {
+  if (!status) return;
+  // If same as current committed status, reset candidate
+  if (botStatus.exchangeApiStatus === status) {
+    _exchangeCandidate = null;
+    _exchangeCandidateCount = 0;
+    return;
+  }
+
+  // If candidate differs from new status, start counting
+  if (_exchangeCandidate !== status) {
+    _exchangeCandidate = status;
+    _exchangeCandidateCount = 1;
+    return;
+  }
+
+  // Same candidate again -> increment and commit if threshold reached
+  _exchangeCandidateCount++;
+  if (_exchangeCandidateCount >= EXCHANGE_STATUS_THRESHOLD) {
+    setExchangeApiStatus(_exchangeCandidate);
+    _exchangeCandidate = null;
+    _exchangeCandidateCount = 0;
+  }
+}
+
 // Broadcast portfolio updates periodically when bot is running
 let portfolioBroadcastInterval = null;
 let apiRateInterval = null;
 
 // Detect test environment (Jest sets JEST_WORKER_ID)
 const isTestEnv = !!process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test';
+// Allow tests to override the data file to avoid interference between parallel test workers
+const DATA_FILE = process.env.PAPER_TRADING_DATA || 'paper-trading-data.json';
 
 // Helper to either schedule a delayed task or run immediately during tests
 function maybeSetTimeout(fn, ms) {
@@ -251,7 +283,7 @@ function startApiRateInterval() {
 
 async function broadcastPortfolio() {
   try {
-    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const data = await fs.readFile(DATA_FILE, 'utf-8');
     const portfolio = JSON.parse(data);
     
     // Calculate stats (same logic as /api/portfolio)
@@ -298,7 +330,7 @@ async function broadcastPortfolio() {
 // Get portfolio summary
 app.get('/api/portfolio', async (req, res) => {
   try {
-    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const data = await fs.readFile(DATA_FILE, 'utf-8');
     const portfolio = JSON.parse(data);
     
     // Calculate stats
@@ -350,7 +382,7 @@ app.get('/api/portfolio', async (req, res) => {
 // Get open positions
 app.get('/api/positions', async (req, res) => {
   try {
-    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const data = await fs.readFile(DATA_FILE, 'utf-8');
     const portfolio = JSON.parse(data);
     
     const positions = portfolio.positions.map(pos => ({
@@ -369,7 +401,7 @@ app.get('/api/positions', async (req, res) => {
 // Get trade history
 app.get('/api/trades', async (req, res) => {
   try {
-    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const data = await fs.readFile(DATA_FILE, 'utf-8');
     const portfolio = JSON.parse(data);
 
     // Return most recent trades first, capped to reduce payload/render cost
@@ -384,7 +416,7 @@ app.get('/api/trades', async (req, res) => {
 // Get performance by coin
 app.get('/api/performance-by-coin', async (req, res) => {
   try {
-    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const data = await fs.readFile(DATA_FILE, 'utf-8');
     const portfolio = JSON.parse(data);
     
     const coinStats = {};
@@ -426,7 +458,7 @@ app.get('/api/performance-by-coin', async (req, res) => {
 // Get recent activity (for activity feed)
 app.get('/api/activity', async (req, res) => {
   try {
-    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const data = await fs.readFile(DATA_FILE, 'utf-8');
     const portfolio = JSON.parse(data);
     
     const activities = [];
@@ -474,7 +506,7 @@ app.post('/api/portfolio/reset', async (req, res) => {
       positions: [],
       closedTrades: []
     };
-    await fs.writeFile('paper-trading-data.json', JSON.stringify(initialPortfolio, null, 2));
+    await fs.writeFile(DATA_FILE, JSON.stringify(initialPortfolio, null, 2));
     console.log('[RESET] Portfolio reset to $10,000');
     
     // Always start the bot after reset
@@ -737,7 +769,7 @@ ${configLines}
 // Get live prices for positions
 app.get('/api/positions/live', async (req, res) => {
   try {
-    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
+    const data = await fs.readFile(DATA_FILE, 'utf-8');
     const portfolio = JSON.parse(data);
     
     // Fetch current prices for all positions in parallel (supports Coinbase and Kraken)
@@ -753,9 +785,9 @@ app.get('/api/positions/live', async (req, res) => {
               response = await fetch(`https://api.kraken.com/0/public/Ticker?pair=${encodeURIComponent(krakenPair)}`);
               if (!response.ok) {
                 if (response.status === 429) {
-                  setExchangeApiStatus('rate-limited');
+                  maybeSetExchangeApiStatus('rate-limited');
                 } else {
-                  setExchangeApiStatus('error');
+                  maybeSetExchangeApiStatus('error');
                 }
                 return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
               }
@@ -785,14 +817,14 @@ app.get('/api/positions/live', async (req, res) => {
                 } catch (e) {
                   // ignore and fall through to error
                 }
-                setExchangeApiStatus('error');
+                maybeSetExchangeApiStatus('error');
                 return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
               }
               const currentPrice = parseFloat(priceStr);
               const currentValue = pos.quantity * currentPrice;
               const currentPL = currentValue - pos.investedAmount;
               const currentPLPercent = (currentPL / pos.investedAmount) * 100;
-              setExchangeApiStatus('ok');
+              maybeSetExchangeApiStatus('ok');
               return {
                 ...pos,
                 currentPrice,
@@ -802,7 +834,7 @@ app.get('/api/positions/live', async (req, res) => {
                 holdTime: Date.now() - pos.entryTime,
               };
             } catch (e) {
-              setExchangeApiStatus('error');
+              maybeSetExchangeApiStatus('error');
               return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
             }
             const pairKey = Object.keys(json.result || {})[0];
@@ -817,7 +849,7 @@ app.get('/api/positions/live', async (req, res) => {
                   const currentValue = pos.quantity * currentPrice;
                   const currentPL = currentValue - pos.investedAmount;
                   const currentPLPercent = (currentPL / pos.investedAmount) * 100;
-                  setExchangeApiStatus('ok');
+                  maybeSetExchangeApiStatus('ok');
                   return {
                     ...pos,
                     currentPrice,
@@ -830,7 +862,7 @@ app.get('/api/positions/live', async (req, res) => {
               } catch (e) {
                 // ignore and fall through to error
               }
-              setExchangeApiStatus('error');
+              maybeSetExchangeApiStatus('error');
               return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
             }
             const currentPrice = parseFloat(priceStr);
@@ -851,9 +883,9 @@ app.get('/api/positions/live', async (req, res) => {
             const response = await fetch(`https://api.exchange.coinbase.com/products/${pos.productId}/ticker`);
             if (!response.ok) {
               if (response.status === 429) {
-                setExchangeApiStatus('rate-limited');
+                maybeSetExchangeApiStatus('rate-limited');
               } else {
-                setExchangeApiStatus('error');
+                maybeSetExchangeApiStatus('error');
               }
               return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
             }
@@ -863,7 +895,7 @@ app.get('/api/positions/live', async (req, res) => {
             const currentPL = currentValue - pos.investedAmount;
             const currentPLPercent = (currentPL / pos.investedAmount) * 100;
             // Successful fetch => API OK
-            setExchangeApiStatus('ok');
+            maybeSetExchangeApiStatus('ok');
             return {
               ...pos,
               currentPrice,
@@ -871,10 +903,10 @@ app.get('/api/positions/live', async (req, res) => {
               currentPL,
               currentPLPercent,
               holdTime: Date.now() - pos.entryTime,
-            };
+            }; 
           }
         } catch (error) {
-          setExchangeApiStatus('error');
+          maybeSetExchangeApiStatus('error');
           return { ...pos, currentPrice: null, currentPL: 0, currentPLPercent: 0 };
         }
       })
@@ -894,13 +926,52 @@ app.post('/api/positions/sell', async (req, res) => {
       return res.json({ success: false, message: 'Position ID required' });
     }
 
-    const data = await fs.readFile('paper-trading-data.json', 'utf-8');
-    const portfolio = JSON.parse(data);
-    
-    // Find the position
-    const positionIndex = portfolio.positions.findIndex(p => p.id === positionId);
+    // Read and parse portfolio (retry once on transient parse/read errors)
+    let portfolio;
+    try {
+      const data = await fs.readFile(DATA_FILE, 'utf-8');
+      portfolio = JSON.parse(data);
+    } catch (e) {
+      // Quick retry to handle test races where the file may be mid-write
+      try {
+        await new Promise(r => setTimeout(r, 10));
+        const data2 = await fs.readFile(DATA_FILE, 'utf-8');
+        portfolio = JSON.parse(data2);
+      } catch (e2) {
+        return res.json({ success: false, message: e2.message });
+      }
+    }
+
+    // Ensure portfolio has expected structure
+    portfolio.positions = portfolio.positions || [];
+    portfolio.closedTrades = portfolio.closedTrades || [];
+
+    // Find the position (retry a few times on race with other tests writing the portfolio)
+    let positionIndex = portfolio.positions.findIndex(p => p.id === positionId);
+    if (isTestEnv) console.log(`[TEST] /api/positions/sell initial read DATA_FILE=${DATA_FILE} positions=${JSON.stringify((portfolio.positions||[]).map(p => p.id))}`);
     if (positionIndex === -1) {
-      return res.json({ success: false, message: 'Position not found' });
+      let found = false;
+      // Try multiple quick retries (10ms intervals) to tolerate concurrent test writes
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          const freshData = await fs.readFile(DATA_FILE, 'utf-8');
+          const freshPortfolio = JSON.parse(freshData);
+          positionIndex = (freshPortfolio.positions || []).findIndex(p => p.id === positionId);
+          if (positionIndex !== -1) {
+            // use fresh portfolio state for the remainder of this request
+            portfolio.positions = freshPortfolio.positions;
+            portfolio.closedTrades = freshPortfolio.closedTrades || portfolio.closedTrades;
+            found = true;
+            break;
+          }
+        } catch (e) {
+          // ignore and retry
+        }
+        await new Promise(r => setTimeout(r, 10));
+      }
+      if (!found) {
+        return res.json({ success: false, message: 'Position not found' });
+      }
     }
     
     const position = portfolio.positions[positionIndex];
@@ -973,7 +1044,7 @@ app.post('/api/positions/sell', async (req, res) => {
     portfolio.closedTrades.push(trade);
     
     // Save
-    await fs.writeFile('paper-trading-data.json', JSON.stringify(portfolio, null, 2));
+    await fs.writeFile(DATA_FILE, JSON.stringify(portfolio, null, 2));
     
     console.log(`[FORCE SELL] ${position.symbol} @ $${currentPrice.toFixed(6)} | Gross: $${grossProfit.toFixed(2)} | Net: $${netProfit.toFixed(2)} (fees: $${totalFees.toFixed(2)})`);
     

@@ -22,7 +22,7 @@ test('broadcastPortfolio skips clients that are not OPEN', async () => {
 
   // Create a minimal data file so broadcastPortfolio attempts to read
   const portfolio = { cash: 100, positions: [], closedTrades: [] };
-  await fs.writeFile('paper-trading-data.json', JSON.stringify(portfolio, null, 2));
+  await fs.writeFile(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', JSON.stringify(portfolio, null, 2));
 
   await broadcastPortfolio();
 

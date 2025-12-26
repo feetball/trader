@@ -37,7 +37,7 @@ test('POST /api/positions/sell returns not found when id missing', async () => {
   jest.resetModules();
   // ensure portfolio exists with no positions
   const emptyPortfolio = { cash: 10000, positions: [], closedTrades: [] };
-  fs.writeFileSync('paper-trading-data.json', JSON.stringify(emptyPortfolio, null, 2));
+  fs.writeFileSync(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', JSON.stringify(emptyPortfolio, null, 2));
 
   const { app } = await import('../server.js');
   const res = await request(app).post('/api/positions/sell').send({ positionId: 'doesnotexist' });
@@ -46,8 +46,17 @@ test('POST /api/positions/sell returns not found when id missing', async () => {
   expect(typeof res.body.message).toBe('string');
 });
 
+// Skipped: This test is flaky under parallel execution because it reads/writes the shared
+// `paper-trading-data.json` file and can race with other tests. It was made more robust but
+// still occasionally fails in CI when run in parallel; re-enable once the concurrency issue
+// is resolved (e.g., by fully isolating the data file per worker or refactoring the endpoint
+// to be more test-friendly).
+// TODO: Re-enable and stabilize this test (#TODO)
 test.skip('POST /api/positions/sell uses entry price when fetch fails and completes sell', async () => {
   jest.resetModules();
+
+  // Use a private data file for this test to avoid interference when tests run in parallel
+  process.env.PAPER_TRADING_DATA = 'paper-trading-data.server.settings.branches.json';
 
   // write a portfolio with one position
   const portfolio = {
@@ -55,17 +64,22 @@ test.skip('POST /api/positions/sell uses entry price when fetch fails and comple
     positions: [{ id: 'p1', symbol: 'C1', productId: 'C1-USD', quantity: 10, entryPrice: 1.0, investedAmount: 10, buyFee: 0.25 }],
     closedTrades: []
   };
-  fs.writeFileSync('paper-trading-data.json', JSON.stringify(portfolio, null, 2));
+  fs.writeFileSync(process.env.PAPER_TRADING_DATA, JSON.stringify(portfolio, null, 2));
 
   const fetchSpy = jest.spyOn(global, 'fetch').mockImplementation(() => { throw new Error('network'); });
 
   const { app } = await import('../server.js');
+  // Re-write right before request to reduce flakiness when tests run in parallel
+  fs.writeFileSync(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', JSON.stringify(portfolio, null, 2));
+  // Sanity check file contents immediately before request (helps catch race conditions)
+  const pre = JSON.parse(fs.readFileSync(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', 'utf-8'));
+  expect(pre.positions.find(p => p.id === 'p1')).toBeDefined();
   let res = await request(app).post('/api/positions/sell').send({ positionId: 'p1' });
   expect(res.status).toBe(200);
 
   // If parse error occurred due to race/mock, retry once after rewriting file
   if (!res.body.success && /findIndex/.test(String(res.body.message || ''))) {
-    fs.writeFileSync('paper-trading-data.json', JSON.stringify(portfolio, null, 2));
+    fs.writeFileSync(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', JSON.stringify(portfolio, null, 2));
     await new Promise(r => setTimeout(r, 10));
     res = await request(app).post('/api/positions/sell').send({ positionId: 'p1' });
   }
@@ -79,8 +93,11 @@ test.skip('POST /api/positions/sell uses entry price when fetch fails and comple
   expect(res.body.trade.reason).toMatch(/Manual force sell/);
 
   // verify positions removed in saved file
-  const updated = JSON.parse(fs.readFileSync('paper-trading-data.json', 'utf-8'));
+  const updated = JSON.parse(fs.readFileSync(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', 'utf-8'));
   expect(updated.positions.find(p => p.id === 'p1')).toBeUndefined();
+
+  // cleanup test-only data file
+  try { fs.unlinkSync(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json'); } catch (e) {}
 
   fetchSpy.mockRestore();
 });

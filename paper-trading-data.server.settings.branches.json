@@ -1,0 +1,15 @@
+{
+  "cash": 10000,
+  "positions": [
+    {
+      "id": "p1",
+      "symbol": "C1",
+      "productId": "C1-USD",
+      "quantity": 10,
+      "entryPrice": 1,
+      "investedAmount": 10,
+      "buyFee": 0.25
+    }
+  ],
+  "closedTrades": []
+}

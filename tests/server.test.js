@@ -114,7 +114,7 @@ describe('API Server', () => {
 
     const res = await request(app).post('/api/portfolio/reset')
     expect(res.statusCode).toBe(200)
-    expect(fs.writeFile).toHaveBeenCalledWith('paper-trading-data.json', expect.stringContaining('"cash": 10000'))
+    expect(fs.writeFile).toHaveBeenCalledWith(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', expect.stringContaining('"cash": 10000'))
 
     // Stop the bot to avoid background processes during tests
     await request(app).post('/api/bot/stop')
@@ -197,7 +197,7 @@ describe('API Server', () => {
     const res = await request(app).post('/api/positions/sell').send({ positionId: 'pos1' })
     expect(res.statusCode).toBe(200)
     expect(res.body.success).toBe(true)
-    expect(fs.writeFile).toHaveBeenCalledWith('paper-trading-data.json', expect.stringContaining('closedTrades'))
+    expect(fs.writeFile).toHaveBeenCalledWith(process.env.PAPER_TRADING_DATA || 'paper-trading-data.json', expect.stringContaining('closedTrades'))
   })
   test('GET /api/updates/status returns default when no updates', async () => {
     const res = await request(app).get('/api/updates/status')

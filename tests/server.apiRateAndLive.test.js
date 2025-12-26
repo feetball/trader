@@ -5,7 +5,7 @@ import path from 'path';
 import request from 'supertest';
 import { app, startApiRateInterval, _addWsClient, _clearWsClients, shutdownForTests, botStatus } from '../server.js';
 
-const DATA_PATH = path.join(process.cwd(), 'paper-trading-data.json');
+const DATA_PATH = process.env.PAPER_TRADING_DATA || path.join(process.cwd(), 'paper-trading-data.json');
 
 afterEach(() => {
   try { shutdownForTests(); } catch (e) {}
@@ -56,11 +56,16 @@ test('GET /api/positions/live returns enriched position prices', async () => {
 
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ price: '2.50' }) });
 
-  const res = await request(app).get('/api/positions/live').send();
-  expect(res.status).toBe(200);
-  expect(Array.isArray(res.body)).toBe(true);
-  expect(res.body[0]).toHaveProperty('currentPrice', 2.5);
-  // After successful fetch, exchangeApiStatus should be OK
+  // First successful fetch - candidate only, not yet committed
+  const res1 = await request(app).get('/api/positions/live').send();
+  expect(res1.status).toBe(200);
+  expect(Array.isArray(res1.body)).toBe(true);
+  expect(res1.body[0]).toHaveProperty('currentPrice', 2.5);
+  expect(botStatus.exchangeApiStatus).not.toBe('ok');
+
+  // Second consecutive successful fetch should commit the OK state
+  const res2 = await request(app).get('/api/positions/live').send();
+  expect(res2.status).toBe(200);
   expect(botStatus.exchangeApiStatus).toBe('ok');
 });
 
@@ -74,9 +79,10 @@ test('GET /api/positions/live sets rate-limited when API returns 429', async () 
 
   global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 429 });
 
-  const res = await request(app).get('/api/positions/live').send();
-  expect(res.status).toBe(200);
-  expect(Array.isArray(res.body)).toBe(true);
+  // Need two consecutive 429 calls to commit the rate-limited state
+  await request(app).get('/api/positions/live').send();
+  expect(botStatus.exchangeApiStatus).not.toBe('rate-limited');
+  await request(app).get('/api/positions/live').send();
   expect(botStatus.exchangeApiStatus).toBe('rate-limited');
 });
 
@@ -90,9 +96,10 @@ test('GET /api/positions/live sets error when fetch throws', async () => {
 
   global.fetch = jest.fn().mockRejectedValue(new Error('network'));
 
-  const res = await request(app).get('/api/positions/live').send();
-  expect(res.status).toBe(200);
-  expect(Array.isArray(res.body)).toBe(true);
+  // Need two consecutive failures to commit 'error'
+  await request(app).get('/api/positions/live').send();
+  expect(botStatus.exchangeApiStatus).not.toBe('error');
+  await request(app).get('/api/positions/live').send();
   expect(botStatus.exchangeApiStatus).toBe('error');
 });
 
@@ -113,10 +120,15 @@ test('GET /api/positions/live returns enriched position prices for Kraken', asyn
   // Mock Kraken response shape
   global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ result: { XBTUSD: { c: ['123.45'] } } }) });
 
-  const res = await request(app).get('/api/positions/live').send();
-  expect(res.status).toBe(200);
-  expect(Array.isArray(res.body)).toBe(true);
-  expect(res.body[0]).toHaveProperty('currentPrice', 123.45);
+  const res1 = await request(app).get('/api/positions/live').send();
+  expect(res1.status).toBe(200);
+  expect(Array.isArray(res1.body)).toBe(true);
+  expect(res1.body[0]).toHaveProperty('currentPrice', 123.45);
+  expect(botStatus.exchangeApiStatus).not.toBe('ok');
+
+  // Second consecutive Kraken success commits the OK state
+  const res2 = await request(app).get('/api/positions/live').send();
+  expect(res2.status).toBe(200);
   expect(botStatus.exchangeApiStatus).toBe('ok');
 
   // Revert exchange
@@ -136,8 +148,10 @@ test('GET /api/positions/live handles Kraken 429 rate-limit', async () => {
 
   global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 429 });
 
-  const res = await request(app).get('/api/positions/live').send();
-  expect(res.status).toBe(200);
+  // Need two consecutive Kraken 429 responses to commit rate-limited
+  await request(app).get('/api/positions/live').send();
+  expect(botStatus.exchangeApiStatus).not.toBe('rate-limited');
+  await request(app).get('/api/positions/live').send();
   expect(botStatus.exchangeApiStatus).toBe('rate-limited');
 
   config.EXCHANGE = 'COINBASE';
@@ -156,8 +170,10 @@ test('GET /api/positions/live handles Kraken fetch error', async () => {
 
   global.fetch = jest.fn().mockRejectedValue(new Error('offline'));
 
-  const res = await request(app).get('/api/positions/live').send();
-  expect(res.status).toBe(200);
+  // Need two consecutive Kraken failures to commit 'error'
+  await request(app).get('/api/positions/live').send();
+  expect(botStatus.exchangeApiStatus).not.toBe('error');
+  await request(app).get('/api/positions/live').send();
   expect(botStatus.exchangeApiStatus).toBe('error');
 
   config.EXCHANGE = 'COINBASE';
