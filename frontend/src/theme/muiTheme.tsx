@@ -9,20 +9,28 @@ const base = createTheme({
     mode: 'dark',
     primary: {
       main: '#7c4dff',
+      contrastText: '#ffffff'
     },
     secondary: {
       main: '#03dac6',
+      contrastText: '#000000'
     },
     background: {
       default: '#0b1020',
       paper: '#0f1724'
     },
+    error: {
+      main: '#ef4444'
+    }
   },
   shape: {
     borderRadius: 12,
   },
   typography: {
     fontFamily: ['Inter', 'Roboto', 'system-ui', 'sans-serif'].join(','),
+    body1: {
+      fontSize: 'var(--md-typography-body, 14px)'
+    }
   }
 });
 
