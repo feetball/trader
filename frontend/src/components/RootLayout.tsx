@@ -28,7 +28,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         component="main" 
         sx={{ 
           flexGrow: 1, 
-          width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column'

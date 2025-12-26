@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "npx concurrently \"npm run server\" \"npm run dashboard\"",
     "serve": "npm run serve:concurrent",
-    "serve:concurrent": "mkdir -p logs && npx concurrently --names \"FRONT,BACK\" --prefix \"[{name}]\" --prefix-colors \"cyan,green\" --timestamp-format \"HH:mm:ss\" \"bash -lc 'set -o pipefail; cd frontend && npm run dev 2>&1 | tee -a ../logs/frontend.log'\" \"bash -lc 'set -o pipefail; node server.js 2>&1 | tee -a logs/backend.log'\" | tee -a logs/dev-combined.log",
+    "serve:concurrent": "mkdir -p logs && npx concurrently --names \"FRONT,BACK\" --prefix \"[{name}]\" --prefix-colors \"cyan,green\" --timestamp-format \"HH:mm:ss\" \"bash -lc 'set -o pipefail; cd frontend && npm run dev 2>&1 | tee -a ../logs/frontend.log ../logs/dev-combined.log'\" \"bash -lc 'set -o pipefail; node server.js 2>&1 | tee -a logs/backend.log logs/dev-combined.log'\"",
     "serve:tail": "tail -F logs/dev-combined.log",
     "start": "node bot.js",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --forceExit",

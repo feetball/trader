@@ -9,6 +9,9 @@ set -e
 APP_NAME="crypto-trader"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Optional branch override (used for git checkout + Docker build arg)
+BRANCH_OVERRIDE=""
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -192,7 +195,7 @@ run_branch() {
 show_help() {
     echo "Crypto Trader Deployment Script"
     echo ""
-    echo "Usage: ./deploy.sh [command]"
+    echo "Usage: ./deploy.sh [--branch <branch>] [command]"
     echo ""
     echo "Commands:"
     echo "  start     Start the trading bot and dashboard"
@@ -207,6 +210,8 @@ show_help() {
     echo ""
     echo "Examples:"
     echo "  ./deploy.sh start    # Start the bot"
+    echo "  ./deploy.sh --branch <branch>    # Checkout branch, build, start"
+    echo "  ./deploy.sh --branch <branch> start    # Same as above"
     echo "  ./deploy.sh logs     # Watch live logs"
     echo "  ./deploy.sh stop     # Stop everything"
     echo "  ./deploy.sh current-branch    # Build & start current branch"
@@ -215,6 +220,49 @@ show_help() {
 # Main
 cd "$SCRIPT_DIR"
 check_docker
+
+# Parse global flags (must come before the command)
+# Supported:
+#   --branch <name>   or  -b <name>
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --branch|-b)
+            BRANCH_OVERRIDE="${2:-}"
+            if [ -z "$BRANCH_OVERRIDE" ]; then
+                log_error "Missing value for $1"
+                exit 1
+            fi
+            shift 2
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+# Default command behavior:
+# - If --branch is provided and no command is given, run the branch.
+if [ -z "${1:-}" ] && [ -n "$BRANCH_OVERRIDE" ]; then
+    set -- run-branch "$BRANCH_OVERRIDE"
+fi
+
+# If branch flag is used with start/restart/build/update, do the branch checkout flow.
+case "${1:-help}" in
+    start|restart|build|update)
+        if [ -n "$BRANCH_OVERRIDE" ]; then
+            set -- run-branch "$BRANCH_OVERRIDE"
+        fi
+        ;;
+esac
+
+# Export for docker-compose.yml build args (Dockerfile uses ARG GIT_BRANCH)
+if [ -n "$BRANCH_OVERRIDE" ]; then
+    export GIT_BRANCH="$BRANCH_OVERRIDE"
+fi
 
 case "${1:-help}" in
     start)
@@ -239,7 +287,7 @@ case "${1:-help}" in
         update
         ;;
     run-branch)
-        run_branch "$2"
+        run_branch "${2:-$BRANCH_OVERRIDE}"
         ;;
     current-branch)
         run_branch

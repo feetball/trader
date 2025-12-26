@@ -276,13 +276,19 @@ export default function Sidebar() {
         onClose={handleDrawerToggle}
         ModalProps={{ keepMounted: true }}
         sx={{
+          // Ensure permanent drawer takes space in the flex layout on desktop.
+          width: { md: DRAWER_WIDTH },
+          flexShrink: { md: 0 },
           '& .MuiDrawer-paper': {
             width: DRAWER_WIDTH,
             boxSizing: 'border-box',
             bgcolor: 'background.paper',
             backgroundImage: 'none',
             borderRight: '1px solid rgba(255,255,255,0.05)',
-            boxShadow: 'none'
+            boxShadow: 'none',
+            // Prevent overlaying the page when used inside a flex layout.
+            // MUI's Drawer paper is positioned for overlay by default.
+            position: { md: 'relative' },
           },
         }}
       >
