@@ -118,11 +118,15 @@ app.use(express.json());
 
 // Serve static frontend files in production (if a static export exists).
 const frontendPath = path.join(__dirname, 'frontend', 'dist');
-const frontendIsStatic = fsSync.existsSync(frontendPath);
+const frontendIndexPath = path.join(frontendPath, 'index.html');
+// Treat the frontend as "static" only if the exported entrypoint exists.
+// It's possible for frontend/dist/ to exist (e.g., empty dir, partial build, gitignored folder)
+// while index.html is missing, which would otherwise cause ENOENT errors.
+const frontendIsStatic = fsSync.existsSync(frontendIndexPath);
 if (frontendIsStatic) {
   app.use(express.static(frontendPath));
 } else {
-  console.warn('[WARN] Frontend static build not found at frontend/dist; falling back to Next dev on http://localhost:3000 (run `npm run dashboard` in development)');
+  console.warn('[WARN] Frontend static build not found at frontend/dist/index.html; falling back to Next dev on http://localhost:3000 (run `npm run dashboard` / `npm run serve` in development)');
 } 
 
 // Bot process and status management
