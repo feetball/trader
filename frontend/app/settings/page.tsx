@@ -155,7 +155,7 @@ export default function SettingsPage() {
   return (
     <div className="p-2 md:p-4 space-y-2 md:space-y-3 pb-20 md:pb-4">
       {/* Sticky header for mobile */}
-      <div className="sticky top-0 z-10 bg-surface/95 backdrop-blur-sm -mx-2 md:mx-0 px-2 md:px-0 py-2 md:py-0 md:static border-b md:border-b-0 border-gray-800 md:bg-transparent md:backdrop-blur-none">
+      <div className="sticky top-0 z-10 glass border-b border-white/10 -mx-2 md:mx-0 px-2 md:px-0 py-2 md:py-0 md:static md:bg-transparent md:backdrop-blur-none">
         <div className="flex flex-col md:flex-row gap-2 md:gap-3 items-start md:items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-xl md:text-2xl font-bold">Bot Settings</h1>
@@ -193,7 +193,7 @@ export default function SettingsPage() {
                 <select
                   value={localSettings.EXCHANGE || 'COINBASE'}
                   onChange={(e) => handleSettingChange('EXCHANGE', e.target.value)}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 >
                   <option value="COINBASE">Coinbase</option>
                   <option value="KRAKEN">Kraken</option>
@@ -209,7 +209,7 @@ export default function SettingsPage() {
                       value={localSettings.KRAKEN_API_KEY || ''}
                       onChange={(e) => handleSettingChange('KRAKEN_API_KEY', e.target.value)}
                       placeholder="Enter Kraken API Key"
-                      className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                      className="w-full lg-input px-2 py-1 text-xs"
                     />
                   </div>
                   <div>
@@ -219,7 +219,7 @@ export default function SettingsPage() {
                       value={localSettings.KRAKEN_API_SECRET || ''}
                       onChange={(e) => handleSettingChange('KRAKEN_API_SECRET', e.target.value)}
                       placeholder="Enter Kraken API Secret"
-                      className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                      className="w-full lg-input px-2 py-1 text-xs"
                     />
                   </div>
                 </>
@@ -262,7 +262,7 @@ export default function SettingsPage() {
                   value={localSettings.MAX_PRICE}
                   onChange={(e) => handleSettingChange('MAX_PRICE', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Trade under this price</p>
               </div>
@@ -273,7 +273,7 @@ export default function SettingsPage() {
                   value={localSettings.POSITION_SIZE}
                   onChange={(e) => handleSettingChange('POSITION_SIZE', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">USD per trade</p>
               </div>
@@ -284,7 +284,7 @@ export default function SettingsPage() {
                   value={localSettings.MAX_POSITIONS}
                   onChange={(e) => handleSettingChange('MAX_POSITIONS', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Max concurrent</p>
               </div>
@@ -305,7 +305,7 @@ export default function SettingsPage() {
                   value={localSettings.PROFIT_TARGET}
                   onChange={(e) => handleSettingChange('PROFIT_TARGET', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Sell at %</p>
               </div>
@@ -317,7 +317,7 @@ export default function SettingsPage() {
                   value={localSettings.STOP_LOSS}
                   onChange={(e) => handleSettingChange('STOP_LOSS', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Cut losses</p>
               </div>
@@ -350,7 +350,7 @@ export default function SettingsPage() {
                   value={localSettings.MOMENTUM_THRESHOLD}
                   onChange={(e) => handleSettingChange('MOMENTUM_THRESHOLD', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Min change</p>
               </div>
@@ -361,7 +361,7 @@ export default function SettingsPage() {
                   value={localSettings.MOMENTUM_WINDOW}
                   onChange={(e) => handleSettingChange('MOMENTUM_WINDOW', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Minutes</p>
               </div>
@@ -372,7 +372,7 @@ export default function SettingsPage() {
                   value={localSettings.SCAN_INTERVAL}
                   onChange={(e) => handleSettingChange('SCAN_INTERVAL', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Seconds</p>
               </div>
@@ -392,7 +392,7 @@ export default function SettingsPage() {
                   value={localSettings.MIN_VOLUME}
                   onChange={(e) => handleSettingChange('MIN_VOLUME', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">24h vol</p>
               </div>
@@ -413,7 +413,7 @@ export default function SettingsPage() {
                   value={localSettings.VOLUME_SURGE_THRESHOLD}
                   onChange={(e) => handleSettingChange('VOLUME_SURGE_THRESHOLD', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                   disabled={!localSettings.VOLUME_SURGE_FILTER}
                 />
                 <p className="text-xs text-gray-500 mt-0.5">% of avg</p>
@@ -443,7 +443,7 @@ export default function SettingsPage() {
                   value={localSettings.RSI_MIN}
                   onChange={(e) => handleSettingChange('RSI_MIN', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                   disabled={!localSettings.RSI_FILTER}
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Min</p>
@@ -455,7 +455,7 @@ export default function SettingsPage() {
                   value={localSettings.RSI_MAX}
                   onChange={(e) => handleSettingChange('RSI_MAX', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                   disabled={!localSettings.RSI_FILTER}
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Max</p>
@@ -477,7 +477,7 @@ export default function SettingsPage() {
                   value={localSettings.TRAILING_STOP_PERCENT}
                   onChange={(e) => handleSettingChange('TRAILING_STOP_PERCENT', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                   disabled={!localSettings.ENABLE_TRAILING_PROFIT}
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Distance %</p>
@@ -490,7 +490,7 @@ export default function SettingsPage() {
                   value={localSettings.MIN_MOMENTUM_TO_RIDE}
                   onChange={(e) => handleSettingChange('MIN_MOMENTUM_TO_RIDE', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                   disabled={!localSettings.ENABLE_TRAILING_PROFIT}
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Min thresh</p>
@@ -502,7 +502,7 @@ export default function SettingsPage() {
                   value={localSettings.OPEN_POSITION_SCAN_INTERVAL}
                   onChange={(e) => handleSettingChange('OPEN_POSITION_SCAN_INTERVAL', parseInt(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Check interval</p>
               </div>
@@ -523,7 +523,7 @@ export default function SettingsPage() {
                   value={localSettings.MAKER_FEE_PERCENT}
                   onChange={(e) => handleSettingChange('MAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Limit orders</p>
               </div>
@@ -535,7 +535,7 @@ export default function SettingsPage() {
                   value={localSettings.TAKER_FEE_PERCENT}
                   onChange={(e) => handleSettingChange('TAKER_FEE_PERCENT', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Market orders</p>
               </div>
@@ -547,7 +547,7 @@ export default function SettingsPage() {
                   value={localSettings.TAX_PERCENT}
                   onChange={(e) => handleSettingChange('TAX_PERCENT', parseFloat(e.target.value) || 0)}
                   onFocus={handleNumericInputFocus}
-                  className="w-full bg-surface px-2 py-1 rounded border border-gray-700 text-xs"
+                  className="w-full lg-input px-2 py-1 text-xs"
                 />
                 <p className="text-xs text-gray-500 mt-0.5">Profits only</p>
               </div>
@@ -564,14 +564,14 @@ export default function SettingsPage() {
             value={settingsComment}
             onChange={(e) => setSettingsComment(e.target.value)}
             placeholder="Add a comment..."
-            className="w-full bg-surface p-1.5 rounded border border-gray-700 text-xs"
+            className="w-full lg-input p-2 text-xs"
             rows={1}
           />
           <div>
             <h4 className="font-semibold mb-1 text-xs">Recent</h4>
             <div className="space-y-0.5 max-h-24 overflow-y-auto">
               {settingsHistory.slice(0, 4).map((entry, i) => (
-                <div key={i} className="text-xs bg-surface p-1 rounded">
+                <div key={i} className="text-xs glass-light p-2 rounded-xl">
                   <p className="text-gray-400">{new Date(entry.savedAt).toLocaleString()}</p>
                   <p className="text-gray-500">{entry.comment || 'No comment'}</p>
                 </div>
@@ -602,7 +602,7 @@ export default function SettingsPage() {
 
       {/* Dialogs */}
       {showResetDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="p-6 max-w-md">
             <CardTitle>Reset Portfolio?</CardTitle>
             <CardContent className="space-y-4 mt-4">
@@ -620,7 +620,7 @@ export default function SettingsPage() {
       )}
 
       {showResetSettingsDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="p-6 max-w-md">
             <CardTitle>Reset Settings?</CardTitle>
             <CardContent className="space-y-4 mt-4">
@@ -641,7 +641,7 @@ export default function SettingsPage() {
 
       {/* Unsaved Changes Dialog */}
       {showUnsavedDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50">
           <Card className="p-6 max-w-md">
             <CardTitle className="flex items-center gap-2">
               <AlertCircle size={20} className="text-warning-400" />
@@ -666,7 +666,7 @@ export default function SettingsPage() {
       )}
 
       {snackbar && (
-        <div className="fixed bottom-4 right-4 bg-primary-600 text-white px-4 py-2 rounded-lg">
+        <div className="fixed bottom-4 right-4 glass border border-primary-500/30 text-white px-4 py-2 rounded-xl">
           {snackbar}
         </div>
       )}

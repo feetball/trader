@@ -15,7 +15,7 @@ export default function Layout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="bg-surface text-white">
+      <body className="bg-transparent text-white">
         <TradingProvider>
           <RootLayout>
             {children}

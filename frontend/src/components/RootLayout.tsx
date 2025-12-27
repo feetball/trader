@@ -17,7 +17,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   if (!mounted) return null
 
   return (
-    <div className="flex h-screen bg-surface">
+    <div className="flex h-screen lg-panel">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden">
         <AppBar />
