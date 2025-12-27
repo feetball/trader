@@ -30,7 +30,7 @@ export default function PerformancePage() {
   )
 
   return (
-    <div className="p-3 md:p-6 space-y-3 md:space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto">
+    <div className="p-3 md:p-6 pb-24 md:pb-6 space-y-3 md:space-y-6">
       {/* Summary Cards */}
       {coinPerformance.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">

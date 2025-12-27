@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import type { Viewport } from 'next'
 import '../src/styles/globals.css'
 import { TradingProvider } from '@/hooks/useTrading'
 import RootLayout from '@/components/RootLayout'
@@ -6,6 +7,12 @@ import RootLayout from '@/components/RootLayout'
 export const metadata: Metadata = {
   title: 'Big DK\'s Crypto Momentum Trader',
   description: 'Automated momentum trading bot for cryptocurrencies',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default function Layout({

@@ -6,6 +6,11 @@ html {
   color-scheme: dark;
 }
 
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
   /* Liquid Glass (iOS-inspired) tokens */
   --lg-blur: 26px;
@@ -35,6 +40,7 @@ body {
     radial-gradient(ellipse at 100% 100%, rgba(34, 197, 94, 0.05) 0%, transparent 50%),
     #0a0a0f;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 /* Ambient highlight + ultra-subtle noise for a liquid feel */
