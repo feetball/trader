@@ -210,10 +210,10 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
   const getWidthClass = (width: number) => {
     switch (width) {
       case 1: return 'col-span-1'
-      case 2: return 'col-span-1 md:col-span-2'
-      case 3: return 'col-span-1 md:col-span-2 lg:col-span-3'
-      case 4: return 'col-span-1 md:col-span-2 lg:col-span-4'
-      default: return 'col-span-1 md:col-span-2'
+      case 2: return 'col-span-1 sm:col-span-2'
+      case 3: return 'col-span-1 sm:col-span-2 lg:col-span-3'
+      case 4: return 'col-span-1 sm:col-span-2 lg:col-span-4'
+      default: return 'col-span-1 sm:col-span-2'
     }
   }
 
@@ -332,7 +332,7 @@ export default function WidgetGrid({ widgets, storageKey = 'default', onLayoutCh
       </div>
 
       {/* Widget Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {visibleWidgets.map((item, index) => {
           const widget = widgets.find(w => w.id === item.id)
           if (!widget) return null
