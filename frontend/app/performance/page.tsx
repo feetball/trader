@@ -136,7 +136,8 @@ export default function PerformancePage() {
           Performance by Coin
         </CardTitle>
         <CardContent>
-          <div className="overflow-x-auto custom-scrollbar">
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto custom-scrollbar">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10">
@@ -215,14 +216,84 @@ export default function PerformancePage() {
                 </tfoot>
               )}
             </table>
-            {coinPerformance.length === 0 && (
-              <div className="text-center py-12">
-                <Award size={48} className="mx-auto text-gray-600 mb-4" />
-                <p className="text-gray-500 text-lg">No performance data yet</p>
-                <p className="text-gray-600 text-sm mt-1">Start trading to see your coin performance</p>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-3">
+            {coinPerformance.map((coin, idx) => (
+              <div 
+                key={coin.symbol}
+                className={`p-4 rounded-xl border transition-all ${
+                  coin.profit >= 0 
+                    ? 'bg-gradient-to-r from-success-500/5 to-transparent border-success-500/20' 
+                    : 'bg-gradient-to-r from-error-500/5 to-transparent border-error-500/20'
+                }`}
+                style={{ animationDelay: `${idx * 30}ms` }}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-600 font-mono">#{idx + 1}</span>
+                    <Chip 
+                      size="small" 
+                      onClick={() => openCoinbase(coin.symbol)} 
+                      className="cursor-pointer hover:scale-105 transition-transform"
+                    >
+                      {coin.symbol}
+                    </Chip>
+                  </div>
+                  <span className={`font-bold text-lg ${coin.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
+                    {coin.profit >= 0 ? '+' : ''}${coin.profit.toFixed(2)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Trades</p>
+                    <p className="font-mono font-semibold">{coin.trades}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Win Rate</p>
+                    <Chip 
+                      size="small" 
+                      variant="glow"
+                      color={coin.winRate >= 60 ? 'success' : coin.winRate >= 40 ? 'warning' : 'error'}
+                    >
+                      {coin.winRate.toFixed(0)}%
+                    </Chip>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Avg Trade</p>
+                    <p className={`text-sm font-semibold ${coin.profit / coin.trades >= 0 ? 'text-success-400' : 'text-error-400'}`}>
+                      ${(coin.profit / coin.trades).toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {coinPerformance.length > 0 && (
+              <div className="p-4 rounded-xl bg-white/10 border border-white/20">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-gray-300">Total</span>
+                  <div className="text-right">
+                    <div className={`font-bold text-xl ${totalProfit >= 0 ? 'gradient-text-profit' : 'gradient-text-loss'}`}>
+                      {totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {coinPerformance.reduce((acc, c) => acc + c.trades, 0)} trades
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>
+
+          {/* Empty State */}
+          {coinPerformance.length === 0 && (
+            <div className="text-center py-12">
+              <Award size={48} className="mx-auto text-gray-600 mb-4" />
+              <p className="text-gray-500 text-lg">No performance data yet</p>
+              <p className="text-gray-600 text-sm mt-1">Start trading to see your coin performance</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

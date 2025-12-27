@@ -51,10 +51,11 @@ export default function Sidebar() {
   return (
     <>
       <button
-        className="md:hidden fixed top-4 left-4 z-50 p-3 glass rounded-xl shadow-glow-sm hover:shadow-glow-md transition-all duration-300"
+        className="md:hidden fixed top-4 left-4 z-50 p-2.5 glass rounded-xl shadow-glow-sm hover:shadow-glow-md transition-all duration-300 active:scale-95 touch-manipulation"
         onClick={() => setOpen(!open)}
+        aria-label={open ? "Close menu" : "Open menu"}
       >
-        {open ? <X size={20} className="text-white" /> : <Menu size={20} className="text-white" />}
+        {open ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
       </button>
 
       <aside

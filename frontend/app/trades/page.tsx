@@ -82,7 +82,8 @@ export default function TradeHistoryPage() {
           Trade History
         </CardTitle>
         <CardContent>
-          <div className="overflow-x-auto custom-scrollbar">
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto custom-scrollbar">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10">
@@ -178,14 +179,100 @@ export default function TradeHistoryPage() {
                 })}
               </tbody>
             </table>
-            {trades.length === 0 && (
-              <div className="text-center py-12">
-                <History size={48} className="mx-auto text-gray-600 mb-4" />
-                <p className="text-gray-500 text-lg">No trades yet</p>
-                <p className="text-gray-600 text-sm mt-1">Start the bot to begin trading</p>
-              </div>
-            )}
           </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-3">
+            {trades.map((trade, i) => {
+              const profit = trade.netProfit ?? trade.profit
+              const isProfit = profit >= 0
+              const auditData = extractTradeAuditData(trade.audit)
+              const { hasAudit, entry } = auditData
+              return (
+                <div 
+                  key={i}
+                  className={`p-4 rounded-xl border transition-all ${
+                    isProfit 
+                      ? 'bg-gradient-to-r from-success-500/5 to-transparent border-success-500/20' 
+                      : 'bg-gradient-to-r from-error-500/5 to-transparent border-error-500/20'
+                  }`}
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <Chip 
+                      size="small" 
+                      onClick={() => openCoinbase(trade.symbol)}
+                      className="cursor-pointer hover:scale-105 transition-transform"
+                    >
+                      {trade.symbol}
+                    </Chip>
+                    <div className="flex items-center gap-2">
+                      <Chip 
+                        size="small" 
+                        variant="glow"
+                        color={isProfit ? 'success' : 'error'}
+                      >
+                        {isProfit ? '+' : ''}{(trade.netProfitPercent ?? trade.profitPercent).toFixed(2)}%
+                      </Chip>
+                      <div className={`flex items-center gap-1 font-bold text-sm ${isProfit ? 'text-success-400' : 'text-error-400'}`}>
+                        {isProfit ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+                        {isProfit ? '+' : ''}${profit.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Audit Info */}
+                  {!hasAudit && (
+                    <div className="mb-2">
+                      <span className="text-xs text-gray-600 font-mono px-2 py-1 rounded-lg bg-white/5">
+                        Audit: legacy trade (no signal/config snapshot)
+                      </span>
+                    </div>
+                  )}
+                  <AuditEntryDisplay 
+                    entry={trade.audit?.entry}
+                    showVolume={true}
+                    showReasons={true}
+                    maxReasons={4}
+                    configAtEntry={trade.audit?.configAtEntry}
+                    configAtExit={trade.audit?.configAtExit}
+                    className="mb-3"
+                  />
+
+                  {/* Trade Details */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Entry</p>
+                      <p className="font-mono text-gray-300">{new Date(trade.entryTime).toLocaleString()}</p>
+                      <p className="font-mono text-gray-400">${(trade.entryPrice || 0).toFixed(6)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Exit</p>
+                      <p className="font-mono text-gray-300">{new Date(trade.exitTime).toLocaleString()}</p>
+                      <p className="font-mono text-gray-400">${(trade.exitPrice || 0).toFixed(6)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Quantity</p>
+                      <p className="font-mono text-gray-300">{(trade.quantity || 0).toFixed(4)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 mb-0.5">Reason</p>
+                      <p className="text-gray-300">{trade.reason || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Empty State */}
+          {trades.length === 0 && (
+            <div className="text-center py-12">
+              <History size={48} className="mx-auto text-gray-600 mb-4" />
+              <p className="text-gray-500 text-lg">No trades yet</p>
+              <p className="text-gray-600 text-sm mt-1">Start the bot to begin trading</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

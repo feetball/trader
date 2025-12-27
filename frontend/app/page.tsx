@@ -186,46 +186,113 @@ function PositionsWidget() {
         {livePositions.map((pos, idx) => (
           <div 
             key={pos.id} 
-            className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 group"
+            className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 border border-white/5 hover:border-white/10 group"
             style={{ animationDelay: `${idx * 50}ms` }}
           >
-            <div className="flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1 min-w-0">
+            {/* Mobile: Stack layout */}
+            <div className="flex flex-col gap-2 md:hidden">
+              <div className="flex items-center justify-between">
                 <Chip onClick={() => openCoinbase(pos.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
                   {pos.symbol}
                 </Chip>
-                <span className="text-xs text-gray-500 font-mono">Coins: {(pos.quantity || 0).toFixed(4)}</span>
-                <span className="text-xs text-gray-500 font-mono">Invested: ${(pos.investedAmount || 0).toFixed(2)}</span>
+                <div className="flex items-center gap-2">
+                  <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                    (pos.currentPLPercent || 0) >= 0 
+                      ? 'bg-success-500/20 text-success-400' 
+                      : 'bg-error-500/20 text-error-400'
+                  }`}>
+                    {(pos.currentPLPercent || 0) >= 0 ? '+' : ''}{(pos.currentPLPercent || 0).toFixed(2)}%
+                  </div>
+                  <button
+                    onClick={() => handleForceSell(pos)}
+                    disabled={sellingId === pos.id}
+                    className="p-1.5 rounded-lg bg-error-500/20 hover:bg-error-500/30 text-error-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Force sell this position"
+                  >
+                    {sellingId === pos.id ? (
+                      <div className="animate-spin text-xs">⏳</div>
+                    ) : (
+                      <X size={14} />
+                    )}
+                  </button>
+                </div>
               </div>
-              <AuditEntryDisplay audit={pos.audit} className="text-xs text-gray-600 font-mono flex flex-wrap gap-x-3 gap-y-1" />
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-mono mt-1">
-                <span className="text-gray-500">Entry: ${(pos.entryPrice || 0).toFixed(6)}</span>
-                {pos.currentPrice && <span className="text-info-400">Now: ${pos.currentPrice.toFixed(6)}</span>}
-                {pos.stopLoss && <span className="text-error-400">Stop: ${pos.stopLoss.toFixed(6)}</span>}
-                {pos.targetPrice && <span className="text-success-400">Target: ${pos.targetPrice.toFixed(6)}</span>}
-              </div>
-              <p className="text-xs text-gray-500 mt-1 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-                (pos.currentPLPercent || 0) >= 0 
-                  ? 'bg-success-500/20 text-success-400' 
-                  : 'bg-error-500/20 text-error-400'
-              }`}>
-                {(pos.currentPLPercent || 0) >= 0 ? '+' : ''}{(pos.currentPLPercent || 0).toFixed(2)}%
-              </div>
-              <button
-                onClick={() => handleForceSell(pos)}
-                disabled={sellingId === pos.id}
-                className="p-2 rounded-lg bg-error-500/20 hover:bg-error-500/30 text-error-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed opacity-0 group-hover:opacity-100"
-                title="Force sell this position"
-              >
-                {sellingId === pos.id ? (
-                  <div className="animate-spin">⏳</div>
-                ) : (
-                  <X size={16} />
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Coins:</span>
+                  <span className="text-gray-400 font-mono">{(pos.quantity || 0).toFixed(4)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Invested:</span>
+                  <span className="text-gray-400 font-mono">${(pos.investedAmount || 0).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-500">Entry:</span>
+                  <span className="text-gray-400 font-mono">${(pos.entryPrice || 0).toFixed(6)}</span>
+                </div>
+                {pos.currentPrice && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Now:</span>
+                    <span className="text-info-400 font-mono">${pos.currentPrice.toFixed(6)}</span>
+                  </div>
                 )}
-              </button>
+                {pos.stopLoss && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Stop:</span>
+                    <span className="text-error-400 font-mono">${pos.stopLoss.toFixed(6)}</span>
+                  </div>
+                )}
+                {pos.targetPrice && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-500">Target:</span>
+                    <span className="text-success-400 font-mono">${pos.targetPrice.toFixed(6)}</span>
+                  </div>
+                )}
+              </div>
+              <AuditEntryDisplay audit={pos.audit} className="text-xs text-gray-600 font-mono" />
+              <p className="text-xs text-gray-500 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()}</p>
+            </div>
+
+            {/* Desktop: Original layout */}
+            <div className="hidden md:flex md:items-center md:justify-between">
+              <div className="flex-1">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1 min-w-0">
+                  <Chip onClick={() => openCoinbase(pos.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
+                    {pos.symbol}
+                  </Chip>
+                  <span className="text-xs text-gray-500 font-mono">Coins: {(pos.quantity || 0).toFixed(4)}</span>
+                  <span className="text-xs text-gray-500 font-mono">Invested: ${(pos.investedAmount || 0).toFixed(2)}</span>
+                </div>
+                <AuditEntryDisplay audit={pos.audit} className="text-xs text-gray-600 font-mono flex flex-wrap gap-x-3 gap-y-1" />
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-mono mt-1">
+                  <span className="text-gray-500">Entry: ${(pos.entryPrice || 0).toFixed(6)}</span>
+                  {pos.currentPrice && <span className="text-info-400">Now: ${pos.currentPrice.toFixed(6)}</span>}
+                  {pos.stopLoss && <span className="text-error-400">Stop: ${pos.stopLoss.toFixed(6)}</span>}
+                  {pos.targetPrice && <span className="text-success-400">Target: ${pos.targetPrice.toFixed(6)}</span>}
+                </div>
+                <p className="text-xs text-gray-500 mt-1 font-mono">Bought: {new Date(pos.entryTime).toLocaleString()}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`px-3 py-1 rounded-lg text-sm font-semibold ${
+                  (pos.currentPLPercent || 0) >= 0 
+                    ? 'bg-success-500/20 text-success-400' 
+                    : 'bg-error-500/20 text-error-400'
+                }`}>
+                  {(pos.currentPLPercent || 0) >= 0 ? '+' : ''}{(pos.currentPLPercent || 0).toFixed(2)}%
+                </div>
+                <button
+                  onClick={() => handleForceSell(pos)}
+                  disabled={sellingId === pos.id}
+                  className="p-2 rounded-lg bg-error-500/20 hover:bg-error-500/30 text-error-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed opacity-0 group-hover:opacity-100"
+                  title="Force sell this position"
+                >
+                  {sellingId === pos.id ? (
+                    <div className="animate-spin">⏳</div>
+                  ) : (
+                    <X size={16} />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -321,19 +388,20 @@ function RecentTradesWidget() {
       {recentTrades.slice(0, 5).map((trade, idx) => (
         <div 
           key={idx} 
-          className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 hover:scale-[1.01] ${
+          className={`p-3 rounded-xl border transition-all duration-300 hover:scale-[1.01] ${
             trade.profit >= 0 
               ? 'bg-gradient-to-r from-success-500/5 to-transparent border-success-500/20 hover:border-success-500/40' 
               : 'bg-gradient-to-r from-error-500/5 to-transparent border-error-500/20 hover:border-error-500/40'
           }`}
         >
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          {/* Mobile Layout */}
+          <div className="md:hidden space-y-2">
+            <div className="flex items-center justify-between">
               <Chip onClick={() => openCoinbase(trade.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
                 {trade.symbol}
               </Chip>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-end">
-                <span className={`font-bold ${trade.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold ${trade.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
                   {trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)}
                 </span>
                 <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
@@ -346,17 +414,55 @@ function RecentTradesWidget() {
               </div>
             </div>
             {!trade.audit && (
-              <div className="mt-2">
+              <div>
                 <span className="text-xs text-gray-600 font-mono px-2 py-1 rounded-lg bg-white/5">
                   Audit: legacy trade (no signal/config snapshot)
                 </span>
               </div>
             )}
-            <div className="mt-1 text-xs text-gray-500 font-mono flex flex-wrap gap-x-3 gap-y-1">
-              <AuditEntryDisplay audit={trade.audit} className="contents" />
-              <span>Coins: {(trade.quantity || 0).toFixed(4)}</span>
-              <span>Buy: {new Date(trade.entryTime).toLocaleString()} @ ${(trade.entryPrice || 0).toFixed(6)}</span>
-              <span>Sell: {new Date(trade.exitTime).toLocaleString()} @ ${(trade.exitPrice || 0).toFixed(6)}</span>
+            <div className="space-y-1 text-xs text-gray-500 font-mono">
+              <AuditEntryDisplay audit={trade.audit} className="block" />
+              <div>Coins: {(trade.quantity || 0).toFixed(4)}</div>
+              <div>Buy: {new Date(trade.entryTime).toLocaleString()} @ ${(trade.entryPrice || 0).toFixed(6)}</div>
+              <div>Sell: {new Date(trade.exitTime).toLocaleString()} @ ${(trade.exitPrice || 0).toFixed(6)}</div>
+            </div>
+          </div>
+
+          {/* Desktop Layout */}
+          <div className="hidden md:block">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                  <Chip onClick={() => openCoinbase(trade.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
+                    {trade.symbol}
+                  </Chip>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-end">
+                    <span className={`font-bold ${trade.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
+                      {trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)}
+                    </span>
+                    <div className={`px-2 py-1 rounded-lg text-xs font-semibold ${
+                      trade.profitPercent >= 0 
+                        ? 'bg-success-500/20 text-success-400' 
+                        : 'bg-error-500/20 text-error-400'
+                    }`}>
+                      {trade.profitPercent >= 0 ? '+' : ''}{trade.profitPercent.toFixed(2)}%
+                    </div>
+                  </div>
+                </div>
+                {!trade.audit && (
+                  <div className="mt-2">
+                    <span className="text-xs text-gray-600 font-mono px-2 py-1 rounded-lg bg-white/5">
+                      Audit: legacy trade (no signal/config snapshot)
+                    </span>
+                  </div>
+                )}
+                <div className="mt-1 text-xs text-gray-500 font-mono flex flex-wrap gap-x-3 gap-y-1">
+                  <AuditEntryDisplay audit={trade.audit} className="contents" />
+                  <span>Coins: {(trade.quantity || 0).toFixed(4)}</span>
+                  <span>Buy: {new Date(trade.entryTime).toLocaleString()} @ ${(trade.entryPrice || 0).toFixed(6)}</span>
+                  <span>Sell: {new Date(trade.exitTime).toLocaleString()} @ ${(trade.exitPrice || 0).toFixed(6)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
