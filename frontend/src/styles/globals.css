@@ -361,13 +361,13 @@ body::after {
     text-size-adjust: 100%;
   }
 
-  /* Improve scrolling performance on mobile */
-  * {
+  /* Improve scrolling performance on mobile - only for scrollable containers */
+  .overflow-auto, .overflow-y-auto, .overflow-x-auto, [class*="overflow-"] {
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Ensure tables don't cause horizontal scroll */
-  table {
+  /* Ensure tables don't cause horizontal scroll - only affects table elements inside cards */
+  .glass table, .card table {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
