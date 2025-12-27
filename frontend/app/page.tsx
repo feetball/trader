@@ -19,7 +19,7 @@ function TotalValueWidget() {
         </div>
         <span className="text-sm text-gray-400">Total Value</span>
       </div>
-      <div className="text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+      <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
         ${(portfolio.totalValue || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
       <div className={`mt-3 flex items-center gap-2 ${roi >= 0 ? 'text-success-400' : 'text-error-400'}`}>
@@ -42,7 +42,7 @@ function CashWidget() {
         </div>
         <span className="text-sm text-gray-400">Available Cash</span>
       </div>
-      <div className="text-4xl font-bold bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
+      <div className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight bg-gradient-to-r from-white via-gray-100 to-gray-300 bg-clip-text text-transparent">
         ${(portfolio.cash || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
       <div className="mt-3 text-sm text-gray-500 flex items-center gap-2">
@@ -65,7 +65,7 @@ function ProfitWidget() {
         </div>
         <span className="text-sm text-gray-400">Total Profit</span>
       </div>
-      <div className={`text-4xl font-bold ${isPositive ? 'gradient-text-profit' : 'gradient-text-loss'}`}>
+      <div className={`text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight ${isPositive ? 'gradient-text-profit' : 'gradient-text-loss'}`}>
         {isPositive ? '+' : ''}${profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
       </div>
       <div className="mt-3 text-sm text-gray-500 flex items-center gap-3">
@@ -190,7 +190,7 @@ function PositionsWidget() {
             style={{ animationDelay: `${idx * 50}ms` }}
           >
             <div className="flex-1">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1 min-w-0">
                 <Chip onClick={() => openCoinbase(pos.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
                   {pos.symbol}
                 </Chip>
@@ -328,11 +328,11 @@ function RecentTradesWidget() {
           }`}
         >
           <div className="flex-1">
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
               <Chip onClick={() => openCoinbase(trade.symbol)} size="small" className="cursor-pointer hover:scale-105 transition-transform">
                 {trade.symbol}
               </Chip>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 justify-end">
                 <span className={`font-bold ${trade.profit >= 0 ? 'text-success-400' : 'text-error-400'}`}>
                   {trade.profit >= 0 ? '+' : ''}${trade.profit.toFixed(2)}
                 </span>
@@ -451,7 +451,7 @@ export default function OverviewPage() {
   ], [])
 
   return (
-    <div className="p-3 md:p-6 max-h-[calc(100vh-80px)] overflow-y-auto">
+    <div className="p-3 md:p-6 pb-24 md:pb-6">
       <WidgetGrid widgets={widgets} storageKey="overview" />
     </div>
   )

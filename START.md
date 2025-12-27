@@ -2,6 +2,11 @@
 
 ## Start Everything at Once
 
+### Linux / macOS (bash):
+```bash
+./start-all.sh
+```
+
 ### Windows PowerShell:
 ```powershell
 .\start-all.ps1

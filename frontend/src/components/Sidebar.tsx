@@ -58,7 +58,7 @@ export default function Sidebar() {
       </button>
 
       <aside
-        className={`fixed md:relative z-40 w-72 h-screen glass border-r border-white/10 transform transition-all duration-500 ease-out ${
+        className={`fixed left-0 top-0 z-40 w-72 h-screen h-[100dvh] glass border-r border-white/10 transform transition-all duration-500 ease-out ${
           open ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
       >
@@ -189,7 +189,7 @@ export default function Sidebar() {
             toast.type === 'success' 
               ? 'bg-success-500/20 border-success-500/50 text-success-300'
               : toast.type === 'error'
-              ? 'bg-danger-500/20 border-danger-500/50 text-danger-300'
+              ? 'bg-error-500/20 border-error-500/50 text-error-300'
               : 'bg-info-500/20 border-info-500/50 text-info-300'
           }`}>
             <p className="text-sm font-medium">{toast.message}</p>

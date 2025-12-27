@@ -64,7 +64,7 @@ export default function LogsPage() {
         <CardTitle>Bot Logs</CardTitle>
         <CardContent className="space-y-4">
           <div className="flex gap-2">
-            <div className="flex-1 flex items-center bg-surface px-3 rounded-lg">
+            <div className="flex-1 flex items-center glass-light px-3 rounded-xl">
               <Search size={18} className="text-gray-500" />
               <input
                 type="text"
@@ -90,7 +90,7 @@ export default function LogsPage() {
             ))}
           </div>
 
-          <div ref={containerRef} className="bg-surface p-3 rounded-lg max-h-96 overflow-y-auto font-mono text-sm space-y-1">
+          <div ref={containerRef} className="glass-light p-3 rounded-xl max-h-96 overflow-y-auto font-mono text-sm space-y-1 custom-scrollbar">
             {filteredLogs.map((log, i) => (
               <div key={i} className="text-gray-400">
                 <span className="text-gray-600">{log.timestamp}</span> {log.message}

@@ -35,8 +35,8 @@ export default function UpdateDialog() {
   const isComplete = updatePrompt.mode === 'complete'
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-surface-light border border-gray-700 rounded-lg p-6 max-w-2xl max-h-[80vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black/55 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="glass border border-white/15 rounded-2xl p-6 max-w-2xl w-[min(42rem,calc(100vw-2rem))] max-h-[80vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           {isComplete ? (
@@ -76,7 +76,7 @@ export default function UpdateDialog() {
               </button>
             </div>
             {showLogs && (
-              <div className="flex-1 bg-gray-900 border border-gray-700 rounded p-3 overflow-y-auto">
+              <div className="flex-1 glass-light rounded-xl p-3 overflow-y-auto">
                 <div className="font-mono text-xs text-gray-300 space-y-1">
                   {updateLogs.map((log, i) => (
                     <div key={i} className="text-gray-400">

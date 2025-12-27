@@ -15,7 +15,7 @@ export default function TradeHistoryPage() {
   const avgProfit = trades.length ? totalProfit / trades.length : 0
 
   return (
-    <div className="p-3 md:p-6 space-y-3 md:space-y-6 max-h-[calc(100vh-80px)] overflow-y-auto">
+    <div className="p-3 md:p-6 pb-24 md:pb-6 space-y-3 md:space-y-6">
       {trades.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
           {[

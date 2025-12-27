@@ -57,7 +57,7 @@ export default function HelpPage() {
               const Icon = page.icon
               return (
                 <Link key={page.href} href={page.href}>
-                  <div className="p-4 bg-surface rounded-lg hover:bg-surface-light transition-colors cursor-pointer">
+                  <div className="p-4 glass-light rounded-xl transition-all cursor-pointer hover:-translate-y-0.5">
                     <div className="flex items-center gap-2 mb-2">
                       <Icon size={20} className="text-primary-500" />
                       <h4 className="font-semibold">{page.title}</h4>
@@ -83,7 +83,7 @@ export default function HelpPage() {
               { label: 'Position Size', value: '$' + settings.POSITION_SIZE },
               { label: 'Max Positions', value: settings.MAX_POSITIONS },
             ].map((item, i) => (
-              <div key={i} className="bg-surface p-2 rounded">
+              <div key={i} className="glass-light p-3 rounded-xl">
                 <p className="text-gray-400 text-xs">{item.label}</p>
                 <p className="font-bold mt-1">{item.value}</p>
               </div>
@@ -96,7 +96,7 @@ export default function HelpPage() {
         <CardTitle>Architecture</CardTitle>
         <CardContent className="space-y-4">
           {/* ASCII Diagram */}
-          <div className="bg-gradient-to-r from-surface to-surface-light p-4 rounded-lg border border-primary-500/20">
+          <div className="glass rounded-xl border border-primary-500/20 p-4">
             <div className="font-mono text-xs text-primary-300 whitespace-pre space-y-1">
               <div className="flex items-center justify-between">
                 <div className="text-center flex-1">
@@ -119,22 +119,22 @@ export default function HelpPage() {
 
           {/* Tech Stack Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="bg-surface border border-primary-500/10 p-3 rounded-lg hover:border-primary-500/30 transition">
+            <div className="glass-light border border-primary-500/10 p-3 rounded-xl transition hover:-translate-y-0.5">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Frontend</p>
               <p className="text-sm font-semibold text-primary-300">Next.js 14</p>
               <p className="text-xs text-gray-500 mt-1">React 18 + Tailwind</p>
             </div>
-            <div className="bg-surface border border-success-500/10 p-3 rounded-lg hover:border-success-500/30 transition">
+            <div className="glass-light border border-success-500/10 p-3 rounded-xl transition hover:-translate-y-0.5">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Backend</p>
               <p className="text-sm font-semibold text-success-400">Node.js</p>
               <p className="text-xs text-gray-500 mt-1">Express + WS</p>
             </div>
-            <div className="bg-surface border border-warning-500/10 p-3 rounded-lg hover:border-warning-500/30 transition">
+            <div className="glass-light border border-warning-500/10 p-3 rounded-xl transition hover:-translate-y-0.5">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Trading</p>
               <p className="text-sm font-semibold text-warning-400">Exchange</p>
               <p className="text-xs text-gray-500 mt-1">Configured exchange (Coinbase or Kraken)</p>
             </div>
-            <div className="bg-surface border border-info-500/10 p-3 rounded-lg hover:border-info-500/30 transition">
+            <div className="glass-light border border-info-500/10 p-3 rounded-xl transition hover:-translate-y-0.5">
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Deploy</p>
               <p className="text-sm font-semibold text-info-400">Docker</p>
               <p className="text-xs text-gray-500 mt-1">Containerized</p>
@@ -166,7 +166,7 @@ export default function HelpPage() {
       </Card>
 
       {/* Status Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-gray-700 px-6 py-3">
+      <div className="fixed bottom-0 left-0 right-0 glass border-t border-white/10 px-6 py-3">
         <div className="flex items-center justify-between text-xs text-gray-400">
           <div className="flex items-center gap-4">
             <span>Version v{appVersion}</span>

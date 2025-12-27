@@ -17,11 +17,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   if (!mounted) return null
 
   return (
-    <div className="flex h-screen bg-surface">
+    <div className="relative h-screen h-[100dvh] lg-panel">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex h-full flex-col overflow-hidden md:pl-72">
         <AppBar />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto min-h-0 overscroll-contain">
           {children}
         </main>
       </div>

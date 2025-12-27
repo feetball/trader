@@ -18,7 +18,7 @@ export function Card({ children, className = '', variant = 'default', color = ''
     info: 'hover:shadow-glow-sm',
   }
 
-  let baseClass = 'glass rounded-2xl border border-white/10 transition-all duration-300'
+  let baseClass = 'glass rounded-2xl transition-all duration-300'
   
   if (variant === 'tonal' && color) {
     const colorMap: { [key: string]: string } = {
@@ -32,11 +32,11 @@ export function Card({ children, className = '', variant = 'default', color = ''
   } else if (variant === 'outlined') {
     baseClass = 'bg-transparent rounded-2xl border-2 border-white/20 transition-all duration-300'
   } else if (variant === 'glass') {
-    baseClass = 'glass rounded-2xl border border-white/10 backdrop-blur-xl transition-all duration-300'
+    baseClass = 'glass rounded-2xl transition-all duration-300'
   }
 
   if (hover) {
-    baseClass += ' hover:scale-[1.02] hover:border-white/20'
+    baseClass += ' hover:-translate-y-0.5'
   }
 
   if (glow && color) {
